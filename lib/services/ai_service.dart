@@ -39,7 +39,7 @@ import 'package:http/http.dart' as http;
 class AiService {
   final String apiKey = "AIzaSyDCKg408QseQDYanvapJvTHFPoCwWzkZ_k";
 
-  Future<String> sendMessage(String message) async {
+  Future<String> sendMessage(String message, {int retries = 1}) async {
     final url = Uri.parse(
       "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=$apiKey",
     );
@@ -53,6 +53,14 @@ class AiService {
         "contents": [
           {
             "parts": [
+              {
+                "text":
+                    "You are a fun, friendly, funny chatbot. Always reply with humor, small jokes, and positive energy. Keep answers short, helpful, and entertaining."
+              }
+            ]
+          },
+          {
+            "parts": [
               {"text": message}
             ]
           }
@@ -60,11 +68,19 @@ class AiService {
       }),
     );
 
+    // SUCCESS → return AI reply
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data["candidates"][0]["content"]["parts"][0]["text"];
-    } else {
-      return "Error: ${response.statusCode} → ${response.body}";
     }
+
+    // MODEL OVERLOADED → retry once
+    if (response.statusCode == 503 && retries > 0) {
+    await Future.delayed(const Duration(seconds: 2));
+    return await sendMessage(message, retries: retries - 1);
+  }
+
+    // OTHER ERRORS
+    return "Error: ${response.statusCode} → ${response.body}";
   }
 }

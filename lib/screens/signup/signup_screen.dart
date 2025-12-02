@@ -1,26 +1,30 @@
-import 'package:chautari_kurakani/screens/signup/signup_screen.dart';
+import 'package:chautari_kurakani/screens/login_screen.dart';
+import 'package:chautari_kurakani/screens/signup/signup_profilepicture_screen.dart';
 import 'package:chautari_kurakani/widgets/my_floating_button.dart';
-import 'package:chautari_kurakani/widgets/my_outline_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_field.dart';
 import 'package:flutter/material.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _loginForm = GlobalKey<FormState>();
+class _SignupScreenState extends State<SignupScreen> {
+  final _signupForm = GlobalKey<FormState>();
 
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+
     bool isTablet = screenWidth > 600;
 
     return Scaffold(
@@ -31,8 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               SizedBox(height: isTablet ? 10 : 40),
 
-              /// Logo
+              // Image.asset('assets/images/white_half_logo.png',height: 100,width: 100,),
               Container(
+                // height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   boxShadow: [
@@ -40,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 26,
                       spreadRadius: 1,
-                      offset: const Offset(0, 4),
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -48,12 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   'assets/images/white_half_logo.png',
                   height: isTablet ? 110 : 100,
                   width: isTablet ? 110 : 100,
+                  // width: 100,
                 ),
               ),
 
               SizedBox(height: isTablet ? 0 : 20),
 
-              /// Title
               Text(
                 "ChautariKuraKani",
                 style: TextStyle(
@@ -63,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 15,
-                      offset: const Offset(2, 3),
+                      offset: Offset(2, 3),
                     ),
                   ],
                 ),
@@ -81,37 +86,73 @@ class _LoginScreenState extends State<LoginScreen> {
 
               SizedBox(height: isTablet ? 30 : 40),
 
-              /// Form Container
               Padding(
+                // padding: const EdgeInsets.all(13.0),
                 padding: EdgeInsets.symmetric(
-                    horizontal: isTablet ? screenWidth * 0.2 : 13),
+                  horizontal: isTablet ? screenWidth * 0.2 : 13,
+                ),
                 child: Container(
+                  // height: 200,
+                  // width: double.infinity,
                   width: isTablet ? screenWidth * 0.6 : double.infinity,
                   decoration: BoxDecoration(
-                      color: const Color(0xFFE3E3E3),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 2),
-                        )
-                      ]),
+                    color: const Color(0xFFE3E3E3),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: Form(
-                    key: _loginForm,
+                    key: _signupForm,
+
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                          isTablet ? 45 : 15, 20, isTablet ? 45 : 15, 30),
+                        isTablet ? 45 : 15,
+                        20,
+                        isTablet ? 45 : 15,
+                        0,
+                      ),
                       child: Column(
                         children: [
                           Text(
-                            "Login",
+                            "Create an account",
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w500),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: MyTextfield(
+                                  controller: firstNameController,
+                                  text: "First Name",
+                                  hintText: "First Name",
+                                  errorText: "Please enter your first name",
+                                ),
+                              ),
+
+                              SizedBox(width: 10),
+
+                              Expanded(
+                                child: MyTextfield(
+                                  controller: lastNameController,
+                                  text: "Last Name",
+                                  hintText: "Last Name",
+                                  errorText: "Please enter your last name",
+                                ),
+                              ),
+                            ],
                           ),
 
-                          SizedBox(height: 20),
+                          SizedBox(height: 10),
 
                           MyTextfield(
                             controller: emailController,
@@ -132,36 +173,38 @@ class _LoginScreenState extends State<LoginScreen> {
                             isPassword: true,
                           ),
 
+                          SizedBox(height: 10),
+
+                          MyTextfield(
+                            controller: confirmPasswordController,
+                            text: "Confirm Password",
+                            hintText: "Confirm Password",
+                            errorText: "Please enter your password",
+                            prefixIcon: Icons.lock,
+                            isPassword: true,
+                          ),
+
                           SizedBox(height: 30),
 
                           MyFloatingButton(
-                            onPressed: () {},
-                            text: "Log in",
+                            onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>SignupProfilepictureScreen()));},
+                            text: "Next",
                             color: const Color.fromARGB(255, 229, 163, 32),
                           ),
 
                           SizedBox(height: 20),
 
                           MyTextButton(
-                            onPressed: () {},
-                            text: "Forgot Password?",
-                            textColor: const Color.fromARGB(255, 63, 124, 42),
-                          ),
-
-                          SizedBox(height: 20),
-
-                          MyOutlinedButton(
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SignupScreen(),
+                                  builder: (context) => LoginScreen(),
                                 ),
                               );
                             },
-                            text: "Create new account",
-                            borderColor: const Color(0xFF76C05D),
-                            textColor: const Color(0xFF717171),
+                            text: "Already have an account??",
+                            textColor: const Color.fromARGB(255, 63, 124, 42),
                           ),
                         ],
                       ),

@@ -1,3 +1,4 @@
+import 'package:chautari_kurakani/screens/forget_password/forget_password_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_screen.dart';
 import 'package:chautari_kurakani/widgets/my_floating_button.dart';
 import 'package:chautari_kurakani/widgets/my_outline_button.dart';
@@ -143,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 20),
 
                           MyTextButton(
-                            onPressed: () {},
+                            onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> ForgetPasswordScreen()));},
                             text: "Forgot Password?",
                             textColor: const Color.fromARGB(255, 63, 124, 42),
                           ),

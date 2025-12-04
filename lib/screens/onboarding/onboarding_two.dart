@@ -62,7 +62,7 @@ class _OnboardingTwoState extends State<OnboardingTwo> {
             ),
 
 
-            SizedBox(height: 10),
+            SizedBox(height: 20),
 
             Padding(
               padding: const EdgeInsets.all(20.0),

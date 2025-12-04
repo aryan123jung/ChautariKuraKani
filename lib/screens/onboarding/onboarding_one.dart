@@ -18,7 +18,32 @@ class _OnboardingOneState extends State<OnboardingOne> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 100),
+
+
+            SizedBox(height: 20,),
+         
+              Text(
+                "Your Digital,\nChautari Awaits",
+                style: TextStyle(
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 9,
+                      offset: const Offset(2, 3),
+                    ),
+                  ],
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            
+
+          
+          SizedBox(height: 50,),
+
+
             Image.asset("assets/images/splash_one.png"),
 
             Padding(

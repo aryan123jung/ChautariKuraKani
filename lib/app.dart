@@ -1,4 +1,5 @@
-import 'package:chautari_kurakani/screens/splash_screen.dart';
+import 'package:chautari_kurakani/screens/onboarding/onboarding_one.dart';
+// import 'package:chautari_kurakani/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatelessWidget {
@@ -9,7 +10,8 @@ class App extends StatelessWidget {
     return MaterialApp(
       color: const Color(0xFF76C05D),
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      // home: SplashScreen(),
+      home: OnboardingOne(),
     );
   }
 }

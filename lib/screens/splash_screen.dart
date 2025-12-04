@@ -77,8 +77,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     ),
                     child: Image.asset(
                       'assets/images/white_half_logo.png',
-                      height: isTablet ? 120 : 170,
-                      width: isTablet ? 120 : 170,
+                      height: isTablet ? 250 : 170,
+                      width: isTablet ? 250 : 170,
                     ),
                   ),
                 ),
@@ -89,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 Text(
                   "ChautariKuraKani",
                   style: TextStyle(
-                    fontSize: isTablet ? 40 : 40,
+                    fontSize: isTablet ? 50 : 40,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                     shadows: [
@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 Text(
                   "Chautarimah Sabai Kura",
                   style: TextStyle(
-                    fontSize: isTablet ? 40 : 20,
+                    fontSize: isTablet ? 30 : 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     shadows: [
@@ -115,11 +115,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   ),
                 ),
             
-                const SizedBox(height: 30),
+                 SizedBox(height:isTablet? 0: 130),
             
                 
                 SizedBox(
-                  height: isTablet ? 80 : 400,
+                  height: isTablet ?500 : 370,
                   child: Lottie.asset(
                     'assets/lottie/loading_hand2.json',
                     controller: _loadingController,

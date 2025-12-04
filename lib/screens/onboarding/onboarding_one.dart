@@ -13,6 +13,8 @@ class OnboardingOne extends StatefulWidget {
 class _OnboardingOneState extends State<OnboardingOne> {
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isTablet = screenWidth > 600;
     return Scaffold(
       backgroundColor: const Color(0xFF76C05D),
       body: SafeArea(
@@ -20,7 +22,7 @@ class _OnboardingOneState extends State<OnboardingOne> {
           children: [
 
 
-            SizedBox(height: 20,),
+            SizedBox(height:isTablet ? 0: 20,),
          
               Text(
                 "Your Digital,\nChautari Awaits",
@@ -41,7 +43,7 @@ class _OnboardingOneState extends State<OnboardingOne> {
             
 
           
-          SizedBox(height: 50,),
+          SizedBox(height: isTablet ? 0: 50,),
 
 
             Image.asset("assets/images/splash_one.png"),
@@ -66,10 +68,10 @@ class _OnboardingOneState extends State<OnboardingOne> {
               ),
             ),
 
-            SizedBox(height: 10),
+            SizedBox(height:isTablet ? 0: 10),
 
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: EdgeInsets.fromLTRB(isTablet? 400:20,20,isTablet? 400:20,isTablet?10:20),
               child: MyFloatingButton(
                 
                 onPressed: () {

@@ -12,11 +12,14 @@ class OnboardingTwo extends StatefulWidget {
 class _OnboardingTwoState extends State<OnboardingTwo> {
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isTablet = screenWidth > 600;
     return Scaffold(
       backgroundColor: const Color(0xFF76C05D),
       body: SafeArea(child: Column(
         children: [
-              SizedBox(height: 30,),
+              // SizedBox(height: 30,),
+              SizedBox(height:isTablet ? 0: 30,),
          
               Text(
                 "Speak Freely,\nListen Deeply",
@@ -37,7 +40,7 @@ class _OnboardingTwoState extends State<OnboardingTwo> {
             
 
           
-          SizedBox(height: 50,),
+          SizedBox(height: isTablet ? 0: 50,),
           Image.asset("assets/images/splash_two.png"),
 
 
@@ -62,10 +65,10 @@ class _OnboardingTwoState extends State<OnboardingTwo> {
             ),
 
 
-            SizedBox(height: 20),
+            SizedBox(height:isTablet? 0: 20),
 
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding:  EdgeInsets.fromLTRB(isTablet? 400:20,20,isTablet? 400:20,isTablet?10:20),
               child: MyFloatingButton(
                 
                 onPressed: () {

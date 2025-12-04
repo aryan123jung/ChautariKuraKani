@@ -12,11 +12,13 @@ class OnboardingThree extends StatefulWidget {
 class _OnboardingThreeState extends State<OnboardingThree> {
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isTablet = screenWidth > 600;
     return Scaffold(
       backgroundColor: const Color(0xFF76C05D),
       body: SafeArea(child: Column(
         children: [
-          SizedBox(height: 10,),
+          SizedBox(height:isTablet? 0: 10,),
          
               Text(
                 "Connect \nAcross Borders",
@@ -37,10 +39,10 @@ class _OnboardingThreeState extends State<OnboardingThree> {
             
 
           
-          SizedBox(height: 30,),
+          SizedBox(height:isTablet? 10: 10,),
 
 
-          Image.asset("assets/images/splash_thre.png"),
+          Image.asset("assets/images/splash_thre.png",height:isTablet? 500: 480,),
 
 
           Padding(
@@ -64,10 +66,10 @@ class _OnboardingThreeState extends State<OnboardingThree> {
             ),
 
 
-            SizedBox(height: 20),
+            SizedBox(height: isTablet? 0:15),
 
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding:  EdgeInsets.fromLTRB(isTablet? 400:20,20,isTablet? 400:20,isTablet?0:20),
               child: MyFloatingButton(
                 
                 onPressed: () {

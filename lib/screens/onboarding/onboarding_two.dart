@@ -1,3 +1,5 @@
+import 'package:chautari_kurakani/screens/onboarding/onboarding_three.dart';
+import 'package:chautari_kurakani/widgets/my_floating_button.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingTwo extends StatefulWidget {
@@ -10,6 +12,71 @@ class OnboardingTwo extends StatefulWidget {
 class _OnboardingTwoState extends State<OnboardingTwo> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      backgroundColor: const Color(0xFF76C05D),
+      body: SafeArea(child: Column(
+        children: [
+              SizedBox(height: 30,),
+         
+              Text(
+                "Speak Freely,\nListen Deeply",
+                style: TextStyle(
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 9,
+                      offset: const Offset(2, 3),
+                    ),
+                  ],
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            
+
+          
+          SizedBox(height: 50,),
+          Image.asset("assets/images/splash_two.png"),
+
+
+          Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Text(
+                "Post thoughts, ask questions and engage in meaningful KuraKani. Find perspective you wont find it anywhere else.",
+                style: TextStyle(
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 9,
+                      offset: const Offset(2, 3),
+                    ),
+                  ],
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+
+            SizedBox(height: 10),
+
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: MyFloatingButton(
+                
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>OnboardingThree()));
+                }, 
+                text: "Next",
+                color: const Color.fromARGB(255, 229, 163, 32),
+              ),
+            ),
+        ],
+      )),
+    );
   }
 }

@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'package:chautari_kurakani/screens/onboarding/onboarding_one.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:chautari_kurakani/screens/login_screen.dart';
+// import 'package:chautari_kurakani/screens/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -32,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     Timer(const Duration(seconds: 4), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const OnboardingOne()),
       );
     });
   }

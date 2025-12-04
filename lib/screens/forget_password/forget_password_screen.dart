@@ -111,7 +111,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                               Text(
                                 "Recover your password",
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: isTablet? 25: 20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -125,13 +125,16 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
                               SizedBox(height: 30),
 
-                              Text("A code will be sent to your mail",style: TextStyle(fontSize: 17,fontWeight: FontWeight.w400),),
+                              Text("A code will be sent to your mail",style: TextStyle(fontSize: 17,fontWeight:isTablet? FontWeight.bold: FontWeight.w400),),
                              
                               SizedBox(height: 40),
 
-                              MyFloatingButton(
-                                  onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPasswordPinScreen()));}, 
-                                  text: "Next"),
+                              Padding(
+                                padding:  EdgeInsets.fromLTRB(isTablet?100:0,0,isTablet?100:0,0),
+                                child: MyFloatingButton(
+                                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPasswordPinScreen()));}, 
+                                    text: "Next",color: const Color.fromARGB(255, 229, 163, 32),),
+                              ),
 
                               SizedBox(height: 20),
                               

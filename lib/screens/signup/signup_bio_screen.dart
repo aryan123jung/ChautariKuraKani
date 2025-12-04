@@ -114,7 +114,7 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                             Text(
                               "Create your profile",
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize:isTablet? 25: 20,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -122,7 +122,7 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                             SizedBox(height: isTablet ? 15 : 15),
                     
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 10, 140, 0),
+                              padding:  EdgeInsets.fromLTRB(0, 10, isTablet? 450:140, 0),
                               child: Text(
                                 "Write some fun bio!",
                                 style: TextStyle(
@@ -135,25 +135,31 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                     
                             SizedBox(height: isTablet? 40:40,),
                     
-                            MyTextfield(controller: bioController, text: "Bio", errorText: ''),
+                            Padding(
+                              padding:  EdgeInsets.fromLTRB(isTablet? 40:0,0,isTablet? 40:0,0),
+                              child: MyTextfield(controller: bioController, text: "Bio", errorText: ''),
+                            ),
                     
                             
-                            SizedBox(height: isTablet ? 40 : 40),
+                            SizedBox(height: isTablet ? 50 : 40),
                     
                             
                     
-                            MyFloatingButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        HomeScreen(),
-                                  ),
-                                );
-                              },
-                              text: "Finish",
-                              color: const Color.fromARGB(255, 229, 163, 32),
+                            Padding(
+                              padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                              child: MyFloatingButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          HomeScreen(),
+                                    ),
+                                  );
+                                },
+                                text: "Finish",
+                                color: const Color.fromARGB(255, 229, 163, 32),
+                              ),
                             ),
                     
                             SizedBox(height: isTablet ? 30 : 30),

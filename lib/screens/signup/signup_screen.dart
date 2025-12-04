@@ -186,10 +186,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
                           SizedBox(height: 30),
 
-                          MyFloatingButton(
-                            onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>SignupProfilepictureScreen()));},
-                            text: "Next",
-                            color: const Color.fromARGB(255, 229, 163, 32),
+                          Padding(
+                            padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                            child: MyFloatingButton(
+                              onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>SignupProfilepictureScreen()));},
+                              text: "Next",
+                              color: const Color.fromARGB(255, 229, 163, 32),
+                            ),
                           ),
 
                           SizedBox(height: 20),

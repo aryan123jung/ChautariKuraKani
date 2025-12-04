@@ -113,7 +113,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                               Text(
                                 "Recover your password",
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize:isTablet? 25:  20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -121,17 +121,18 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                               SizedBox(height: 40),
 
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(0,0,60,0),
-                                child: Text("Enter the code sent to your mail.",style: TextStyle(fontSize: 16,fontWeight: FontWeight.w400),),
+                                padding:  EdgeInsets.fromLTRB(0,0,isTablet? 390: 60,0),
+                                child: Text("Enter the code sent to your mail.",style: TextStyle(fontSize:16,
+                                fontWeight:isTablet? FontWeight.bold:FontWeight.w400),),
                               ),
 
-                              SizedBox(height: 40),
+                              SizedBox(height:isTablet? 50: 40),
 
 
 
                               Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 30),
+                                     EdgeInsets.symmetric(horizontal:isTablet? 120:30),
                                 child: PinCodeTextField(
                                   length: 4,
                                   appContext: context,
@@ -147,7 +148,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   pinTheme: PinTheme(
                                     shape: PinCodeFieldShape.box,
                                     borderRadius: BorderRadius.circular(8),
-                                    fieldWidth: 50,
+                                    fieldWidth:isTablet? 60: 50,
 
                                     activeColor:
                                         Colors.grey, 
@@ -164,19 +165,24 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                 ),
                               ),
 
-                              SizedBox(height: 15,),
+                              SizedBox(height:isTablet? 5: 15,),
 
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(240,0,0,0),
-                                child: MyTextButton(onPressed: (){}, text: "Resend",textColor: const Color.fromARGB(255, 63, 124, 42) ,),
+                                padding:  EdgeInsets.fromLTRB(isTablet? 550:240,0,0,0),
+                                child: MyTextButton(onPressed: (){}, text: "Resend",textColor: const Color.fromARGB(255, 63, 124, 42) ,
+                                ),
                               ),
 
                               SizedBox(height: 20),
 
 
-                              MyFloatingButton(
-                                  onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPasswordNewPassword()));}, 
-                                  text: "Next"),
+                              Padding(
+                                padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet?100:0,0),
+                                child: MyFloatingButton(
+                                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPasswordNewPassword()));}, 
+                                    text: "Next",
+                                    color: const Color.fromARGB(255, 229, 163, 32),),
+                              ),
 
                               SizedBox(height: 20),
                             ],

@@ -135,10 +135,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           SizedBox(height: 30),
 
-                          MyFloatingButton(
-                            onPressed: () {},
-                            text: "Log in",
-                            color: const Color.fromARGB(255, 229, 163, 32),
+                          Padding(
+                            padding:  EdgeInsets.fromLTRB(isTablet? 100: 0,0,isTablet? 100:0,0),
+                            child: MyFloatingButton(
+                              onPressed: () {},
+                              text: "Log in",
+                              color: const Color.fromARGB(255, 229, 163, 32),
+                            ),
                           ),
 
                           SizedBox(height: 20),
@@ -151,18 +154,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           SizedBox(height: 20),
 
-                          MyOutlinedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SignupScreen(),
-                                ),
-                              );
-                            },
-                            text: "Create new account",
-                            borderColor: const Color(0xFF76C05D),
-                            textColor: const Color(0xFF717171),
+                          Padding(
+                            padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                            child: MyOutlinedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SignupScreen(),
+                                  ),
+                                );
+                              },
+                              text: "Create new account",
+                              borderColor: const Color(0xFF76C05D),
+                              textColor: const Color(0xFF717171),
+                            ),
                           ),
                         ],
                       ),

@@ -112,7 +112,7 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                               Text(
                                 "Recover your password",
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize:isTablet? 25: 20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -122,7 +122,7 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                               SizedBox(height: 35),
 
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(0,0,140,0),
+                                padding:  EdgeInsets.fromLTRB(0,0,isTablet?450: 140,0),
                                 child: Text("Enter your new password.",style: TextStyle(fontSize: 17,fontWeight: FontWeight.w400),),
                               ),
 
@@ -137,9 +137,13 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                              
                               SizedBox(height: 40),
 
-                              MyFloatingButton(
-                                  onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));}, 
-                                  text: "Confirm"),
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(isTablet?100:0,0,isTablet?100:0,0),
+                                child: MyFloatingButton(
+                                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));}, 
+                                    text: "Confirm",
+                                    color: const Color.fromARGB(255, 229, 163, 32),),
+                              ),
 
                               SizedBox(height: 20),
                             ],

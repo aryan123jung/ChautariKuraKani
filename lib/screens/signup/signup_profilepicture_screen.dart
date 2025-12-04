@@ -110,7 +110,7 @@ class _SignupProfilepictureScreenState
                               Text(
                                 "Create your profile",
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: isTablet? 25: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -119,7 +119,7 @@ class _SignupProfilepictureScreenState
 
                               Padding(
                                 padding:
-                                    const EdgeInsets.fromLTRB(0, 10, 140, 0),
+                                     EdgeInsets.fromLTRB(0, 10, isTablet? 450:140, 0),
                                 child: Text(
                                   "Your profile picture.",
                                   style: TextStyle(
@@ -131,7 +131,7 @@ class _SignupProfilepictureScreenState
                                 ),
                               ),
 
-                              SizedBox(height: isTablet ? 30 : 30),
+                              SizedBox(height: isTablet ? 10 : 30),
 
                               Container(
                                 height: isTablet ? 180 : 140,
@@ -169,19 +169,22 @@ class _SignupProfilepictureScreenState
 
                               SizedBox(height: 30),
 
-                              MyFloatingButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          SignupCoverpictureScreen(),
-                                    ),
-                                  );
-                                },
-                                text: "Next",
-                                color:
-                                    const Color.fromARGB(255, 229, 163, 32),
+                              Padding(
+                                padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                                child: MyFloatingButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SignupCoverpictureScreen(),
+                                      ),
+                                    );
+                                  },
+                                  text: "Next",
+                                  color:
+                                      const Color.fromARGB(255, 229, 163, 32),
+                                ),
                               ),
 
                               SizedBox(height: isTablet ? 30 : 30),

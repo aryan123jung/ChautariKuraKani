@@ -16,11 +16,7 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // SizedBox(
-            //   width: double.infinity,
-            //   child: FloatingActionButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => ChatbotScreen(),),);},
-            //   child: Text("Ai ChatBot", style: TextStyle(fontSize: 20),),)
-            // ),
+    
             Card(
   elevation: 4,
   shape: RoundedRectangleBorder(
@@ -33,7 +29,6 @@ class HomeScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         
-        // Top Row (Profile + Name)
         Row(
           children: [
             CircleAvatar(

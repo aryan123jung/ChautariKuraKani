@@ -1,6 +1,7 @@
 import 'package:chautari_kurakani/screens/forget_password/forget_password_pin_screen.dart';
 import 'package:chautari_kurakani/screens/login_screen.dart';
 import 'package:chautari_kurakani/widgets/my_floating_button.dart';
+import 'package:chautari_kurakani/widgets/my_text_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_field.dart';
 import 'package:flutter/material.dart';
 
@@ -111,72 +112,79 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                               Text(
                                 "Recover your password",
                                 style: TextStyle(
-                                  fontSize: isTablet? 25: 20,
+                                  fontSize: isTablet ? 25 : 20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
 
-                              
-
                               SizedBox(height: 40),
 
-
-                              MyTextfield(controller: emailController, text: "Enter your email", errorText: "Please enter your mail"),
+                              MyTextfield(
+                                controller: emailController,
+                                text: "Enter your email",
+                                errorText: "Please enter your mail",
+                              ),
 
                               SizedBox(height: 30),
 
-                              Text("A code will be sent to your mail",style: TextStyle(fontSize: 17,fontWeight:isTablet? FontWeight.bold: FontWeight.w400),),
-                             
+                              Text(
+                                "A code will be sent to your mail",
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: isTablet
+                                      ? FontWeight.bold
+                                      : FontWeight.w400,
+                                ),
+                              ),
+
                               SizedBox(height: 40),
 
                               Padding(
-                                padding:  EdgeInsets.fromLTRB(isTablet?100:0,0,isTablet?100:0,0),
+                                padding: EdgeInsets.fromLTRB(
+                                  isTablet ? 100 : 0,
+                                  0,
+                                  isTablet ? 100 : 0,
+                                  0,
+                                ),
                                 child: MyFloatingButton(
-                                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPasswordPinScreen()));}, 
-                                    text: "Next",color: const Color.fromARGB(255, 229, 163, 32),),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ForgetPasswordPinScreen(),
+                                      ),
+                                    );
+                                  },
+                                  text: "Next",
+                                  color: const Color.fromARGB(
+                                    255,
+                                    229,
+                                    163,
+                                    32,
+                                  ),
+                                ),
                               ),
 
-                              SizedBox(height: 20),
-                              
-                              // Row(
-                              //   children: [
-                              //     Text("Already have an account?",style: TextStyle(fontSize: 16),),
-                              //     MyTextButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));}, 
-                              //     text: "Login",fontSize: 17,),
-                              //   ],
-                              // )
-                             Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Already have an account?",
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 15,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LoginScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF000B38),
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
-                  ),
+                              SizedBox(height: isTablet ? 0 : 10),
 
+                              MyTextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LoginScreen(),
+                                    ),
+                                  );
+                                },
+                                text: "Already have an account??",
+                                textColor: const Color.fromARGB(
+                                  255,
+                                  63,
+                                  124,
+                                  42,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -196,10 +204,16 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                 //   shape: BoxShape.circle,
                 // ),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back,
-                      color: Colors.black, size: 26),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.black,
+                    size: 26,
+                  ),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
                   },
                 ),
               ),

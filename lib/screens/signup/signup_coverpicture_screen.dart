@@ -130,13 +130,14 @@ class _SignupCoverpictureScreenState extends State<SignupCoverpictureScreen> {
                             ),
                           ),
           
-                          SizedBox(height: isTablet ? 0 : 30),
+                          SizedBox(height: isTablet ? 20 : 30),
           
                           Container(
                             height: isTablet ? 180 : 140,
-                            width: isTablet ? 180 : 140,
+                            width: isTablet ? 340 : 300,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                              shape: BoxShape.rectangle,
+                              borderRadius: BorderRadius.circular(20),
                               color: const Color(0xFFE3E3E3),
                               boxShadow: [
                                 BoxShadow(
@@ -154,7 +155,7 @@ class _SignupCoverpictureScreenState extends State<SignupCoverpictureScreen> {
                             ),
                           ),
           
-                          SizedBox(height: isTablet ? 40 : 40),
+                          SizedBox(height: isTablet ? 20 : 40),
           
                           Text(
                             "Tap above to choose image",
@@ -164,7 +165,7 @@ class _SignupCoverpictureScreenState extends State<SignupCoverpictureScreen> {
                             ),
                           ),
           
-                          SizedBox(height: 30),
+                          SizedBox(height:isTablet? 20: 30),
           
                           Padding(
                             padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),

@@ -6,7 +6,7 @@ class AddPostScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(child: Center(
-      child: Text("Welcome to Profile Screen"),
+      child: Text("Welcome to Add Post Screen"),
     ),);
   }
 }

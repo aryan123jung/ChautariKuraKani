@@ -1,6 +1,6 @@
 import 'package:chautari_kurakani/screens/dashboard.dart';
 import 'package:chautari_kurakani/screens/forget_password/forget_password_screen.dart';
-import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen.dart';
+// import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_screen.dart';
 import 'package:chautari_kurakani/widgets/my_floating_button.dart';
 import 'package:chautari_kurakani/widgets/my_outline_button.dart';

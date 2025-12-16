@@ -5,14 +5,14 @@ import 'package:chautari_kurakani/screens/bottom_nav_screen/profile_screen.dart'
 import 'package:chautari_kurakani/screens/bottom_nav_screen/search_screen.dart';
 import 'package:flutter/material.dart';
 
-class BottomNavScreen extends StatefulWidget {
-  const BottomNavScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
 
   @override
-  State<BottomNavScreen> createState() => _BottomNavScreenState();
+  State<DashboardScreen> createState() => _BottomNavScreenState();
 }
 
-class _BottomNavScreenState extends State<BottomNavScreen> {
+class _BottomNavScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
   List<Widget>lstBottomScreen = [
@@ -25,12 +25,6 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text("Dashboard",),
-      //   // title: Text("Dashboard",style: TextStyle(fontFamily: 'OpenSans Italic'),),
-      //   centerTitle: true,
-      //   backgroundColor: Colors.blueGrey,
-      // ),
       body: SafeArea(child: lstBottomScreen[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -41,9 +35,10 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.message),label: 'Message'),
           BottomNavigationBarItem(icon: Icon(Icons.person),label: 'Profile'),
         ],
-        backgroundColor: Colors.orange,
+        // backgroundColor: Colors.orange,
+        // backgroundColor: Color(0XFF76C05D),
         selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.white,
+        unselectedItemColor: const Color.fromARGB(255, 224, 224, 224),
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {

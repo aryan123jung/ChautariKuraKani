@@ -1,5 +1,6 @@
+import 'package:chautari_kurakani/screens/dashboard.dart';
 import 'package:chautari_kurakani/screens/forget_password/forget_password_screen.dart';
-import 'package:chautari_kurakani/screens/home_screen.dart';
+import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_screen.dart';
 import 'package:chautari_kurakani/widgets/my_floating_button.dart';
 import 'package:chautari_kurakani/widgets/my_outline_button.dart';
@@ -140,7 +141,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding:  EdgeInsets.fromLTRB(isTablet? 100: 0,0,isTablet? 100:0,0),
                             child: MyFloatingButton(
                               onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=>HomeScreen()));
+                                // Navigator.push(context, MaterialPageRoute(builder: (context)=>HomeScreen()));
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavScreen()));
                               },
                               text: "Log in",
                               color: const Color.fromARGB(255, 229, 163, 32),

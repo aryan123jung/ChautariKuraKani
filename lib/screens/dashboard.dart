@@ -25,13 +25,13 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Dashboard",),
-        // title: Text("Dashboard",style: TextStyle(fontFamily: 'OpenSans Italic'),),
-        centerTitle: true,
-        backgroundColor: Colors.blueGrey,
-      ),
-      body: lstBottomScreen[_selectedIndex],
+      // appBar: AppBar(
+      //   title: Text("Dashboard",),
+      //   // title: Text("Dashboard",style: TextStyle(fontFamily: 'OpenSans Italic'),),
+      //   centerTitle: true,
+      //   backgroundColor: Colors.blueGrey,
+      // ),
+      body: SafeArea(child: lstBottomScreen[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const [

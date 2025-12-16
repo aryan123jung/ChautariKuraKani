@@ -72,6 +72,7 @@ class _SignupCoverpictureScreenState extends State<SignupCoverpictureScreen> {
                 "Chautarimah Sabai Kura",
                 style: TextStyle(
                   color: Colors.white,
+                  fontWeight: FontWeight.w600,
                   fontSize: isTablet ? 28 : 20,
                 ),
               ),

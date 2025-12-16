@@ -95,7 +95,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(child: Center(
-      child: Text("Welcome to Home Screen"),
+      child: Text("Welcome to Home Screen",style: TextStyle(fontFamily: 'OpenSans Italic'),),
     ),);
   }
 }

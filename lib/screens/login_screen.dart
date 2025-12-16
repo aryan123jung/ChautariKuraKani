@@ -62,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   fontSize: isTablet ? 50 : 40,
                   fontWeight: FontWeight.bold,
+                  // fontFamily: 'OpenSans Bold',
                   shadows: [
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.2),
@@ -78,6 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 "Chautarimah Sabai Kura",
                 style: TextStyle(
                   color: Colors.white,
+                  fontWeight: FontWeight.w600,
                   fontSize: isTablet ? 28 : 20,
                 ),
               ),

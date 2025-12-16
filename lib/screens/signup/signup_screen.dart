@@ -81,6 +81,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isTablet ? 28 : 20,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
 

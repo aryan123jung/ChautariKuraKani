@@ -75,6 +75,7 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isTablet ? 28 : 20,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
 

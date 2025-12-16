@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen.dart';
+import 'package:chautari_kurakani/screens/dashboard_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_coverpicture_screen.dart';
 import 'package:chautari_kurakani/widgets/my_floating_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_field.dart';
@@ -75,6 +75,7 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                   "Chautarimah Sabai Kura",
                   style: TextStyle(
                     color: Colors.white,
+                    fontWeight: FontWeight.w600,
                     fontSize: isTablet ? 28 : 20,
                   ),
                 ),
@@ -153,7 +154,7 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          HomeScreen(),
+                                          DashboardScreen(),
                                     ),
                                   );
                                 },

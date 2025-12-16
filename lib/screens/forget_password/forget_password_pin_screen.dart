@@ -76,6 +76,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isTablet ? 28 : 20,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
 

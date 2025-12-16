@@ -35,8 +35,6 @@ class _BottomNavScreenState extends State<DashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.message),label: 'Message'),
           BottomNavigationBarItem(icon: Icon(Icons.person),label: 'Profile'),
         ],
-        // backgroundColor: Colors.orange,
-        // backgroundColor: Color(0XFF76C05D),
         selectedItemColor: Colors.black,
         unselectedItemColor: const Color.fromARGB(255, 224, 224, 224),
         currentIndex: _selectedIndex,

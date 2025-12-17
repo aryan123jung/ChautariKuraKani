@@ -1,6 +1,6 @@
 import 'package:chautari_kurakani/screens/dashboard_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_coverpicture_screen.dart';
-import 'package:chautari_kurakani/widgets/my_floating_button.dart';
+import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_field.dart';
 import 'package:flutter/material.dart';
 

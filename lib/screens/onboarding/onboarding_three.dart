@@ -1,5 +1,5 @@
 import 'package:chautari_kurakani/screens/login_screen.dart';
-import 'package:chautari_kurakani/widgets/my_floating_button.dart';
+import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingThree extends StatefulWidget {

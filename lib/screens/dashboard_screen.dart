@@ -5,6 +5,8 @@ import 'package:chautari_kurakani/screens/bottom_nav_screen/profile_screen.dart'
 import 'package:chautari_kurakani/screens/bottom_nav_screen/search_screen.dart';
 import 'package:flutter/material.dart';
 
+
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -15,12 +17,12 @@ class DashboardScreen extends StatefulWidget {
 class _BottomNavScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
-  List<Widget>lstBottomScreen = [
+  List<Widget> lstBottomScreen = [
     const HomeScreen(),
     const SearchScreen(),
     const AddPostScreen(),
     const MessageScreen(),
-    const ProfileScreen()
+    const ProfileScreen(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -29,20 +31,27 @@ class _BottomNavScreenState extends State<DashboardScreen> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home),label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search),label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.add),label: 'Add'),
-          BottomNavigationBarItem(icon: Icon(Icons.message),label: 'Message'),
-          BottomNavigationBarItem(icon: Icon(Icons.person),label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Message'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        
+
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
             _selectedIndex = index;
           });
         },
-        ),
-    );
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        onPressed: () {},
+        child: const Icon(Icons.smart_toy_outlined, size: 30,color: Colors.white),),
+      );
+
+    
   }
 }

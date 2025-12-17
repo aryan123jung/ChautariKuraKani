@@ -1,6 +1,7 @@
 import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen/chautari_screen.dart';
 import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen/feed_screen.dart';
 import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen/friend_feed_screen.dart';
+import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen/notification_screen.dart';
 import 'package:flutter/material.dart';
 
 
@@ -59,7 +60,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>NotificationScreen()));},
                       icon: const Icon(Icons.notifications_none),
                       iconSize: 33,
                     ),

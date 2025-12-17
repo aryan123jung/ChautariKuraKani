@@ -1,5 +1,5 @@
 import 'package:chautari_kurakani/screens/bottom_nav_screen/add_post_screen.dart';
-import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen.dart';
+import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen/home_screen.dart';
 import 'package:chautari_kurakani/screens/bottom_nav_screen/message_screen.dart';
 import 'package:chautari_kurakani/screens/bottom_nav_screen/profile_screen.dart';
 import 'package:chautari_kurakani/screens/bottom_nav_screen/search_screen.dart';

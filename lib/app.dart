@@ -1,7 +1,6 @@
-// import 'package:chautari_kurakani/screens/onboarding/onboarding_one.dart';
+import 'package:flutter/material.dart';
 import 'package:chautari_kurakani/screens/splash_screen.dart';
 import 'package:chautari_kurakani/theme/theme_data.dart';
-import 'package:flutter/material.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -13,7 +12,6 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
       theme: getApplicationTheme(),
-      // home: OnboardingOne(),
     );
   }
 }

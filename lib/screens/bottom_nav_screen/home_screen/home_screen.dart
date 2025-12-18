@@ -10,28 +10,31 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isTablet = screenWidth > 600;
     return Padding(
-      padding: const EdgeInsets.all(15.0),
+      padding:  EdgeInsets.fromLTRB(15,isTablet? 0: 15,15,15),
       child: DefaultTabController(
         length: 3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+
+            Center(
               child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
                     "assets/images/green_half_logo.png",
-                    height: 80,
+                    height: isTablet ? 100 : 80,
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     "ChautariKuraKani",
                     style: TextStyle(
                       fontFamily: "OpenSans Bold",
-                      fontSize: 30,
+                      fontSize: isTablet ? 45 : 30,
                     ),
                   ),
                 ],
@@ -39,9 +42,9 @@ class HomeScreen extends StatelessWidget {
             ),
 
             Container(
-              padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+              padding:  EdgeInsets.fromLTRB(0,isTablet? 0: 10, 0, 0),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
+                padding:  EdgeInsets.symmetric(horizontal:isTablet ? 60: 5),
                 child: Row(
                   children: [
                     const Expanded(
@@ -69,7 +72,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: 10,),
+            SizedBox(height:isTablet? 10: 10,),
 
             Expanded(
               child: TabBarView(

@@ -1,189 +1,109 @@
+import 'package:chautari_kurakani/services/ai_services.dart';
 import 'package:flutter/material.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  final VoidCallback onClose;
-
-  const ChatbotScreen({super.key, required this.onClose});
+  const ChatbotScreen({super.key});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-  final TextEditingController chatController = TextEditingController();
+  final AiService aiService = AiService();
+  final TextEditingController controller = TextEditingController();
+
+  List<Map<String, String>> messages = [];
+  bool isLoading = false;
+
+  void sendMessage() async {
+    String userInput = controller.text.trim();
+    if (userInput.isEmpty) return;
+
+    setState(() {
+      messages.add({"role": "user", "text": userInput});
+      isLoading = true;
+    });
+
+    controller.clear();
+
+    String aiReply = await aiService.sendMessage(userInput);
+
+    setState(() {
+      messages.add({"role": "ai", "text": aiReply});
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomRight,
-      child: Container(
-        height: 600,
-        width: double.infinity,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                Center(
-                  child: Text(
-                    "Chat Bot",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontFamily: "OpenSans Bold",
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("AI Assistant"),
+        centerTitle: true,
+        backgroundColor: Colors.green,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final msg = messages[index];
+                bool isUser = msg["role"] == "user";
+
+                return Align(
+                  alignment:
+                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.green : const Color.fromARGB(255, 174, 187, 158),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      msg["text"]!,
+                      style: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: -7,
-                  right: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: widget.onClose,
-                  ),
-                ),
-              ],
+                );
+              },
             ),
+          ),
 
-            SizedBox(height: 10),
-            const Divider(),
-
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: const Center(
-                  child: Text("Chat messages"),
-                ),
-              ),
-            ),
-
-            Row(
+          Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: chatController,
+                    controller: controller,
                     decoration: const InputDecoration(
-                      hintText: "Ask questions freely...",
+                      hintText: "Type your message...",
                       border: OutlineInputBorder(),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 6),
                 IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () {},
+                  icon: const Icon(Icons.send, size: 28),
+                  onPressed: sendMessage,
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
     );
   }
 }
-
-// import 'package:chautari_kurakani/services/chatbot_model.dart';
-// import 'package:flutter/material.dart';
-
-// class ChatbotScreen extends StatefulWidget {
-//   final VoidCallback onClose;
-
-//   const ChatbotScreen({super.key, required this.onClose});
-
-//   @override
-//   State<ChatbotScreen> createState() => _ChatbotScreenState();
-// }
-
-// class _ChatbotScreenState extends State<ChatbotScreen> {
-//   final AiService aiService = AiService();
-//   final TextEditingController controller = TextEditingController();
-
-//   List<Map<String, String>> messages = [];
-//   bool isLoading = false;
-
-//   void sendMessage() async {
-//     String userInput = controller.text.trim();
-//     if(userInput.isEmpty) return;
-
-//     setState(() {
-//       messages.add({"role": "user", "text": userInput});
-//       isLoading = true;
-//     });
-
-//     controller.clear();
-
-//     String aiReply = await aiService.sendMessage(userInput);
-
-//     setState(() {
-//       messages.add({"role": "ai", "text": aiReply});
-//       isLoading = false;
-//     });
-//   }
-//   @override
-//   Widget build(BuildContext context) {
-//     return Align(
-//       alignment: Alignment.bottomRight,
-//       child: Container(
-//         height: 600,
-//         width: double.infinity,
-//         margin: const EdgeInsets.all(16),
-//         padding: const EdgeInsets.all(12),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(16),
-//           boxShadow: [
-//             BoxShadow(
-//               color: Colors.black26,
-//               blurRadius: 8,
-//               offset: Offset(0, 4),
-//             ),
-//           ],
-//         ),
-//         child: Column(
-//           children: [
-//             Stack(
-//                 children: [
-//                   Center(
-//                     child: Text(
-//                       "Chat Bot",
-//                       style: const TextStyle(
-//                         fontSize: 20,
-//                         fontFamily: "OpenSans Bold",
-//                       ),
-//                     ),
-//                   ),
-//                   Positioned(
-//                     top: 0,
-//                     right: 0,
-//                     child: IconButton(
-//                       icon: const Icon(Icons.close),
-//                       onPressed: widget.onClose,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-
-//             SizedBox(height: 10,),
-//             const Divider(),
-
-//             const Expanded(
-//               child: Center(
-//                 child: Text("Chatbot content goes here"),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }

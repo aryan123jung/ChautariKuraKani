@@ -1,6 +1,5 @@
 import 'package:chautari_kurakani/screens/dashboard_screen.dart';
 import 'package:chautari_kurakani/screens/forget_password/forget_password_screen.dart';
-// import 'package:chautari_kurakani/screens/bottom_nav_screen/home_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_screen.dart';
 import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/widgets/my_outline_button.dart';
@@ -34,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               SizedBox(height: isTablet ? 10 : 40),
 
-              /// Logo
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -56,7 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               SizedBox(height: isTablet ? 0 : 20),
 
-              /// Title
               Text(
                 "ChautariKuraKani",
                 style: TextStyle(
@@ -86,7 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               SizedBox(height: isTablet ? 30 : 40),
 
-              /// Form Container
               Padding(
                 padding: EdgeInsets.symmetric(
                     horizontal: isTablet ? screenWidth * 0.2 : 13),
@@ -143,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding:  EdgeInsets.fromLTRB(isTablet? 100: 0,0,isTablet? 100:0,0),
                             child: MyFloatingButton(
                               onPressed: () {
-                                // Navigator.push(context, MaterialPageRoute(builder: (context)=>HomeScreen()));
                                 Navigator.push(context, MaterialPageRoute(builder: (context)=>DashboardScreen()));
                               },
                               text: "Log in",

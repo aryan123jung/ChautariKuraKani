@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/models/chautari-model.dart';
+import 'package:chautari_kurakani/models/chautari_model.dart';
 import 'package:flutter/material.dart';
 
 

@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/screens/login_screen.dart';
+import 'package:chautari_kurakani/features/login/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/screens/signup/signup_profilepicture_screen.dart';
 import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_button.dart';
@@ -33,7 +33,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: isTablet ? 10 : 40),
+              SizedBox(height: isTablet ? 40 : 40),
 
               // Image.asset('assets/images/white_half_logo.png',height: 100,width: 100,),
               Container(
@@ -51,18 +51,18 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 child: Image.asset(
                   'assets/images/white_half_logo.png',
-                  height: isTablet ? 110 : 100,
-                  width: isTablet ? 110 : 100,
+                  height: isTablet ? 200 : 100,
+                  width: isTablet ? 200 : 100,
                   // width: 100,
                 ),
               ),
 
-              SizedBox(height: isTablet ? 0 : 20),
+              SizedBox(height: isTablet ? 30 : 20),
 
               Text(
                 "ChautariKuraKani",
                 style: TextStyle(
-                  fontSize: isTablet ? 50 : 40,
+                  fontSize: isTablet ? 70 : 40,
                   fontWeight: FontWeight.bold,
                   shadows: [
                     Shadow(
@@ -85,7 +85,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
 
-              SizedBox(height: isTablet ? 30 : 40),
+              SizedBox(height: isTablet ? 90 : 40),
 
               Padding(
                 // padding: const EdgeInsets.all(13.0),
@@ -188,9 +188,22 @@ class _SignupScreenState extends State<SignupScreen> {
                           SizedBox(height: 30),
 
                           Padding(
-                            padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                            padding: EdgeInsets.fromLTRB(
+                              isTablet ? 100 : 0,
+                              0,
+                              isTablet ? 100 : 0,
+                              0,
+                            ),
                             child: MyFloatingButton(
-                              onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>SignupProfilepictureScreen()));},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        SignupProfilepictureScreen(),
+                                  ),
+                                );
+                              },
                               text: "Next",
                               color: const Color.fromARGB(255, 229, 163, 32),
                             ),

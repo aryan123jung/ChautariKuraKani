@@ -16,7 +16,6 @@ class ForgetPasswordPinScreen extends StatefulWidget {
 class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
   final _forgetPinKey = GlobalKey<FormState>();
 
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -31,7 +30,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
             SingleChildScrollView(
               child: Column(
                 children: [
-                  SizedBox(height: isTablet ? 10 : 40),
+                  SizedBox(height: isTablet ? 40 : 40),
 
                   Container(
                     decoration: BoxDecoration(
@@ -47,17 +46,17 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                     ),
                     child: Image.asset(
                       'assets/images/white_half_logo.png',
-                      height: isTablet ? 110 : 100,
-                      width: isTablet ? 110 : 100,
+                      height: isTablet ? 200 : 100,
+                      width: isTablet ? 200 : 100,
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 0 : 20),
+                  SizedBox(height: isTablet ? 30 : 20),
 
                   Text(
                     "ChautariKuraKani",
                     style: TextStyle(
-                      fontSize: isTablet ? 50 : 40,
+                      fontSize: isTablet ? 70 : 40,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -80,7 +79,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 30 : 60),
+                  SizedBox(height: isTablet ? 100 : 60),
 
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -114,75 +113,121 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                               Text(
                                 "Recover your password",
                                 style: TextStyle(
-                                  fontSize:isTablet? 25:  20,
+                                  fontSize: isTablet ? 25 : 20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
 
-                              SizedBox(height: 40),
+                              SizedBox(height: isTablet ? 55 : 40),
 
                               Padding(
-                                padding:  EdgeInsets.fromLTRB(0,0,isTablet? 390: 60,0),
-                                child: Text("Enter the code sent to your mail.",style: TextStyle(fontSize:16,
-                                fontWeight:isTablet? FontWeight.bold:FontWeight.w400),),
+                                padding: EdgeInsets.fromLTRB(
+                                  0,
+                                  0,
+                                  isTablet ? 200 : 60,
+                                  0,
+                                ),
+                                child: Text(
+                                  "Enter the code sent to your mail.",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: isTablet
+                                        ? FontWeight.bold
+                                        : FontWeight.w400,
+                                  ),
+                                ),
                               ),
 
-                              SizedBox(height:isTablet? 50: 40),
-
-
+                              SizedBox(height: isTablet ? 50 : 40),
 
                               Padding(
-                                padding:
-                                     EdgeInsets.symmetric(horizontal:isTablet? 120:30),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 120 : 30,
+                                ),
                                 child: PinCodeTextField(
                                   length: 4,
                                   appContext: context,
                                   cursorHeight: 20,
                                   enableActiveFill: true,
                                   textStyle: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly
+                                    FilteringTextInputFormatter.digitsOnly,
                                   ],
 
                                   pinTheme: PinTheme(
                                     shape: PinCodeFieldShape.box,
                                     borderRadius: BorderRadius.circular(8),
-                                    fieldWidth:isTablet? 60: 50,
+                                    fieldWidth: isTablet ? 60 : 50,
 
-                                    activeColor:
-                                        Colors.grey, 
+                                    activeColor: Colors.grey,
                                     inactiveColor: Colors.grey,
                                     selectedColor: Colors.grey,
 
                                     activeFillColor: Colors.white,
                                     inactiveFillColor: Colors.white,
                                     selectedFillColor: const Color.fromARGB(
-                                        255, 201, 209, 212),
+                                      255,
+                                      201,
+                                      209,
+                                      212,
+                                    ),
                                   ),
 
                                   onChanged: (value) {},
                                 ),
                               ),
 
-                              SizedBox(height:isTablet? 5: 15,),
+                              SizedBox(height: isTablet ? 5 : 15),
 
                               Padding(
-                                padding:  EdgeInsets.fromLTRB(isTablet? 550:240,0,0,0),
-                                child: MyTextButton(onPressed: (){}, text: "Resend",textColor: const Color.fromARGB(255, 63, 124, 42) ,
+                                padding: EdgeInsets.fromLTRB(
+                                  isTablet ? 400 : 240,
+                                  0,
+                                  0,
+                                  0,
+                                ),
+                                child: MyTextButton(
+                                  onPressed: () {},
+                                  text: "Resend",
+                                  textColor: const Color.fromARGB(
+                                    255,
+                                    63,
+                                    124,
+                                    42,
+                                  ),
                                 ),
                               ),
 
                               SizedBox(height: 20),
 
-
                               Padding(
-                                padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet?100:0,0),
+                                padding: EdgeInsets.fromLTRB(
+                                  isTablet ? 100 : 0,
+                                  0,
+                                  isTablet ? 100 : 0,
+                                  0,
+                                ),
                                 child: MyFloatingButton(
-                                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPasswordNewPassword()));}, 
-                                    text: "Next",
-                                    color: const Color.fromARGB(255, 229, 163, 32),),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ForgetPasswordNewPassword(),
+                                      ),
+                                    );
+                                  },
+                                  text: "Next",
+                                  color: const Color.fromARGB(
+                                    255,
+                                    229,
+                                    163,
+                                    32,
+                                  ),
+                                ),
                               ),
 
                               SizedBox(height: 20),
@@ -201,10 +246,18 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
               left: 10,
               child: Container(
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back,
-                      color: Colors.black, size: 26),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.black,
+                    size: 26,
+                  ),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ForgetPasswordScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ForgetPasswordScreen(),
+                      ),
+                    );
                   },
                 ),
               ),

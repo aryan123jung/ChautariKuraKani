@@ -13,73 +13,176 @@ class _OnboardingTwoState extends State<OnboardingTwo> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    Orientation orientation = MediaQuery.of(context).orientation;
+
     bool isTablet = screenWidth > 600;
+
+    double titleFont = isTablet ? 42 : 36;
+    double descFont = isTablet ? 22 : 20;
+    double imageWidth = isTablet && orientation == Orientation.landscape
+        ? screenWidth * 0.4
+        : screenWidth * 0.8;
+
     return Scaffold(
       backgroundColor: const Color(0xFF76C05D),
-      body: SafeArea(child: Column(
+      body: SafeArea(
+        child: isTablet && orientation == Orientation.landscape
+            ? _tabletLandscapeLayout(context, titleFont, descFont, imageWidth)
+            : _defaultLayout(
+                context,
+                titleFont,
+                descFont,
+                imageWidth,
+                isTablet,
+              ),
+      ),
+    );
+  }
+
+  // 📱 Phone + Tablet Portrait (unchanged phone behavior)
+  Widget _defaultLayout(
+    BuildContext context,
+    double titleFont,
+    double descFont,
+    double imageWidth,
+    bool isTablet,
+  ) {
+    return Column(
+      children: [
+        SizedBox(height: isTablet ? 50 : 35),
+
+        Text(
+          "Speak Freely,\nListen Deeply",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: titleFont,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 9,
+                offset: const Offset(2, 3),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: isTablet ? 30 : 50),
+
+        Image.asset("assets/images/splash_two.png", width: imageWidth),
+
+        Padding(
+          padding: EdgeInsets.fromLTRB(15, isTablet ? 0 : 30, 15, 15),
+          child: Text(
+            "Post thoughts, ask questions and engage in meaningful KuraKani. Find perspective you wont find it anywhere else.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: descFont,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 9,
+                  offset: const Offset(2, 3),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 40),
+
+        SizedBox(
+          width: isTablet ? 320 : double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: MyFloatingButton(
+              text: "Next",
+              color: const Color.fromARGB(255, 229, 163, 32),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OnboardingThree()),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 📱 Tablet Landscape Layout
+  Widget _tabletLandscapeLayout(
+    BuildContext context,
+    double titleFont,
+    double descFont,
+    double imageWidth,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Row(
         children: [
-              // SizedBox(height: 30,),
-              SizedBox(height:isTablet ? 0: 30,),
-         
-              Text(
-                "Speak Freely,\nListen Deeply",
-                style: TextStyle(
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 9,
-                      offset: const Offset(2, 3),
-                    ),
-                  ],
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Speak Freely,\nListen Deeply",
+                  style: TextStyle(
+                    fontSize: titleFont,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 9,
+                        offset: const Offset(2, 3),
+                      ),
+                    ],
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            
 
-          
-          SizedBox(height: isTablet ? 0: 50,),
-          Image.asset("assets/images/splash_two.png"),
+                const SizedBox(height: 20),
 
-
-          Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Text(
-                "Post thoughts, ask questions and engage in meaningful KuraKani. Find perspective you wont find it anywhere else.",
-                style: TextStyle(
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 9,
-                      offset: const Offset(2, 3),
-                    ),
-                  ],
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
+                Text(
+                  "Post thoughts, ask questions and engage in meaningful KuraKani. Find perspective you wont find it anywhere else.",
+                  style: TextStyle(
+                    fontSize: descFont,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
+
+                const SizedBox(height: 30),
+
+                SizedBox(
+                  width: 260,
+                  child: MyFloatingButton(
+                    text: "Next",
+                    color: const Color.fromARGB(255, 229, 163, 32),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OnboardingThree(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
+          ),
 
+          const SizedBox(width: 40),
 
-            SizedBox(height:isTablet? 0: 20),
-
-            Padding(
-              padding:  EdgeInsets.fromLTRB(isTablet? 400:20,20,isTablet? 400:20,isTablet?10:20),
-              child: MyFloatingButton(
-                
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>OnboardingThree()));
-                }, 
-                text: "Next",
-                color: const Color.fromARGB(255, 229, 163, 32),
-              ),
-            ),
+          Image.asset("assets/images/splash_two.png", width: imageWidth),
         ],
-      )),
+      ),
     );
   }
 }

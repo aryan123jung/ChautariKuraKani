@@ -1,5 +1,5 @@
 import 'package:chautari_kurakani/screens/forget_password/forget_password_pin_screen.dart';
-import 'package:chautari_kurakani/screens/login_screen.dart';
+import 'package:chautari_kurakani/features/login/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_field.dart';
@@ -30,7 +30,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
             SingleChildScrollView(
               child: Column(
                 children: [
-                  SizedBox(height: isTablet ? 10 : 40),
+                  SizedBox(height: isTablet ? 40 : 40),
 
                   Container(
                     decoration: BoxDecoration(
@@ -46,17 +46,17 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                     ),
                     child: Image.asset(
                       'assets/images/white_half_logo.png',
-                      height: isTablet ? 110 : 100,
-                      width: isTablet ? 110 : 100,
+                      height: isTablet ? 200 : 100,
+                      width: isTablet ? 200 : 100,
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 0 : 20),
+                  SizedBox(height: isTablet ? 30 : 20),
 
                   Text(
                     "ChautariKuraKani",
                     style: TextStyle(
-                      fontSize: isTablet ? 50 : 40,
+                      fontSize: isTablet ? 70 : 40,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -79,7 +79,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 30 : 60),
+                  SizedBox(height: isTablet ? 100 : 60),
 
                   Padding(
                     padding: EdgeInsets.symmetric(

@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: isTablet ? 10 : 40),
+              SizedBox(height: isTablet ? 40 : 40),
 
               Container(
                 decoration: BoxDecoration(
@@ -47,17 +47,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Image.asset(
                   'assets/images/white_half_logo.png',
-                  height: isTablet ? 110 : 100,
-                  width: isTablet ? 110 : 100,
+                  height: isTablet ? 200 : 100,
+                  width: isTablet ? 200 : 100,
                 ),
               ),
 
-              SizedBox(height: isTablet ? 0 : 20),
+              SizedBox(height: isTablet ? 30 : 20),
 
               Text(
                 "ChautariKuraKani",
                 style: TextStyle(
-                  fontSize: isTablet ? 50 : 40,
+                  fontSize: isTablet ? 70 : 40,
                   fontWeight: FontWeight.bold,
                   // fontFamily: 'OpenSans Bold',
                   shadows: [
@@ -81,35 +81,43 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              SizedBox(height: isTablet ? 30 : 40),
+              SizedBox(height: isTablet ? 100 : 40),
 
               Padding(
                 padding: EdgeInsets.symmetric(
-                    horizontal: isTablet ? screenWidth * 0.2 : 13),
+                  horizontal: isTablet ? screenWidth * 0.2 : 13,
+                ),
                 child: Container(
                   width: isTablet ? screenWidth * 0.6 : double.infinity,
                   decoration: BoxDecoration(
-                      color: const Color(0xFFE3E3E3),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 2),
-                        )
-                      ]),
+                    color: const Color(0xFFE3E3E3),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: Form(
                     key: _loginForm,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                          isTablet ? 45 : 15, 20, isTablet ? 45 : 15, 30),
+                        isTablet ? 45 : 15,
+                        20,
+                        isTablet ? 45 : 15,
+                        30,
+                      ),
                       child: Column(
                         children: [
                           Text(
                             "Login",
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w500),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
 
                           SizedBox(height: 20),
@@ -136,10 +144,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 30),
 
                           Padding(
-                            padding:  EdgeInsets.fromLTRB(isTablet? 100: 0,0,isTablet? 100:0,0),
+                            padding: EdgeInsets.fromLTRB(
+                              isTablet ? 100 : 0,
+                              0,
+                              isTablet ? 100 : 0,
+                              0,
+                            ),
                             child: MyFloatingButton(
                               onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=>DashboardScreen()));
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DashboardScreen(),
+                                  ),
+                                );
                               },
                               text: "Log in",
                               color: const Color.fromARGB(255, 229, 163, 32),
@@ -149,7 +167,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 20),
 
                           MyTextButton(
-                            onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> ForgetPasswordScreen()));},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ForgetPasswordScreen(),
+                                ),
+                              );
+                            },
                             text: "Forgot Password?",
                             textColor: const Color.fromARGB(255, 63, 124, 42),
                           ),
@@ -157,7 +182,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 20),
 
                           Padding(
-                            padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                            padding: EdgeInsets.fromLTRB(
+                              isTablet ? 100 : 0,
+                              0,
+                              isTablet ? 100 : 0,
+                              0,
+                            ),
                             child: MyOutlinedButton(
                               onPressed: () {
                                 Navigator.push(

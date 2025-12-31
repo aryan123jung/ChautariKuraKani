@@ -28,7 +28,7 @@ class _SignupProfilepictureScreenState
             SingleChildScrollView(
               child: Column(
                 children: [
-                  SizedBox(height: isTablet ? 10 : 40),
+                  SizedBox(height: isTablet ? 40 : 40),
 
                   Container(
                     decoration: BoxDecoration(
@@ -44,17 +44,17 @@ class _SignupProfilepictureScreenState
                     ),
                     child: Image.asset(
                       'assets/images/white_half_logo.png',
-                      height: isTablet ? 110 : 100,
-                      width: isTablet ? 110 : 100,
+                      height: isTablet ? 200 : 100,
+                      width: isTablet ? 200 : 100,
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 0 : 20),
+                  SizedBox(height: isTablet ? 30 : 20),
 
                   Text(
                     "ChautariKuraKani",
                     style: TextStyle(
-                      fontSize: isTablet ? 50 : 40,
+                      fontSize: isTablet ? 70 : 40,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -77,7 +77,7 @@ class _SignupProfilepictureScreenState
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 30 : 40),
+                  SizedBox(height: isTablet ? 90 : 40),
 
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -111,28 +111,36 @@ class _SignupProfilepictureScreenState
                               Text(
                                 "Create your profile",
                                 style: TextStyle(
-                                  fontSize: isTablet? 25: 20,
+                                  fontSize: isTablet ? 25 : 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
 
-                              SizedBox(height: isTablet ? 15 : 15),
+                              SizedBox(height: isTablet ? 40 : 15),
 
                               Padding(
-                                padding:
-                                     EdgeInsets.fromLTRB(0, 10, isTablet? 450:140, 0),
+                                padding: EdgeInsets.fromLTRB(
+                                  0,
+                                  10,
+                                  isTablet ? 300 : 140,
+                                  0,
+                                ),
                                 child: Text(
                                   "Your profile picture.",
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w400,
-                                    color:
-                                        const Color.fromARGB(255, 69, 65, 54),
+                                    color: const Color.fromARGB(
+                                      255,
+                                      69,
+                                      65,
+                                      54,
+                                    ),
                                   ),
                                 ),
                               ),
 
-                              SizedBox(height: isTablet ? 10 : 30),
+                              SizedBox(height: isTablet ? 50 : 30),
 
                               Container(
                                 height: isTablet ? 180 : 140,
@@ -142,8 +150,9 @@ class _SignupProfilepictureScreenState
                                   color: const Color(0xFFE3E3E3),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.25),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.25,
+                                      ),
                                       blurRadius: 12,
                                       spreadRadius: 1,
                                       offset: Offset(0, 3),
@@ -153,12 +162,16 @@ class _SignupProfilepictureScreenState
                                 child: Icon(
                                   Icons.camera_alt,
                                   size: isTablet ? 60 : 50,
-                                  color:
-                                      const Color.fromARGB(255, 120, 120, 120),
+                                  color: const Color.fromARGB(
+                                    255,
+                                    120,
+                                    120,
+                                    120,
+                                  ),
                                 ),
                               ),
 
-                              SizedBox(height: isTablet ? 40 : 40),
+                              SizedBox(height: isTablet ? 60 : 40),
 
                               Text(
                                 "Tap above to choose image",
@@ -168,10 +181,15 @@ class _SignupProfilepictureScreenState
                                 ),
                               ),
 
-                              SizedBox(height: 30),
+                              SizedBox(height: isTablet ? 50 : 30),
 
                               Padding(
-                                padding:  EdgeInsets.fromLTRB(isTablet? 100:0,0,isTablet? 100:0,0),
+                                padding: EdgeInsets.fromLTRB(
+                                  isTablet ? 100 : 0,
+                                  0,
+                                  isTablet ? 100 : 0,
+                                  0,
+                                ),
                                 child: MyFloatingButton(
                                   onPressed: () {
                                     Navigator.push(
@@ -183,8 +201,12 @@ class _SignupProfilepictureScreenState
                                     );
                                   },
                                   text: "Next",
-                                  color:
-                                      const Color.fromARGB(255, 229, 163, 32),
+                                  color: const Color.fromARGB(
+                                    255,
+                                    229,
+                                    163,
+                                    32,
+                                  ),
                                 ),
                               ),
 
@@ -211,9 +233,7 @@ class _SignupProfilepictureScreenState
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SignupScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => SignupScreen()),
                   );
                 },
               ),

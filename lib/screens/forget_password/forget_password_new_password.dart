@@ -1,5 +1,5 @@
 import 'package:chautari_kurakani/screens/forget_password/forget_password_pin_screen.dart';
-import 'package:chautari_kurakani/screens/login_screen.dart';
+import 'package:chautari_kurakani/features/login/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/widgets/my_text_field.dart';
 import 'package:flutter/material.dart';
@@ -8,13 +8,15 @@ class ForgetPasswordNewPassword extends StatefulWidget {
   const ForgetPasswordNewPassword({super.key});
 
   @override
-  State<ForgetPasswordNewPassword> createState() => _ForgetPasswordNewPasswordState();
+  State<ForgetPasswordNewPassword> createState() =>
+      _ForgetPasswordNewPasswordState();
 }
 
 class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
   final _forgetkey = GlobalKey<FormState>();
   final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,7 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
             SingleChildScrollView(
               child: Column(
                 children: [
-                  SizedBox(height: isTablet ? 10 : 40),
+                  SizedBox(height: isTablet ? 40 : 40),
 
                   Container(
                     decoration: BoxDecoration(
@@ -46,17 +48,17 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                     ),
                     child: Image.asset(
                       'assets/images/white_half_logo.png',
-                      height: isTablet ? 110 : 100,
-                      width: isTablet ? 110 : 100,
+                      height: isTablet ? 200 : 100,
+                      width: isTablet ? 200 : 100,
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 0 : 20),
+                  SizedBox(height: isTablet ? 30 : 20),
 
                   Text(
                     "ChautariKuraKani",
                     style: TextStyle(
-                      fontSize: isTablet ? 50 : 40,
+                      fontSize: isTablet ? 70 : 40,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -79,7 +81,7 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 30 : 60),
+                  SizedBox(height: isTablet ? 100 : 60),
 
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -113,37 +115,71 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                               Text(
                                 "Recover your password",
                                 style: TextStyle(
-                                  fontSize:isTablet? 25: 20,
+                                  fontSize: isTablet ? 25 : 20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
 
-                              
-
-                              SizedBox(height: 35),
+                              SizedBox(height: isTablet ? 55 : 35),
 
                               Padding(
-                                padding:  EdgeInsets.fromLTRB(0,0,isTablet?450: 140,0),
-                                child: Text("Enter your new password.",style: TextStyle(fontSize: 17,fontWeight: FontWeight.w400),),
+                                padding: EdgeInsets.fromLTRB(
+                                  0,
+                                  0,
+                                  isTablet ? 300 : 140,
+                                  0,
+                                ),
+                                child: Text(
+                                  "Enter your new password.",
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
                               ),
 
-                              SizedBox(height: 40,),
+                              SizedBox(height: 40),
 
-                              MyTextfield(controller: newPasswordController, text: "New Password", errorText: "Please enter your password"),
-                              SizedBox(height: 14,),
-                              MyTextfield(controller: confirmPasswordController, text: "Confirm Password", errorText: "Please enter your password"),
+                              MyTextfield(
+                                controller: newPasswordController,
+                                text: "New Password",
+                                errorText: "Please enter your password",
+                              ),
+                              SizedBox(height: 14),
+                              MyTextfield(
+                                controller: confirmPasswordController,
+                                text: "Confirm Password",
+                                errorText: "Please enter your password",
+                              ),
 
                               SizedBox(height: 30),
 
-                             
                               SizedBox(height: 40),
 
                               Padding(
-                                padding: EdgeInsets.fromLTRB(isTablet?100:0,0,isTablet?100:0,0),
+                                padding: EdgeInsets.fromLTRB(
+                                  isTablet ? 100 : 0,
+                                  0,
+                                  isTablet ? 100 : 0,
+                                  0,
+                                ),
                                 child: MyFloatingButton(
-                                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));}, 
-                                    text: "Confirm",
-                                    color: const Color.fromARGB(255, 229, 163, 32),),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LoginScreen(),
+                                      ),
+                                    );
+                                  },
+                                  text: "Confirm",
+                                  color: const Color.fromARGB(
+                                    255,
+                                    229,
+                                    163,
+                                    32,
+                                  ),
+                                ),
                               ),
 
                               SizedBox(height: 20),
@@ -166,10 +202,18 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
                 //   shape: BoxShape.circle,
                 // ),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back,
-                      color: Colors.black, size: 26),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.black,
+                    size: 26,
+                  ),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ForgetPasswordPinScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ForgetPasswordPinScreen(),
+                      ),
+                    );
                   },
                 ),
               ),

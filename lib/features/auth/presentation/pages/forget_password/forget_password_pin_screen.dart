@@ -1,7 +1,7 @@
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_new_password.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_screen.dart';
-import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
-import 'package:chautari_kurakani/widgets/my_text_button.dart';
+import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
+import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';

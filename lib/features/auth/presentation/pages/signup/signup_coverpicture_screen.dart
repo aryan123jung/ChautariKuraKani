@@ -1,6 +1,6 @@
 import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_bio_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_profilepicture_screen.dart';
-import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
+import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:flutter/material.dart';
 
 class SignupCoverpictureScreen extends StatefulWidget {

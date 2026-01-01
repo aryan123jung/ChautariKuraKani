@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/services/ai_services.dart';
+import 'package:chautari_kurakani/core/services/ai_services.dart';
 import 'package:flutter/material.dart';
 
 class ChatbotScreen extends StatefulWidget {

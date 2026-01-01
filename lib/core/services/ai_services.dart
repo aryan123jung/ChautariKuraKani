@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:chautari_kurakani/features/dashboard/data/datasources/api.dart';
+import 'package:chautari_kurakani/core/api/api.dart';
 import 'package:http/http.dart' as http;
 
 class AiService {

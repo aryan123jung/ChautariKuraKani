@@ -1,8 +1,8 @@
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_pin_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
-import 'package:chautari_kurakani/widgets/my_elevated_button.dart';
-import 'package:chautari_kurakani/widgets/my_text_button.dart';
-import 'package:chautari_kurakani/widgets/my_text_field.dart';
+import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
+import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
+import 'package:chautari_kurakani/core/widgets/my_text_field.dart';
 import 'package:flutter/material.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {

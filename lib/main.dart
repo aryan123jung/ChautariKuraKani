@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/app.dart';
+import 'package:chautari_kurakani/app/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 

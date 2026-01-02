@@ -614,14 +614,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           SizedBox(height: 20),
 
                           MyTextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LoginScreen(),
-                                ),
-                              );
-                            },
+                            onPressed: _navigateToLogin,
                             text: "Already have an account??",
                             textColor: const Color.fromARGB(255, 63, 124, 42),
                           ),

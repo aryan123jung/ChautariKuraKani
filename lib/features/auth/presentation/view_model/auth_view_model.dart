@@ -1,3 +1,4 @@
+import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -27,6 +28,9 @@ class AuthViewModel extends Notifier<AuthState> {
     required String password,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
+
+    await Future.delayed(const Duration(seconds: 2));
+
     final params = RegisterUsecaseParams(
       fName: fName,
       lName: lName,
@@ -55,11 +59,12 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  //Login
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(status: AuthStatus.loading);
     final params = LoginUsecaseParams(email: email, password: password);
-    final result = await _loginUsecase(params);
+    await Future.delayed(const Duration(seconds: 1));
+
+    final result = await _loginUsecase.call(params);
 
     result.fold(
       (failure) {

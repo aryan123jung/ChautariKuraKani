@@ -434,6 +434,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   decoration: const InputDecoration(
                                     labelText: 'First Name',
                                     hintText: 'Enter your first name',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(12),
+                                      ),
+                                    ),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -460,6 +465,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   decoration: const InputDecoration(
                                     labelText: 'Last Name',
                                     hintText: 'Enter your last name',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(12),
+                                      ),
+                                    ),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -487,6 +497,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               labelText: 'Email',
                               hintText: 'Enter your email',
                               prefixIcon: Icon(Icons.email),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                              ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -510,6 +525,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             decoration: InputDecoration(
                               labelText: 'Password',
                               hintText: 'Enter your password',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                              ),
                               prefixIcon: const Icon(Icons.lock),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -543,6 +563,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             decoration: InputDecoration(
                               labelText: 'Confirm Password',
                               hintText: 'Confirm your password',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                              ),
                               prefixIcon: const Icon(Icons.lock),
                               suffixIcon: IconButton(
                                 icon: Icon(

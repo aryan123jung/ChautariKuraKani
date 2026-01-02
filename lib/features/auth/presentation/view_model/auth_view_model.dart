@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
+// import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -81,4 +81,6 @@ class AuthViewModel extends Notifier<AuthState> {
       },
     );
   }
+
+  
 }

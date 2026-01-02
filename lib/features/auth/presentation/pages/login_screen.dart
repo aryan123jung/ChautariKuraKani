@@ -1,3 +1,4 @@
+import 'package:chautari_kurakani/core/routes/app_routes.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
@@ -62,10 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
         // SnackbarUtils.showSuccess(context, 'Login successful');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
+        AppRoutes.pushReplacement(context, DashboardScreen());
       } else if (next.status == AuthStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }

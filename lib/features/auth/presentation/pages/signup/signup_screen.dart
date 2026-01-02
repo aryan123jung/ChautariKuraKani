@@ -239,6 +239,7 @@
 //   }
 // }
 
+import 'package:chautari_kurakani/core/routes/app_routes.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 // import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_profilepicture_screen.dart';
@@ -311,10 +312,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         );
       } else if (next.status == AuthStatus.registered) {
         SnackbarUtils.showSuccess(context, 'Registration successful!');
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => LoginScreen()),
+        // );
+        AppRoutes.pushReplacement(context, LoginScreen());
       }
     });
 

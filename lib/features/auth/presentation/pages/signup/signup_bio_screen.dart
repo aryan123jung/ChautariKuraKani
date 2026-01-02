@@ -1,22 +1,90 @@
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/dashboard_screen.dart';
+import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
+import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
+// import 'package:chautari_kurakani/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_coverpicture_screen.dart';
+import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_field.dart';
+import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SignupBioScreen extends StatefulWidget {
-  const SignupBioScreen({super.key});
+class SignupBioScreen extends ConsumerStatefulWidget {
+  final AuthEntity signupData;
+
+  const SignupBioScreen({super.key, required this.signupData});
 
   @override
-  State<SignupBioScreen> createState() => _SignupBioScreenState();
+  ConsumerState<SignupBioScreen> createState() => _SignupBioScreenState();
 }
 
-class _SignupBioScreenState extends State<SignupBioScreen> {
+class _SignupBioScreenState extends ConsumerState<SignupBioScreen> {
   final TextEditingController bioController = TextEditingController();
   final _signupKey = GlobalKey<FormState>();
 
   @override
+  void dispose() {
+    bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleCompleteSignup() async {
+    final updatedSignupData = widget.signupData.copyWith(
+      bio: bioController.text.trim().isEmpty ? null : bioController.text.trim(),
+    );
+
+    ref
+        .read(authViewModelProvider.notifier)
+        .register(
+          fName: updatedSignupData.fName,
+          lName: updatedSignupData.lName,
+          email: updatedSignupData.email,
+          username: updatedSignupData.username,
+          password: updatedSignupData.password!,
+          profilePicture: updatedSignupData.profilePicture,
+          coverPicture: updatedSignupData.coverPicture,
+          bio: updatedSignupData.bio,
+        );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider);
+
+    // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    //   if (next.status == AuthStatus.error) {
+    //     SnackbarUtils.showError(
+    //       context,
+    //       next.errorMessage ?? 'Registration Failed',
+    //     );
+    //   } else if (next.status == AuthStatus.registered) {
+    //     SnackbarUtils.showSuccess(context, 'Registration successful! Welcome!');
+    //     Navigator.pushReplacement(
+    //       context,
+    //       MaterialPageRoute(builder: (context) => LoginScreen()),
+    //     );
+    //   }
+    // });
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.error) {
+        SnackbarUtils.showError(
+          context,
+          next.errorMessage ?? 'Registration Failed',
+        );
+      } else if (next.status == AuthStatus.registered) {
+        // Registration success → go to LoginScreen
+        SnackbarUtils.showSuccess(
+          context,
+          'Registration successful! Please log in.',
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    });
+
     double screenWidth = MediaQuery.of(context).size.width;
 
     bool isTablet = screenWidth > 600;
@@ -169,14 +237,7 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                                   0,
                                 ),
                                 child: MyFloatingButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DashboardScreen(),
-                                      ),
-                                    );
-                                  },
+                                  onPressed: _handleCompleteSignup,
                                   text: "Finish",
                                   color: const Color.fromARGB(
                                     255,
@@ -209,7 +270,9 @@ class _SignupBioScreenState extends State<SignupBioScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => SignupCoverpictureScreen(),
+                        builder: (context) => SignupCoverpictureScreen(
+                          signupData: widget.signupData,
+                        ),
                       ),
                     );
                   },

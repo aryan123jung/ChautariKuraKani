@@ -1,8 +1,9 @@
 // import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 // import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_profilepicture_screen.dart';
-// import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
-// import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
-// import 'package:chautari_kurakani/core/widgets/my_text_field.dart';
+// import 'package:chautari_kurakani/features/auth/domain/entities/signup_data.dart';
+// // import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
+// // import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
+// // import 'package:chautari_kurakani/core/widgets/my_text_field.dart';
 // import 'package:flutter/material.dart';
 
 // class SignupScreen extends StatefulWidget {
@@ -239,14 +240,15 @@
 //   }
 // }
 
-import 'package:chautari_kurakani/core/routes/app_routes.dart';
-import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
-import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
-// import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_profilepicture_screen.dart';
+// import 'package:chautari_kurakani/core/routes/app_routes.dart';
+// import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
+// import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
+import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
-import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
-import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_profilepicture_screen.dart';
+// import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
+// import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -283,16 +285,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   Future<void> _handleSignup() async {
     if (_signupForm.currentState!.validate()) {
-      ref
-          .read(authViewModelProvider.notifier)
-          .register(
-            fName: _firstNameController.text,
-            lName: _lastNameController.text,
-            email: _emailController.text,
-            username:
-                "${_firstNameController.text.trim()}${_lastNameController.text.trim()}",
-            password: _passwordController.text,
-          );
+      final signupData = AuthEntity(
+        fName: _firstNameController.text,
+        lName: _lastNameController.text,
+        email: _emailController.text,
+        username:
+            "${_firstNameController.text.trim()}${_lastNameController.text.trim()}",
+        password: _passwordController.text,
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              SignupProfilepictureScreen(signupData: signupData),
+        ),
+      );
     }
   }
 
@@ -302,23 +310,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authViewModelProvider);
+    // final authState = ref.watch(authViewModelProvider);
 
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.error) {
-        SnackbarUtils.showError(
-          context,
-          next.errorMessage ?? 'Registration Failed',
-        );
-      } else if (next.status == AuthStatus.registered) {
-        SnackbarUtils.showSuccess(context, 'Registration successful!');
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => LoginScreen()),
-        // );
-        AppRoutes.pushReplacement(context, LoginScreen());
-      }
-    });
+    // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    //   if (next.status == AuthStatus.error) {
+    //     SnackbarUtils.showError(
+    //       context,
+    //       next.errorMessage ?? 'Registration Failed',
+    //     );
+    //   } else if (next.status == AuthStatus.registered) {
+    //     SnackbarUtils.showSuccess(context, 'Registration successful!');
+    //     // Navigator.push(
+    //     //   context,
+    //     //   MaterialPageRoute(builder: (context) => LoginScreen()),
+    //     // );
+    //     // AppRoutes.pushReplacement(context, LoginScreen());
+    //     AppRoutes.pushReplacement(context, SignupProfilepictureScreen());
+    //   }
+    // });
 
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -609,7 +618,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               onPressed: _handleSignup,
                               text: "Next",
                               color: const Color.fromARGB(255, 229, 163, 32),
-                              isLoading: authState.status == AuthStatus.loading,
                             ),
                           ),
 

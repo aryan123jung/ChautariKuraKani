@@ -8,7 +8,7 @@ part of 'auth_hive_model.dart';
 
 class AuthHiveModelAdapter extends TypeAdapter<AuthHiveModel> {
   @override
-  final int typeId = 1;
+  final int typeId = 0;
 
   @override
   AuthHiveModel read(BinaryReader reader) {
@@ -23,6 +23,8 @@ class AuthHiveModelAdapter extends TypeAdapter<AuthHiveModel> {
       email: fields[4] as String,
       password: fields[5] as String?,
       profilePicture: fields[6] as String?,
+      coverPicture: fields[7] as String?,
+      bio: fields[8] as String?,
       username: fields[3] as String,
     );
   }
@@ -30,7 +32,7 @@ class AuthHiveModelAdapter extends TypeAdapter<AuthHiveModel> {
   @override
   void write(BinaryWriter writer, AuthHiveModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.authId)
       ..writeByte(1)
@@ -44,7 +46,11 @@ class AuthHiveModelAdapter extends TypeAdapter<AuthHiveModel> {
       ..writeByte(5)
       ..write(obj.password)
       ..writeByte(6)
-      ..write(obj.profilePicture);
+      ..write(obj.profilePicture)
+      ..writeByte(7)
+      ..write(obj.coverPicture)
+      ..writeByte(8)
+      ..write(obj.bio);
   }
 
   @override

@@ -60,9 +60,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
 
+    // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    //   if (next.status == AuthStatus.authenticated) {
+    //     // SnackbarUtils.showSuccess(context, 'Login successful');
+    //     AppRoutes.pushReplacement(context, DashboardScreen());
+    //   } else if (next.status == AuthStatus.error && next.errorMessage != null) {
+    //     SnackbarUtils.showError(context, next.errorMessage!);
+    //   }
+    // });
+
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.authenticated) {
-        // SnackbarUtils.showSuccess(context, 'Login successful');
+      // Only navigate when login is successful (not on first build)
+      if (next.status == AuthStatus.authenticated &&
+          previous?.status != AuthStatus.authenticated) {
         AppRoutes.pushReplacement(context, DashboardScreen());
       } else if (next.status == AuthStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);

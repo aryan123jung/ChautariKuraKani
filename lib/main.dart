@@ -17,10 +17,12 @@
 
 import 'package:chautari_kurakani/app/app.dart';
 import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
+import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:lost_n_found/app/app.dart';
 // import 'package:lost_n_found/core/services/hive/hive_service.dart';
 
@@ -37,7 +39,16 @@ void main() async {
     ),
   );
   await HiveService().init();
-  runApp(const ProviderScope(child: App()));
+  final sharedPreferences = await SharedPreferences.getInstance();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      ],
+      child: const App(),
+    ),
+  );
 }
 
 // import 'package:chautari_kurakani/features/dashboard/presentation/pages/dashboard_screen.dart';

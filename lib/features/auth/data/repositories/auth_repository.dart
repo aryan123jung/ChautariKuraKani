@@ -75,7 +75,7 @@
 //       return Left(LocalDatabaseFailure(message: e.toString()));
 //     }
 //   }
-  
+
 //   @override
 //   Future<Either<Failure, bool>> clearAllUserData() {
 //     throw UnimplementedError();
@@ -97,10 +97,10 @@ final authRepositoryProvider = Provider<IAuthRepository>((ref) {
 });
 
 class AuthRepository implements IAuthRepository {
-  final IAuthDatasource _authDatasource;
-  
-  AuthRepository({required IAuthDatasource authDatasource})
-      : _authDatasource = authDatasource;
+  final IAuthLocalDatasource _authDatasource;
+
+  AuthRepository({required IAuthLocalDatasource authDatasource})
+    : _authDatasource = authDatasource;
 
   @override
   Future<Either<Failure, AuthEntity>> getCurrentUser() async {

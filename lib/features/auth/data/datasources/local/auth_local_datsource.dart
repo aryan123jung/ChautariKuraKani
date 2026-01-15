@@ -67,11 +67,11 @@ import 'package:chautari_kurakani/features/auth/data/datasources/auth_datasource
 import 'package:chautari_kurakani/features/auth/data/models/auth_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final authLocalDatsourceProvider = Provider<IAuthDatasource>((ref) {
+final authLocalDatsourceProvider = Provider<IAuthLocalDatasource>((ref) {
   return AuthLocalDatasource(hiveService: ref.read(hiveServiceProvider));
 });
 
-class AuthLocalDatasource implements IAuthDatasource {
+class AuthLocalDatasource implements IAuthLocalDatasource {
   final HiveService _hiveService;
 
   AuthLocalDatasource({required HiveService hiveService})

@@ -10,3 +10,10 @@ abstract interface class IAuthLocalDatasource {
   // get email exists
   Future<bool> isEmailExists(String email);
 }
+
+
+abstract interface class IAuthDatasource {
+  Future<AuthHiveModel> register(AuthHiveModel user);
+  Future<AuthHiveModel?> login(String email, String password);
+  Future<AuthHiveModel?> getUserById(String authId);
+}

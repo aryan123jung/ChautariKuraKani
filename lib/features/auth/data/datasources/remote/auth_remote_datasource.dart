@@ -3,10 +3,9 @@ import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/features/auth/data/datasources/auth_datasource.dart';
 import 'package:chautari_kurakani/features/auth/data/models/auth_api_model.dart';
-import 'package:chautari_kurakani/features/auth/data/models/auth_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Create provider
+// provider
 final authRemoteDatasourceProvider = Provider<IAuthRemoteDatasource>((ref) {
   return AuthRemoteDatasource(
     apiClient: ref.read(apiClientProvider),

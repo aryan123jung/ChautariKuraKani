@@ -1,6 +1,5 @@
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
-// import 'package:chautari_kurakani/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_coverpicture_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -99,7 +98,6 @@ class _SignupBioScreenState extends ConsumerState<SignupBioScreen> {
                   SizedBox(height: isTablet ? 40 : 40),
 
                   Container(
-                    // height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -115,7 +113,6 @@ class _SignupBioScreenState extends ConsumerState<SignupBioScreen> {
                       'assets/images/white_half_logo.png',
                       height: isTablet ? 200 : 100,
                       width: isTablet ? 200 : 100,
-                      // width: 100,
                     ),
                   ),
 

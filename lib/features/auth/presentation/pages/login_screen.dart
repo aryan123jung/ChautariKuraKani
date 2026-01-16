@@ -58,15 +58,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authViewModelProvider);
 
     // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-    //   if (next.status == AuthStatus.authenticated) {
-    //     // SnackbarUtils.showSuccess(context, 'Login successful');
-    //     AppRoutes.pushReplacement(context, DashboardScreen());
-    //   } else if (next.status == AuthStatus.error && next.errorMessage != null) {
-    //     SnackbarUtils.showError(context, next.errorMessage!);
-    //   }
-    // });
-
-    // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
     //   // Only navigate when login is successful (not on first build)
     //   if (next.status == AuthStatus.authenticated &&
     //       previous?.status != AuthStatus.authenticated) {
@@ -211,10 +202,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               }
                               return null;
                             },
-                            // text: "Email",
-                            // hintText: "Email",
-                            // errorText: "Please enter your email",
-                            // prefixIcon: Icons.email,
                           ),
 
                           SizedBox(height: 10),
@@ -253,29 +240,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               }
                               return null;
                             },
-                            // text: "Password",
-                            // hintText: "Password",
-                            // errorText: "Please enter your password",
-                            // prefixIcon: Icons.lock,
-                            // isPassword: true,
                           ),
 
                           SizedBox(height: 30),
 
-                          // Padding(
-                          //   padding: EdgeInsets.fromLTRB(
-                          //     isTablet ? 100 : 0,
-                          //     0,
-                          //     isTablet ? 100 : 0,
-                          //     0,
-                          //   ),
-                          //   child: MyFloatingButton(
-                          //     onPressed: _handleLogin,
-                          //     text: "Log in",
-                          //     color: const Color.fromARGB(255, 229, 163, 32),
-                          //     isLoading: authState.status == AuthStatus.loading,
-                          //   ),
-                          // ),
                           SizedBox(
                             width: double.infinity,
                             height: 50,

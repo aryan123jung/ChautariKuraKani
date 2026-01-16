@@ -69,12 +69,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     //   }
     // });
 
+    // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    //   // Only navigate when login is successful (not on first build)
+    //   if (next.status == AuthStatus.authenticated &&
+    //       previous?.status != AuthStatus.authenticated) {
+    //     AppRoutes.pushReplacement(context, DashboardScreen());
+    //   } else if (next.status == AuthStatus.error && next.errorMessage != null) {
+    //     SnackbarUtils.showError(context, next.errorMessage!);
+    //   }
+    // });
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      // Only navigate when login is successful (not on first build)
       if (next.status == AuthStatus.authenticated &&
           previous?.status != AuthStatus.authenticated) {
-        AppRoutes.pushReplacement(context, DashboardScreen());
-      } else if (next.status == AuthStatus.error && next.errorMessage != null) {
+        // ✅ Show success snackbar
+        SnackbarUtils.showSuccess(context, 'Login successful');
+
+        // ✅ Navigate AFTER snackbar
+        Future.microtask(() {
+          AppRoutes.pushReplacement(context, DashboardScreen());
+        });
+      }
+
+      if (next.status == AuthStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
     });

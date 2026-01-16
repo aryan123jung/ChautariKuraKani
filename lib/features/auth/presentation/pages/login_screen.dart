@@ -50,7 +50,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleForgotPassword() {
-    // TODO: Implement forgot password
     SnackbarUtils.showInfo(context, 'Forgot password feature coming soon');
   }
 
@@ -79,10 +78,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated &&
           previous?.status != AuthStatus.authenticated) {
-        // ✅ Show success snackbar
         SnackbarUtils.showSuccess(context, 'Login successful');
 
-        // ✅ Navigate AFTER snackbar
         Future.microtask(() {
           AppRoutes.pushReplacement(context, DashboardScreen());
         });
@@ -130,7 +127,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                   fontSize: isTablet ? 70 : 40,
                   fontWeight: FontWeight.bold,
-                  // fontFamily: 'OpenSans Bold',
                   shadows: [
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.2),
@@ -324,14 +320,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           MyTextButton(
                             onPressed: _handleForgotPassword,
-                            // onPressed: () {
-                            //   Navigator.push(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //       builder: (context) => ForgetPasswordScreen(),
-                            //     ),
-                            //   );
-                            // },
                             text: "Forgot Password?",
                             textColor: const Color.fromARGB(255, 63, 124, 42),
                           ),

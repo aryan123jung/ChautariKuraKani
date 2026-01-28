@@ -1,6 +1,7 @@
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingThree extends StatefulWidget {
   const OnboardingThree({super.key});
@@ -162,12 +163,23 @@ class _OnboardingThreeState extends State<OnboardingThree> {
                   child: MyFloatingButton(
                     text: "Next",
                     color: const Color.fromARGB(255, 229, 163, 32),
-                    onPressed: () {
-                      Navigator.push(
+                    // onPressed: () {
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    //   );
+                    // },
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('onboarding_done', true);
+
+                      Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
                       );
-                    },
+                    }
+
                   ),
                 ),
               ],

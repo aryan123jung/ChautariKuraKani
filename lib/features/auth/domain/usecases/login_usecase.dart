@@ -31,7 +31,7 @@ class LoginUsecase
     : _authRepository = authRepository;
 
   @override
-  Future<Either<Failure, AuthEntity>> call(LoginUsecaseParams params) {
-    return _authRepository.login(params.email, params.password);
+  Future<Either<Failure, AuthEntity>> call(LoginUsecaseParams params) async{
+    return await _authRepository.login(params.email, params.password);
   }
 }

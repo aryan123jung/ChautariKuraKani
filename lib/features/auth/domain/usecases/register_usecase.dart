@@ -48,14 +48,14 @@ final registerUsecaseProvider = Provider<RegisterUsecase>((ref) {
 });
 
 class RegisterUsecase
-    implements UsecaseWithParams<bool, RegisterUsecaseParams> {
+    implements UsecaseWithParams<AuthEntity, RegisterUsecaseParams> {
   final IAuthRepository _authRepository;
 
   RegisterUsecase({required IAuthRepository authRepository})
     : _authRepository = authRepository;
 
   @override
-  Future<Either<Failure, bool>> call(RegisterUsecaseParams params) {
+  Future<Either<Failure, AuthEntity>> call(RegisterUsecaseParams params) {
     final entity = AuthEntity(
       fName: params.fName,
       lName: params.lName,

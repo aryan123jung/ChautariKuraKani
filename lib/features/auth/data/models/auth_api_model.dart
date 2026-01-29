@@ -34,8 +34,8 @@ class AuthApiModel {
       'email': email,
       'password': password,
       'confirmPassword': confirmPassword ?? password,
-      'profilePicture': profilePicture,
-      'coverPicture': coverPicture,
+      'profileUrl': profilePicture,
+      'coverUrl': coverPicture,
       'bio': bio,
     };
   }
@@ -49,8 +49,8 @@ class AuthApiModel {
       username: json['username'] as String,
       email: json['email'] as String,
       password: json['password'] as String?,
-      profilePicture: json['profilePicture'] as String?,
-      coverPicture: json['coverPicture'] as String?,
+      profilePicture: json['profileUrl'] as String?,
+      coverPicture: json['coverUrl'] as String?,
       bio: json['bio'] as String?,
     );
   }

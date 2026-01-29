@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:chautari_kurakani/features/auth/data/models/auth_api_model.dart';
 import 'package:chautari_kurakani/features/auth/data/models/auth_hive_model.dart';
 
@@ -26,4 +28,6 @@ abstract interface class IAuthRemoteDatasource {
   Future<AuthApiModel?> register(AuthApiModel user);
   Future<AuthApiModel?> login(String email, String password);
   Future<AuthApiModel?> getCurrentUserById(String userId);
+  Future<String> profileImageUpload(File image);
+  Future<String> coverImageUpload(File image);
 }

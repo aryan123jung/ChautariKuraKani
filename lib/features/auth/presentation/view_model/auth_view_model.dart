@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:chautari_kurakani/features/auth/domain/usecases/get_current_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/register_usecase.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/upload_cover_image_usecase.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/upload_profile_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,6 +18,8 @@ class AuthViewModel extends Notifier<AuthState> {
   late final LoginUsecase _loginUsecase;
   late final LogoutUsecase _logoutUsecase;
   late final GetCurrentUserUsecase _getCurrentUserUsecase;
+  late final UploadProfileImageUsecase _uploadProfileImageUsecase;
+  late final UploadCoverImageUsecase _uploadCoverImageUsecase;
 
   @override
   AuthState build() {
@@ -21,6 +27,8 @@ class AuthViewModel extends Notifier<AuthState> {
     _loginUsecase = ref.read(loginUsecaseProvider);
     _logoutUsecase = ref.read(logoutUsecaseProvider);
     _getCurrentUserUsecase = ref.read(getCurrentUserUsecaseProvider);
+    _uploadProfileImageUsecase = ref.read(uploadProfileImageUsecaseProvider);
+    _uploadCoverImageUsecase = ref.read(uploadCoverImageUsecaseProvider);
     return const AuthState(status: AuthStatus.checking);
   }
 
@@ -120,6 +128,76 @@ class AuthViewModel extends Notifier<AuthState> {
         state = AuthState(
           status: AuthStatus.currentUserLoaded,
           authEntity: user,
+        );
+      },
+    );
+  }
+
+  //profile image upload
+  Future<void> uploadProfileImage(File image) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _uploadProfileImageUsecase(image);
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (imageName) {
+        state = state.copyWith(
+          status: AuthStatus.loaded,
+          uploadProfilePhotoName: imageName,
+        );
+      },
+    );
+  }
+  //   Future<Either<Failure, String>> uploadProfileImage(File image) async {
+  //   try {
+  //     final token = await storage.read(key: 'auth_token'); // await the token!
+
+  //     final formData = FormData.fromMap({
+  //       'profileUrl': await MultipartFile.fromFile(image.path),
+  //     });
+
+  //     final response = await apiClient.put(
+  //       ApiEndpoints.profileImage,
+  //       data: formData,
+  //       options: Options(
+  //         headers: {
+  //           'Authorization': 'Bearer $token',
+  //           'Content-Type': 'multipart/form-data',
+  //         },
+  //       ),
+  //     );
+
+  //     return Right(response.data['fileName']); // or whatever your backend returns
+  //   } catch (e) {
+  //     return Left(Failure(message: e.toString()));
+  //   }
+  // }
+
+  //   }
+
+  //cover image upload
+  Future<void> uploadCoverImage(File image) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _uploadCoverImageUsecase(image);
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (imageName) {
+        state = state.copyWith(
+          status: AuthStatus.loaded,
+          uploadCoverPhotoName: imageName,
         );
       },
     );

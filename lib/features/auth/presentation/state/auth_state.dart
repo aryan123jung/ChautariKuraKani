@@ -1,18 +1,16 @@
-
-
-
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:equatable/equatable.dart';
 
 /// ✅ Possible authentication states
 enum AuthStatus {
   initial,
-  checking,        // checking for existing user/token
-  loading,         // during login/register/logout
+  checking, // checking for existing user/token
+  loading, // during login/register/logout
   authenticated,
   unauthenticated,
   registered,
   error,
+  loaded,
   currentUserLoaded,
 }
 
@@ -21,18 +19,25 @@ class AuthState extends Equatable {
   final AuthStatus status;
   final AuthEntity? authEntity;
   final String? errorMessage;
+  //store image name temporarily
+  final String? uploadProfilePhotoName;
+  final String? uploadCoverPhotoName;
 
   const AuthState({
     required this.status,
     this.authEntity,
     this.errorMessage,
+    this.uploadProfilePhotoName,
+    this.uploadCoverPhotoName,
   });
 
   /// Initial state
-  const AuthState.initial()
-      : status = AuthStatus.initial,
-        authEntity = null,
-        errorMessage = null;
+  const AuthState.initial(
+    this.uploadProfilePhotoName,
+    this.uploadCoverPhotoName,
+  ) : status = AuthStatus.initial,
+      authEntity = null,
+      errorMessage = null;
 
   /// CopyWith with optional clearing of authEntity
   AuthState copyWith({
@@ -40,22 +45,32 @@ class AuthState extends Equatable {
     AuthEntity? authEntity,
     bool clearAuthEntity = false,
     String? errorMessage,
+    String? uploadProfilePhotoName,
+    String? uploadCoverPhotoName,
   }) {
     return AuthState(
       status: status ?? this.status,
       authEntity: clearAuthEntity ? null : authEntity ?? this.authEntity,
       errorMessage: errorMessage,
+      uploadProfilePhotoName:
+          uploadProfilePhotoName ?? this.uploadProfilePhotoName,
+      uploadCoverPhotoName: uploadCoverPhotoName ?? this.uploadCoverPhotoName,
     );
   }
 
   @override
-  List<Object?> get props => [status, authEntity, errorMessage];
+  List<Object?> get props => [
+    status,
+    authEntity,
+    errorMessage,
+    uploadProfilePhotoName,
+    uploadCoverPhotoName,
+  ];
 
   @override
   String toString() =>
       'AuthState(status: $status, authEntity: $authEntity, errorMessage: $errorMessage)';
 }
-
 
 // import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 // import 'package:equatable/equatable.dart';

@@ -1,7 +1,10 @@
+import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
-import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_profilepicture_screen.dart';
+import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
+import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
+import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,6 +21,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
@@ -31,6 +35,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -42,18 +47,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         fName: _firstNameController.text,
         lName: _lastNameController.text,
         email: _emailController.text,
-        username:
-            "${_firstNameController.text.trim()}${_lastNameController.text.trim()}",
+        username: _usernameController.text,
         password: _passwordController.text,
       );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              SignupProfilepictureScreen(signupData: signupData),
-        ),
-      );
+      ref
+          .read(authViewModelProvider.notifier)
+          .register(
+            fName: signupData.fName,
+            lName: signupData.lName,
+            email: signupData.email,
+            username: signupData.username,
+            password: signupData.password!,
+          );
+
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) =>
+      //         SignupProfilepictureScreen(signupData: signupData),
+      //   ),
+      // );
     }
   }
 
@@ -85,6 +99,30 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     double screenWidth = MediaQuery.of(context).size.width;
 
     bool isTablet = screenWidth > 600;
+
+    final authState = ref.watch(authViewModelProvider);
+
+    ref.listen<AuthState>(authViewModelProvider, (prev, next) {
+      if (next.status == AuthStatus.error) {
+        SnackbarUtils.showError(
+          context,
+          next.errorMessage ?? 'Registration failed',
+        );
+      } else if (next.status == AuthStatus.registered) {
+        SnackbarUtils.showSuccess(
+          context,
+          'Registration successful! Please log in.',
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    });
+
+    if (authState.status == AuthStatus.loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF76C05D),
@@ -267,6 +305,31 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               return null;
                             },
                           ),
+                          SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: _usernameController,
+                            keyboardType: TextInputType.text,
+                            decoration: const InputDecoration(
+                              labelText: 'Username',
+                              hintText: 'Enter your username',
+                              prefixIcon: Icon(Icons.person),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your username';
+                              }
+                              if (value.length < 3) {
+                                return 'Name must be at least 3 characters';
+                              }
+                              return null;
+                            },
+                          ),
 
                           SizedBox(height: 10),
 
@@ -356,7 +419,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                             child: MyFloatingButton(
                               onPressed: _handleSignup,
-                              text: "Next",
+                              text: "Register",
                               color: const Color.fromARGB(255, 229, 163, 32),
                             ),
                           ),

@@ -42,14 +42,18 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 class ApiEndpoints {
   ApiEndpoints._();
   static const int port = 6060;
 
+  static const String computerIpAddress = "192.168.1.66";
+
   static String get baseUrl {
-    // if (isPhysicalDevice) {
-    //   return "http://$computerIpAddress:$port/api";
-    // }
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      return "http://$computerIpAddress:$port/api";
+    }
 
     // if (kIsWeb) {
     //   return "http://localhost:$port/api";
@@ -65,8 +69,6 @@ class ApiEndpoints {
 
     return "http://localhost:$port/api";
   }
-
-
 
   /// Profile image URL
   static String profileImageUrl(String fileName) {
@@ -105,7 +107,6 @@ class ApiEndpoints {
   static const String authRegister = '/auth/register';
   static const String whoAmI = '/auth/whoami';
   static String getCurrentUserById(String userId) => '/auth/user/$userId';
-
 
   // Profile picture upload
   static const String updateProfileImage = '/auth/update-profile';

@@ -486,53 +486,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 🖼 Cover Image
-            // GestureDetector(
-            //   onTap: () => _showImageSourceDialog(isProfile: false),
-            //   child: Container(
-            //     height: 140,
-            //     width: double.infinity,
-            //     decoration: BoxDecoration(
-            //       borderRadius: BorderRadius.circular(20),
-            //       color: const Color(0xFFE3E3E3),
-            //       image: _selectedCoverImage != null
-            //           ? DecorationImage(
-            //               image: FileImage(_selectedCoverImage!),
-            //               fit: BoxFit.cover,
-            //             )
-            //           : null,
-            //     ),
-            //     child: _selectedCoverImage == null
-            //         ? const Icon(Icons.camera_alt, size: 40)
-            //         : null,
-            //   ),
-            // ),
-
-            // const SizedBox(height: 40),
-
-            // // 👤 Profile Image
-            // GestureDetector(
-            //   onTap: () => _showImageSourceDialog(isProfile: true),
-            //   child: Container(
-            //     height: 140,
-            //     width: 140,
-            //     decoration: BoxDecoration(
-            //       shape: BoxShape.circle,
-            //       color: const Color(0xFFE3E3E3),
-            //       image: _selectedProfileImage != null
-            //           ? DecorationImage(
-            //               image: FileImage(_selectedProfileImage!),
-            //               fit: BoxFit.cover,
-            //             )
-            //           : null,
-            //     ),
-            //     child: _selectedProfileImage == null
-            //         ? const Icon(Icons.person, size: 50)
-            //         : null,
-            //   ),
-            // ),
-            // 🖼 Cover Image
-            // 🖼 Cover Image
             GestureDetector(
               onTap: () => _showImageSourceDialog(isProfile: false),
               child: Container(
@@ -569,7 +522,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             const SizedBox(height: 40),
 
-            // 👤 Profile Image
             GestureDetector(
               onTap: () => _showImageSourceDialog(isProfile: true),
               child: Container(

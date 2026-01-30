@@ -175,33 +175,6 @@ class AuthRepository implements IAuthRepository {
     }
   }
 
-  // @override
-  // Future<Either<Failure, String>> coverImageUpload(File image) async {
-  //   if (await _networkInfo.isConnected) {
-  //     try {
-  //       final fileName = await _authRemoteDatasource.coverImageUpload(image);
-  //       return Right(fileName);
-  //     } catch (e) {
-  //       return Left(ApiFailure(message: e.toString()));
-  //     }
-  //   } else {
-  //     return Left(ApiFailure(message: "No internet connection"));
-  //   }
-  // }
-
-  // @override
-  // Future<Either<Failure, String>> profileImageUpload(File image) async {
-  //   if (await _networkInfo.isConnected) {
-  //     try {
-  //       final fileName = await _authRemoteDatasource.profileImageUpload(image);
-  //       return Right(fileName);
-  //     } catch (e) {
-  //       return Left(ApiFailure(message: e.toString()));
-  //     }
-  //   } else {
-  //     return Left(ApiFailure(message: "No internet connection"));
-  //   }
-  // }
   @override
   Future<Either<Failure, String>> profileImageUpload(File image) async {
     if (await _networkInfo.isConnected) {

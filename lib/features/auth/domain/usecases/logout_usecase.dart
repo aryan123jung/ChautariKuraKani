@@ -1,23 +1,3 @@
-// import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:hive/hive.dart';
-
-// class LogoutUseCase {
-//   final Ref ref;
-
-//   LogoutUseCase(this.ref);
-
-//   Future<void> execute() async {
-//     // 1. Clear auth state
-//     ref.read(authViewModelProvider.notifier).logout();
-
-//     // 2. Clear any stored tokens or user data (Hive, SharedPreferences, etc.)
-//     // Example:
-//     final box = await Hive.openBox('authBox');
-//     await box.clear();
-//   }
-// }
-
 import 'package:chautari_kurakani/core/error/failures.dart';
 import 'package:chautari_kurakani/core/usecase/app_usecase.dart';
 import 'package:chautari_kurakani/features/auth/data/repositories/auth_repository.dart';

@@ -32,7 +32,6 @@ class AuthViewModel extends Notifier<AuthState> {
     return const AuthState(status: AuthStatus.checking);
   }
 
-  /// 🔐 LOGIN
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(status: AuthStatus.loading);
 
@@ -53,7 +52,6 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  /// 🧾 REGISTER
   Future<void> register({
     required String fName,
     required String lName,
@@ -92,7 +90,6 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  /// 🚪 LOGOUT
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.loading);
 
@@ -111,7 +108,6 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  /// 🔄 GET CURRENT USER
   Future<void> getCurrentUser({required String userId}) async {
     state = state.copyWith(status: AuthStatus.loading);
     final getCurrentUsecaseParams = GetCurrentUsecaseParams(userId: userId);
@@ -133,7 +129,6 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  //profile image upload
   Future<void> uploadProfileImage(File image) async {
     state = state.copyWith(status: AuthStatus.loading);
 
@@ -154,34 +149,7 @@ class AuthViewModel extends Notifier<AuthState> {
       },
     );
   }
-  //   Future<Either<Failure, String>> uploadProfileImage(File image) async {
-  //   try {
-  //     final token = await storage.read(key: 'auth_token'); // await the token!
 
-  //     final formData = FormData.fromMap({
-  //       'profileUrl': await MultipartFile.fromFile(image.path),
-  //     });
-
-  //     final response = await apiClient.put(
-  //       ApiEndpoints.profileImage,
-  //       data: formData,
-  //       options: Options(
-  //         headers: {
-  //           'Authorization': 'Bearer $token',
-  //           'Content-Type': 'multipart/form-data',
-  //         },
-  //       ),
-  //     );
-
-  //     return Right(response.data['fileName']); // or whatever your backend returns
-  //   } catch (e) {
-  //     return Left(Failure(message: e.toString()));
-  //   }
-  // }
-
-  //   }
-
-  //cover image upload
   Future<void> uploadCoverImage(File image) async {
     state = state.copyWith(status: AuthStatus.loading);
 

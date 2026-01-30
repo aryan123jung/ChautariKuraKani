@@ -98,7 +98,7 @@ class _OnboardingThreeState extends State<OnboardingThree> {
           width: isTablet ? 320 : double.infinity,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: MyFloatingButton(
+            child: MyElevatedButton(
               text: "Next",
               color: const Color.fromARGB(255, 229, 163, 32),
               onPressed: () {
@@ -160,7 +160,7 @@ class _OnboardingThreeState extends State<OnboardingThree> {
 
                 SizedBox(
                   width: 260,
-                  child: MyFloatingButton(
+                  child: MyElevatedButton(
                     text: "Next",
                     color: const Color.fromARGB(255, 229, 163, 32),
 

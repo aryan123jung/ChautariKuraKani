@@ -147,7 +147,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                                   isTablet ? 100 : 0,
                                   0,
                                 ),
-                                child: MyFloatingButton(
+                                child: MyElevatedButton(
                                   onPressed: () {
                                     Navigator.push(
                                       context,

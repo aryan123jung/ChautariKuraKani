@@ -417,7 +417,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               isTablet ? 100 : 0,
                               0,
                             ),
-                            child: MyFloatingButton(
+                            child: MyElevatedButton(
                               onPressed: _handleSignup,
                               text: "Register",
                               color: const Color.fromARGB(255, 229, 163, 32),

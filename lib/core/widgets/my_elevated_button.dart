@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class MyFloatingButton extends StatelessWidget {
-  const MyFloatingButton({
+class MyElevatedButton extends StatelessWidget {
+  const MyElevatedButton({
     super.key,
     required this.onPressed,
     required this.text,

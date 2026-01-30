@@ -11,7 +11,7 @@ enum AuthStatus {
   registered,
   error,
   loaded,
-  currentUserLoaded,
+  currentUserLoaded, success,
 }
 
 

@@ -55,6 +55,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   flutter_launcher_icons: ^0.14.4
   mocktail: ^1.0.4
+  network_image_mock: ^2.1.1
 
 
 

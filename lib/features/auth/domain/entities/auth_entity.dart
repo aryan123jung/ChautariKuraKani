@@ -18,7 +18,7 @@ class AuthEntity {
     this.profilePicture,
     this.coverPicture,
     this.bio,
-    this.authId,
+    this.authId, 
   });
 
   AuthEntity copyWith({

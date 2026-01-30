@@ -66,7 +66,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     });
 
     if (authState.authEntity == null) {
-      return const Scaffold(body: Center(child: Text("No user data found")));
+      // return const Scaffold(body: Center(child: Text("No user data found")));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final userEntity = authState.authEntity;

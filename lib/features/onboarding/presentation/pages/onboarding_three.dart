@@ -163,23 +163,29 @@ class _OnboardingThreeState extends State<OnboardingThree> {
                   child: MyFloatingButton(
                     text: "Next",
                     color: const Color.fromARGB(255, 229, 163, 32),
-                    // onPressed: () {
-                    //   Navigator.push(
+
+                    // onPressed: () async {
+                    //   final prefs = await SharedPreferences.getInstance();
+                    //   await prefs.setBool('onboarding_done', true);
+
+                    //   Navigator.pushAndRemoveUntil(
                     //     context,
                     //     MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    //     (route) => false,
                     //   );
-                    // },
+                    // }
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setBool('onboarding_done', true);
+
+                      if (!context.mounted) return;
 
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
                         (route) => false,
                       );
-                    }
-
+                    },
                   ),
                 ),
               ],

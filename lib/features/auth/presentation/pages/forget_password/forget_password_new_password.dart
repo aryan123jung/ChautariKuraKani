@@ -196,26 +196,20 @@ class _ForgetPasswordNewPasswordState extends State<ForgetPasswordNewPassword> {
             Positioned(
               top: 10,
               left: 10,
-              child: Container(
-                // decoration: BoxDecoration(
-                //   color: const Color.fromARGB(180, 0, 0, 0),
-                //   shape: BoxShape.circle,
-                // ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.black,
-                    size: 26,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ForgetPasswordPinScreen(),
-                      ),
-                    );
-                  },
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.black,
+                  size: 26,
                 ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ForgetPasswordPinScreen(),
+                    ),
+                  );
+                },
               ),
             ),
           ],

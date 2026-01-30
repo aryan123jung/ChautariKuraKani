@@ -50,24 +50,43 @@ class ApiEndpoints {
 
   static const String computerIpAddress = "192.168.1.66";
 
+  // static String get baseUrl {
+  //   if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+  //     return "http://$computerIpAddress:$port/api";
+  //   }
+
+  //   // if (kIsWeb) {
+  //   //   return "http://localhost:$port/api";
+  //   // }
+
+  //   if (Platform.isAndroid) {
+  //     return "http://10.0.2.2:$port/api";
+  //   }
+
+  //   if (Platform.isIOS) {
+  //     return "http://localhost:$port/api";
+  //   }
+
+  //   return "http://localhost:$port/api";
+  // }
   static String get baseUrl {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
-      return "http://$computerIpAddress:$port/api";
+    // Web
+    if (kIsWeb) {
+      return "http://localhost:$port/api";
     }
 
-    // if (kIsWeb) {
-    //   return "http://localhost:$port/api";
-    // }
-
+    // Android Emulator
     if (Platform.isAndroid) {
       return "http://10.0.2.2:$port/api";
     }
 
+    // iOS Simulator
     if (Platform.isIOS) {
       return "http://localhost:$port/api";
     }
 
-    return "http://localhost:$port/api";
+    // Physical device fallback
+    return "http://$computerIpAddress:$port/api";
   }
 
   /// Profile image URL

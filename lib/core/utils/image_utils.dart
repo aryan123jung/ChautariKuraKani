@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -17,7 +18,9 @@ class ImageUtils {
 
       return permanentPath;
     } catch (e) {
-      print('Error saving image permanently: $e');
+      if (kDebugMode) {
+        print('Error saving image permanently: $e');
+      }
       return null;
     }
   }

@@ -17,8 +17,6 @@
 
 //   @override
 //   Future<AuthHiveModel> getCurrentUser() {
-//     // TODO: implement getCurrentUser
-//     throw UnimplementedError();
 //   }
 
 //   @override
@@ -113,7 +111,8 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
   @override
   Future<AuthHiveModel?> login(String email, String password) async {
     try {
-      final user = await _hiveService.login(email, password);
+      // final user = await _hiveService.login(email, password);
+      final user = _hiveService.login(email, password);
       if (user != null && user.authId != null) {
         // Save user session to sharedpreffs
         await _userSessionService.saveUserSession(

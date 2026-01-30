@@ -22,7 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void dispose() {
@@ -71,9 +71,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           previous?.status != AuthStatus.authenticated) {
         SnackbarUtils.showSuccess(context, 'Login successful');
 
-        Future.microtask(() {
-          AppRoutes.pushReplacement(context, DashboardScreen());
-        });
+        // Future.microtask(() {
+        //   AppRoutes.pushReplacement(context, DashboardScreen());
+        // });
+        if (!mounted) return;
+        AppRoutes.pushReplacement(context, DashboardScreen());
       }
 
       if (next.status == AuthStatus.error && next.errorMessage != null) {

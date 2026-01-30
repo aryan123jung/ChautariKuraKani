@@ -244,22 +244,20 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
             Positioned(
               top: 10,
               left: 10,
-              child: Container(
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.black,
-                    size: 26,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ForgetPasswordScreen(),
-                      ),
-                    );
-                  },
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.black,
+                  size: 26,
                 ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ForgetPasswordScreen(),
+                    ),
+                  );
+                },
               ),
             ),
           ],

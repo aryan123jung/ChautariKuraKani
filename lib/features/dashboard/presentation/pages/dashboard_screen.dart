@@ -515,14 +515,14 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
             borderRadius: BorderRadius.circular(40),
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.18),
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha: 0.18),
+                Colors.white.withValues(alpha: 0.05),
               ],
             ),
             border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
@@ -543,8 +543,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
                     borderRadius: BorderRadius.circular(30),
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withOpacity(0.35),
-                        Colors.white.withOpacity(0.15),
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.white.withValues(alpha: 0.15),
                       ],
                     ),
                   ),

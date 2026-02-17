@@ -1,21 +1,20 @@
-import 'package:flutter/material.dart';
 import 'package:chautari_kurakani/features/dashboard/data/models/post_model.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/widgets/post_card_widget.dart';
+import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
+import 'package:flutter/material.dart';
 
-class FriendsFeedScreen extends StatelessWidget {
-  const FriendsFeedScreen({super.key});
+class FeedScreen extends StatelessWidget {
+  const FeedScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     final List<PostModel> posts = [
       PostModel(
         profileUrl: "https://randomuser.me/api/portraits/men/1.jpg",
-        name: "Shyam Khadka",
+        name: "Hari Lama",
         hoursAgo: "2h",
         caption: "My first dog.",
         imageUrl:
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Cute_dog.jpg/2560px-Cute_dog.jpg",
+            "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L25zODIzMC1pbWFnZS5qcGc.jpg",
       ),
       PostModel(
         profileUrl: "https://randomuser.me/api/portraits/women/2.jpg",
@@ -36,6 +35,7 @@ class FriendsFeedScreen extends StatelessWidget {
       itemCount: posts.length,
       itemBuilder: (context, index) {
         return PostCard(post: posts[index]);
-      });
+      },
+    );
   }
 }

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:chautari_kurakani/features/auth/domain/usecases/forgot_password_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/get_current_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/register_usecase.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/upload_cover_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/upload_profile_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -20,6 +22,8 @@ class AuthViewModel extends Notifier<AuthState> {
   late final GetCurrentUserUsecase _getCurrentUserUsecase;
   late final UploadProfileImageUsecase _uploadProfileImageUsecase;
   late final UploadCoverImageUsecase _uploadCoverImageUsecase;
+  late final ForgotPasswordUsecase _forgotPasswordUsecase;
+  late final ResetPasswordUsecase _resetPasswordUsecase;
 
   @override
   AuthState build() {
@@ -29,6 +33,9 @@ class AuthViewModel extends Notifier<AuthState> {
     _getCurrentUserUsecase = ref.read(getCurrentUserUsecaseProvider);
     _uploadProfileImageUsecase = ref.read(uploadProfileImageUsecaseProvider);
     _uploadCoverImageUsecase = ref.read(uploadCoverImageUsecaseProvider);
+    _forgotPasswordUsecase = ref.read(forgotPasswordUsecaseProvider);
+    _resetPasswordUsecase = ref.read(resetPasswordUsecaseProvider);
+
     return const AuthState(status: AuthStatus.checking);
   }
 
@@ -167,6 +174,48 @@ class AuthViewModel extends Notifier<AuthState> {
           status: AuthStatus.loaded,
           uploadCoverPhotoName: imageName,
         );
+      },
+    );
+  }
+
+  Future<void> sendResetEmail(String email) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _forgotPasswordUsecase(email);
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (_) {
+        state = state.copyWith(status: AuthStatus.passwordResetEmailSent);
+      },
+    );
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _resetPasswordUsecase(
+      token: token,
+      newPassword: newPassword,
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (_) {
+        state = state.copyWith(status: AuthStatus.passwordResetSuccess);
       },
     );
   }

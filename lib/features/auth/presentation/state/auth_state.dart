@@ -1,19 +1,20 @@
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:equatable/equatable.dart';
 
-
 enum AuthStatus {
   initial,
-  checking, 
-  loading, 
+  checking,
+  loading,
   authenticated,
   unauthenticated,
   registered,
   error,
   loaded,
-  currentUserLoaded, success,
+  currentUserLoaded,
+  success,
+  passwordResetSuccess,
+  passwordResetEmailSent,
 }
-
 
 class AuthState extends Equatable {
   final AuthStatus status;
@@ -30,7 +31,6 @@ class AuthState extends Equatable {
     this.uploadProfilePhotoName,
     this.uploadCoverPhotoName,
   });
-
 
   const AuthState.initial(
     this.uploadProfilePhotoName,

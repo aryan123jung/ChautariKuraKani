@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "5Y972X4DJ8.com.aryan.batch35dflutter.chautariKurakani",
+        "paths": ["/reset-password/*", "/reset-password"]
+      }
+    ]
+  }
+}

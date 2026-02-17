@@ -56,6 +56,7 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   mocktail: ^1.0.4
   network_image_mock: ^2.1.1
+  uni_links: ^0.5.1
 
 
 

@@ -6,7 +6,7 @@ class ApiEndpoints {
   ApiEndpoints._();
   static const int port = 6060;
 
-  static const String computerIpAddress = "192.168.1.66";
+  static const String computerIpAddress = "192.168.1.86";
 
   // static String get baseUrl {
   //   if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
@@ -40,7 +40,8 @@ class ApiEndpoints {
 
     // iOS Simulator
     if (Platform.isIOS) {
-      return "http://localhost:$port/api";
+      // return "http://localhost:$port/api";
+      return "http://$computerIpAddress:$port/api";
     }
 
     // Physical device fallback
@@ -84,6 +85,11 @@ class ApiEndpoints {
   static const String authRegister = '/auth/register';
   static const String whoAmI = '/auth/whoami';
   static String getCurrentUserById(String userId) => '/auth/user/$userId';
+
+  static const String sendResetPasswordEmail =
+      "/auth/send-reset-password-email";
+
+  static String resetPassword(String token) => "/auth/reset-password/$token";
 
   // Profile picture upload
   static const String updateProfileImage = '/auth/update-profile';

@@ -181,4 +181,25 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 
     return coverUrl;
   }
+
+  @override
+  Future<void> sendResetPasswordEmail(String email) async {
+    await _apiClient.post(
+      ApiEndpoints.sendResetPasswordEmail,
+      data: {
+        "email": email,
+        "platform": "mobile",
+        "resetUrl": "chautari://reset-password",
+      },
+    );
+  }
+
+  @override
+  Future<void> resetPassword(String token, String newPassword) async {
+    await _apiClient.post(
+      ApiEndpoints.resetPassword(token),
+      data: {"newPassword": newPassword},
+    );
+  }
+
 }

@@ -1,7 +1,7 @@
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/home_screen/chautari_screen.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/home_screen/feed_screen.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/home_screen/friend_feed_screen.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/home_screen/notification_screen.dart';
+import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/chautari_screen.dart';
+import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/feed_screen.dart';
+import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/friend_feed_screen.dart';
+import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/notification_screen.dart';
 import 'package:flutter/material.dart';
 
 

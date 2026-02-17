@@ -1,5 +1,5 @@
 import 'package:chautari_kurakani/features/dashboard/data/models/chautari_model.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/widgets/chautari_card_widget.dart';
+import 'package:chautari_kurakani/features/home/presentation/widgets/chautari_card_widget.dart';
 import 'package:flutter/material.dart';
 
 class ChautariScreen extends StatelessWidget {

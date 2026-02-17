@@ -1,5 +1,6 @@
 import 'package:chautari_kurakani/core/routes/app_routes.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
+import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/dashboard/presentation/pages/dashboard_screen.dart';
@@ -50,7 +51,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleForgotPassword() {
-    SnackbarUtils.showInfo(context, 'Forgot password feature coming soon');
+    // SnackbarUtils.showInfo(context, 'Forgot password feature coming soon');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ForgetPasswordScreen()),
+    );
   }
 
   @override

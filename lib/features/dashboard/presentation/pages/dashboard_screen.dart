@@ -519,7 +519,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
                 Colors.white.withOpacity(0.05),
               ],
             ),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),

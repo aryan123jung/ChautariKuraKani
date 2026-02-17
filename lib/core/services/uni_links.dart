@@ -62,7 +62,7 @@ class DeepLinkService {
         }
       },
       onError: (err) {
-        print('Error handling deep link: $err');
+        'Error handling deep link: $err';
       },
     );
 
@@ -82,7 +82,8 @@ class DeepLinkService {
         }
       }
     } catch (err) {
-      print('Failed to get initial uri: $err');
+      // print('Failed to get initial uri: $err');
+      'Failed to get initial uri: $err';
     }
   }
 

@@ -263,6 +263,7 @@
 //     );
 //   }
 // }
+import 'package:chautari_kurakani/common/my_snackbar.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
@@ -305,7 +306,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 26,
                           spreadRadius: 1,
                           offset: const Offset(0, 4),
@@ -329,7 +330,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 15,
                           offset: const Offset(2, 3),
                         ),
@@ -363,7 +364,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 12,
                             spreadRadius: 2,
                             offset: const Offset(0, 2),
@@ -443,10 +444,16 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Password reset link sent to your email.",
-                                            ),
+                                          // const SnackBar(
+                                          //   content: Text(
+                                          //     "Password reset link sent to your email.",
+                                          //   ),
+                                          // ),
+                                          showMySnackBar(
+                                            context: context,
+                                            color: Colors.blueGrey,
+                                            message:
+                                                "Password reset link sent to your email.",
                                           ),
                                         );
                                       } else if (state.status ==

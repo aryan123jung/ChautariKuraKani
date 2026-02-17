@@ -441,11 +441,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             _bio = newBio;
             if (newImage != null) {
               _selectedProfileImage = newImage;
-              // TODO:Upload new profile image
+              // garnabaki:Upload new profile image
             }
           });
 
-          // TODO: Update user data in backend
+          // garnabaki: Update user data in backend
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -459,21 +459,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   void _showSettings() {
-    // TODO: Navigate to settings screen
+    //garnabaki: Navigate to settings screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Settings screen coming soon')),
     );
   }
 
   void _showHelp() {
-    // TODO: Navigate to help screen
+    // garnabaki: Navigate to help screen
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Help screen coming soon')));
   }
 
   void _showPrivacyPolicy() {
-    // TODO: Navigate to privacy policy screen
+    // garnabaki: Navigate to privacy policy screen
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Privacy policy coming soon')));

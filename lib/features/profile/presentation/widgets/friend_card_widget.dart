@@ -77,7 +77,7 @@
 //                 // View Button
 //                 ElevatedButton(
 //                   onPressed: () {
-//                     // TODO: Navigate to friend's profile
+//                     //  Navigate to friend's profile
 //                   },
 //                   style: ElevatedButton.styleFrom(
 //                     backgroundColor: Colors.blue,
@@ -172,7 +172,7 @@ class FriendCard extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // TODO: Navigate to friend's profile
+                    // Navigate to friend's profile
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

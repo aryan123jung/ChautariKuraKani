@@ -1,4 +1,5 @@
 import 'package:chautari_kurakani/features/addPost/data/post_remote_service.dart';
+import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/dashboard/data/models/post_model.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider);
+    final currentUserId = authState.authEntity?.authId;
+    final currentUserProfile = authState.authEntity?.profilePicture;
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -92,7 +97,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       onRefresh: _loadPosts,
       child: ListView.builder(
         itemCount: _posts.length,
-        itemBuilder: (context, index) => PostCard(post: _posts[index]),
+        itemBuilder: (context, index) => PostCard(
+          post: _posts[index],
+          currentUserId: currentUserId,
+          currentUserProfileUrl: currentUserProfile,
+        ),
       ),
     );
   }

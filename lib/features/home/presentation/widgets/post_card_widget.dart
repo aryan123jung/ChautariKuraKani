@@ -1,4 +1,5 @@
 import 'package:chautari_kurakani/features/addPost/data/post_remote_service.dart';
+import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/features/dashboard/data/models/post_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +7,15 @@ import 'package:video_player/video_player.dart';
 
 class PostCard extends ConsumerStatefulWidget {
   final PostModel post;
+  final String? currentUserId;
+  final String? currentUserProfileUrl;
 
-  const PostCard({super.key, required this.post});
+  const PostCard({
+    super.key,
+    required this.post,
+    this.currentUserId,
+    this.currentUserProfileUrl,
+  });
 
   @override
   ConsumerState<PostCard> createState() => _PostCardState();
@@ -151,6 +159,19 @@ class _PostCardState extends ConsumerState<PostCard> {
     double timeFont = isTablet ? 14 : 12;
     double avatarRadius = isTablet ? 36 : 28;
 
+    final bool isMyPost =
+        widget.currentUserId != null &&
+        widget.currentUserId!.isNotEmpty &&
+        widget.post.authorId == widget.currentUserId;
+
+    final String? fallbackProfileUrl = isMyPost
+        ? _resolveProfileInput(widget.currentUserProfileUrl)
+        : null;
+
+    final String displayProfileUrl = widget.post.profileUrl.isNotEmpty
+        ? widget.post.profileUrl
+        : (fallbackProfileUrl ?? '');
+
     return Center(
       child: SizedBox(
         width: cardWidth,
@@ -169,14 +190,24 @@ class _PostCardState extends ConsumerState<PostCard> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: avatarRadius,
-                      backgroundImage: widget.post.profileUrl.isNotEmpty
-                          ? NetworkImage(widget.post.profileUrl)
-                          : null,
-                      child: widget.post.profileUrl.isEmpty
-                          ? const Icon(Icons.person)
-                          : null,
+                    SizedBox(
+                      height: avatarRadius * 2,
+                      width: avatarRadius * 2,
+                      child: ClipOval(
+                        child: displayProfileUrl.isNotEmpty
+                            ? Image.network(
+                                displayProfileUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: Colors.grey.shade300,
+                                  child: const Icon(Icons.person),
+                                ),
+                              )
+                            : Container(
+                                color: Colors.grey.shade300,
+                                child: const Icon(Icons.person),
+                              ),
+                      ),
                     ),
                     SizedBox(width: isTablet ? 16 : 12),
                     Column(
@@ -266,6 +297,16 @@ class _PostCardState extends ConsumerState<PostCard> {
         ),
       ),
     );
+  }
+
+  String? _resolveProfileInput(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final value = raw.trim();
+    if (value.startsWith('http')) return value;
+    if (value.contains('/') || value.contains('\\')) {
+      return ApiEndpoints.uploadUrl(value);
+    }
+    return ApiEndpoints.profileImageUrl(value);
   }
 }
 

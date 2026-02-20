@@ -48,34 +48,54 @@ class ApiEndpoints {
     return "http://$computerIpAddress:$port/api";
   }
 
+  static String get uploadBaseUrl {
+    if (kIsWeb) {
+      return "http://localhost:$port";
+    }
+    if (Platform.isAndroid) {
+      return "http://10.0.2.2:$port";
+    }
+    if (Platform.isIOS) {
+      return "http://localhost:$port";
+    }
+    return "http://$computerIpAddress:$port";
+  }
+
+  static String uploadUrl(String relativePath) {
+    if (relativePath.startsWith('http')) return relativePath;
+    final normalized = relativePath.replaceAll('\\', '/').trim();
+    final cleaned = normalized.startsWith('/')
+        ? normalized.substring(1)
+        : normalized;
+    return "$uploadBaseUrl/$cleaned";
+  }
+
   /// Profile image URL
   static String profileImageUrl(String fileName) {
     if (fileName.startsWith('http')) return fileName;
+    if (fileName.contains('/') || fileName.contains('\\')) {
+      return uploadUrl(fileName);
+    }
 
     // if (isPhysicalDevice) {
     //   return "http://$computerIpAddress:$port/uploads/profile/$fileName";
     // }
 
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:$port/uploads/profile/$fileName";
-    }
-
-    return "http://localhost:$port/uploads/profile/$fileName";
+    return uploadUrl("uploads/profile/$fileName");
   }
 
   /// Cover image URL
   static String coverImageUrl(String fileName) {
     if (fileName.startsWith('http')) return fileName;
+    if (fileName.contains('/') || fileName.contains('\\')) {
+      return uploadUrl(fileName);
+    }
 
     // if (isPhysicalDevice) {
     //   return "http://$computerIpAddress:$port/uploads/cover/$fileName";
     // }
 
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:$port/uploads/cover/$fileName";
-    }
-
-    return "http://localhost:$port/uploads/cover/$fileName";
+    return uploadUrl("uploads/cover/$fileName");
   }
 
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -104,13 +124,11 @@ class ApiEndpoints {
 
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;
-
-    final String folder = mediaType == 'video' ? 'videos' : 'images';
-
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:$port/uploads/posts/$folder/$fileName";
+    if (fileName.contains('/') || fileName.contains('\\')) {
+      return uploadUrl(fileName);
     }
 
-    return "http://localhost:$port/uploads/posts/$folder/$fileName";
+    final String folder = mediaType == 'video' ? 'videos' : 'images';
+    return uploadUrl("uploads/posts/$folder/$fileName");
   }
 }

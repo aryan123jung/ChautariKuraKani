@@ -963,7 +963,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         padding: const EdgeInsets.all(8),
                         itemCount: _userPosts.length,
                         itemBuilder: (context, index) {
-                          return PostCard(post: _userPosts[index]);
+                          return PostCard(
+                            post: _userPosts[index],
+                            currentUserId: widget.userEntity.authId,
+                            currentUserProfileUrl:
+                                widget.userEntity.profilePicture,
+                          );
                         },
                       ),
               ),

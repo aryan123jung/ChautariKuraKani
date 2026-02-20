@@ -40,15 +40,21 @@ class PostModel {
     final String firstName = hasAuthorMap
         ? (author['firstName']?.toString() ?? '')
         : '';
-    final String lastName = hasAuthorMap ? (author['lastName']?.toString() ?? '') : '';
+    final String lastName = hasAuthorMap
+        ? (author['lastName']?.toString() ?? '')
+        : '';
 
-    final String displayName = [firstName, lastName]
-        .where((part) => part.trim().isNotEmpty)
-        .join(' ')
-        .trim();
+    final String displayName = [
+      firstName,
+      lastName,
+    ].where((part) => part.trim().isNotEmpty).join(' ').trim();
 
     final String rawProfile = hasAuthorMap
-        ? (author['profileImage']?.toString() ?? '')
+        ? ((author['profileImage'] ??
+                      author['profileUrl'] ??
+                      author['profilePicture'])
+                  ?.toString() ??
+              '')
         : '';
 
     final String mediaType = json['mediaType']?.toString() ?? '';
@@ -73,9 +79,7 @@ class PostModel {
     return PostModel(
       id: json['_id']?.toString() ?? '',
       authorId: rawAuthorId,
-      profileUrl: rawProfile.isNotEmpty
-          ? ApiEndpoints.profileImageUrl(rawProfile)
-          : '',
+      profileUrl: rawProfile.isNotEmpty ? _resolveProfileUrl(rawProfile) : '',
       name: displayName.isNotEmpty ? displayName : 'Unknown User',
       hoursAgo: _formatRelativeTime(createdAt),
       caption: json['caption']?.toString() ?? '',
@@ -96,6 +100,12 @@ class PostModel {
     if (difference.inHours < 24) return '${difference.inHours}h';
     if (difference.inDays < 7) return '${difference.inDays}d';
     return '${(difference.inDays / 7).floor()}w';
+  }
+
+  static String _resolveProfileUrl(String rawProfile) {
+    if (rawProfile.startsWith('http')) return rawProfile;
+    if (rawProfile.contains('/')) return ApiEndpoints.uploadUrl(rawProfile);
+    return ApiEndpoints.profileImageUrl(rawProfile);
   }
 }
 

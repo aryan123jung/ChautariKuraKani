@@ -45,14 +45,15 @@
 //   }
 // }
 import 'dart:async';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 
 class DeepLinkService {
+  final AppLinks _appLinks = AppLinks();
   StreamSubscription? _sub;
 
   void init(void Function(String token) onResetPasswordLink) {
     // App is running and receives a link
-    _sub = uriLinkStream.listen(
+    _sub = _appLinks.uriLinkStream.listen(
       (Uri? uri) {
         if (uri != null && _isResetPasswordLink(uri)) {
           final token = uri.queryParameters['token'];
@@ -74,7 +75,7 @@ class DeepLinkService {
     void Function(String token) onResetPasswordLink,
   ) async {
     try {
-      final initialUri = await getInitialUri();
+      final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null && _isResetPasswordLink(initialUri)) {
         final token = initialUri.queryParameters['token'];
         if (token != null && token.isNotEmpty) {

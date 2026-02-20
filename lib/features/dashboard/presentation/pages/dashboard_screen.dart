@@ -375,7 +375,7 @@ import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/add_post_screen.dart';
+import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/chatbot_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/home_screen.dart';
 import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/message_screen.dart';
@@ -510,7 +510,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
         filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
           width: width,
-          height: 75,
+          height: 65,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(40),
             gradient: LinearGradient(

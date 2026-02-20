@@ -40,8 +40,8 @@ class ApiEndpoints {
 
     // iOS Simulator
     if (Platform.isIOS) {
-      // return "http://localhost:$port/api";
-      return "http://$computerIpAddress:$port/api";
+      return "http://localhost:$port/api";
+      // return "http://$computerIpAddress:$port/api";
     }
 
     // Physical device fallback
@@ -96,4 +96,21 @@ class ApiEndpoints {
 
   // Cover picture upload
   static const String updateCoverImage = '/auth/update-cover';
+
+  // Posts
+  static const String posts = '/post';
+  static String likePost(String id) => '/post/$id/like';
+  static String postComments(String id) => '/post/$id/comments';
+
+  static String postMediaUrl(String fileName, String mediaType) {
+    if (fileName.startsWith('http')) return fileName;
+
+    final String folder = mediaType == 'video' ? 'videos' : 'images';
+
+    if (Platform.isAndroid) {
+      return "http://10.0.2.2:$port/uploads/posts/$folder/$fileName";
+    }
+
+    return "http://localhost:$port/uploads/posts/$folder/$fileName";
+  }
 }

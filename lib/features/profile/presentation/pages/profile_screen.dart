@@ -247,7 +247,9 @@ import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:chautari_kurakani/features/addPost/data/post_remote_service.dart';
 import 'package:chautari_kurakani/features/dashboard/data/models/post_model.dart';
+import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
@@ -280,6 +282,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool _isAppBarVisible = false;
   double _lastScrollOffset = 0;
   bool _isScrollingDown = false;
+  List<PostModel> _userPosts = [];
+  bool _isLoadingPosts = true;
 
   @override
   void initState() {
@@ -288,6 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _bio = widget.userEntity.bio ?? 'No bio yet';
     _tabController = TabController(length: 2, vsync: this);
     _scrollController.addListener(_onScroll);
+    _loadUserPosts();
   }
 
   @override
@@ -491,10 +496,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Future<void> _onRefresh() async {
-    // Add your refresh logic here
-    // For example, fetch updated user data, posts, friends, etc.
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {});
+    await _loadUserPosts();
+  }
+
+  Future<void> _loadUserPosts() async {
+    final userId = widget.userEntity.authId;
+    if (userId == null || userId.isEmpty) {
+      setState(() {
+        _userPosts = [];
+        _isLoadingPosts = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingPosts = true;
+    });
+
+    try {
+      final posts = await ref
+          .read(postRemoteServiceProvider)
+          .getMyPosts(authId: userId);
+      if (!mounted) return;
+      setState(() {
+        _userPosts = posts;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _userPosts = [];
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingPosts = false;
+      });
+    }
   }
 
   @override
@@ -514,27 +551,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (authState.status == AuthStatus.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
-    // Sample user posts - replace with actual data from your backend
-    List<PostModel> _userPosts = [
-      PostModel(
-        name: _fullName,
-        profileUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
-        hoursAgo: '2 hours ago',
-        caption: 'This is my first post on my profile! 🎉',
-        imageUrl:
-            'https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L25zODIzMC1pbWFnZS5qcGc.jpg',
-        isPoll: false,
-      ),
-      PostModel(
-        name: _fullName,
-        profileUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
-        hoursAgo: '5 hours ago',
-        caption: 'Just finished this amazing project!',
-        imageUrl: null,
-        isPoll: true,
-      ),
-    ];
 
     // Sample friends list - replace with actual data
     final List<Map<String, String>> _friends = [
@@ -682,7 +698,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha:0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 10,
                                     offset: const Offset(0, 5),
                                   ),
@@ -769,6 +785,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               ),
                             ),
                           ),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const AddPostScreen(popOnSuccess: true),
+                                ),
+                              );
+                              if (result == true) {
+                                await _loadUserPosts();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0XFF76C05D),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text("Add Post"),
+                          ),
+                          const SizedBox(width: 6),
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: _showEditProfile,
@@ -881,7 +924,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               // Posts Tab
               RefreshIndicator(
                 onRefresh: _onRefresh,
-                child: _userPosts.isEmpty
+                child: _isLoadingPosts
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 120),
+                          Center(child: CircularProgressIndicator()),
+                        ],
+                      )
+                    : _userPosts.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [

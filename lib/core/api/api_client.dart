@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Provider for ApiClient
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -156,7 +157,8 @@ class _AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     if (!_isPublicEndpoint(options.path)) {
-      final token = await _storage.read(key: _tokenKey);
+      String? token = await _storage.read(key: _tokenKey);
+      token ??= (await SharedPreferences.getInstance()).getString(_tokenKey);
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
@@ -169,6 +171,7 @@ class _AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
       _storage.delete(key: _tokenKey);
+      SharedPreferences.getInstance().then((prefs) => prefs.remove(_tokenKey));
     }
     handler.next(err);
   }

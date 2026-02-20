@@ -146,7 +146,6 @@ class _PostCardState extends ConsumerState<PostCard> {
         : screenWidth * 1;
 
     double cardPadding = isTablet ? 16 : 10;
-    double imageHeight = isTablet ? 400 : 300;
     double nameFont = isTablet ? 20 : 16.5;
     double captionFont = isTablet ? 18 : 15;
     double timeFont = isTablet ? 14 : 12;
@@ -223,15 +222,25 @@ class _PostCardState extends ConsumerState<PostCard> {
                 if (widget.post.imageUrl != null)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
-                    child: Image.network(
-                      widget.post.imageUrl!,
-                      height: imageHeight,
+                    child: Container(
                       width: double.infinity,
-                      fit: BoxFit.cover,
+                      color: Colors.black,
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.72,
+                      ),
+                      child: Image.network(
+                        widget.post.imageUrl!,
+                        width: double.infinity,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const SizedBox(
+                          height: 220,
+                          child: Center(child: Text('Failed to load image')),
+                        ),
+                      ),
                     ),
                   ),
                 if (widget.post.videoUrl != null)
-                  _PostVideoPlayer(url: widget.post.videoUrl!, height: imageHeight),
+                  _PostVideoPlayer(url: widget.post.videoUrl!),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -262,9 +271,8 @@ class _PostCardState extends ConsumerState<PostCard> {
 
 class _PostVideoPlayer extends StatefulWidget {
   final String url;
-  final double height;
 
-  const _PostVideoPlayer({required this.url, required this.height});
+  const _PostVideoPlayer({required this.url});
 
   @override
   State<_PostVideoPlayer> createState() => _PostVideoPlayerState();
@@ -305,53 +313,64 @@ class _PostVideoPlayerState extends State<_PostVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.72;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
         width: double.infinity,
-        height: widget.height,
         color: Colors.black,
         child: !_isReady
-            ? const Center(child: CircularProgressIndicator())
-            : Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox.expand(
-                    child: FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: _controller.value.size.width,
-                        height: _controller.value.size.height,
-                        child: VideoPlayer(_controller),
+            ? const SizedBox(
+                height: 220,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: AspectRatio(
+                  aspectRatio: _controller.value.aspectRatio == 0
+                      ? 9 / 16
+                      : _controller.value.aspectRatio,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox.expand(
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: SizedBox(
+                            width: _controller.value.size.width,
+                            height: _controller.value.size.height,
+                            child: VideoPlayer(_controller),
+                          ),
+                        ),
                       ),
-                    ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (_controller.value.isPlaying) {
+                              _controller.pause();
+                            } else {
+                              _controller.play();
+                            }
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black45,
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          padding: const EdgeInsets.all(10),
+                          child: Icon(
+                            _controller.value.isPlaying
+                                ? Icons.pause
+                                : Icons.play_arrow,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (_controller.value.isPlaying) {
-                          _controller.pause();
-                        } else {
-                          _controller.play();
-                        }
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black45,
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      child: Icon(
-                        _controller.value.isPlaying
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
       ),
     );

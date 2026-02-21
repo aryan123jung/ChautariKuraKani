@@ -226,26 +226,7 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
                   validator: (_) => null,
                 ),
                 const SizedBox(height: 14),
-                // DropdownButtonFormField<String>(
-                //   value: _visibility,
-                //   decoration: InputDecoration(
-                //     labelText: "Visibility",
-                //     border: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //     ),
-                //   ),
-                //   items: const [
-                //     DropdownMenuItem(value: "Public", child: Text("Public")),
-                //     DropdownMenuItem(value: "Friends", child: Text("Friends")),
-                //     DropdownMenuItem(value: "Private", child: Text("Private")),
-                //   ],
-                //   onChanged: (value) {
-                //     if (value == null) return;
-                //     setState(() {
-                //       _visibility = value;
-                //     });
-                //   },
-                // ),
+
                 const SizedBox(height: 20),
                 Row(
                   children: [

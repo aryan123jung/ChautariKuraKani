@@ -242,16 +242,17 @@
 import 'dart:io';
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/core/routes/app_routes.dart';
+import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
-import 'package:chautari_kurakani/features/addPost/data/post_remote_service.dart';
-import 'package:chautari_kurakani/features/dashboard/data/models/post_model.dart';
 import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
+import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
+import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/side_nav_widget.dart';
 import 'package:flutter/material.dart';
@@ -260,7 +261,12 @@ import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final AuthEntity userEntity;
-  const ProfileScreen({super.key, required this.userEntity});
+  final int refreshTick;
+  const ProfileScreen({
+    super.key,
+    required this.userEntity,
+    this.refreshTick = 0,
+  });
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -282,7 +288,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool _isAppBarVisible = false;
   double _lastScrollOffset = 0;
   bool _isScrollingDown = false;
-  List<PostModel> _userPosts = [];
+  List<PostEntity> _userPosts = [];
   bool _isLoadingPosts = true;
 
   @override
@@ -293,6 +299,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _tabController = TabController(length: 2, vsync: this);
     _scrollController.addListener(_onScroll);
     _loadUserPosts();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final oldUserId = oldWidget.userEntity.authId ?? '';
+    final newUserId = widget.userEntity.authId ?? '';
+    final userChanged =
+        oldWidget.userEntity.email != widget.userEntity.email ||
+        oldWidget.userEntity.username != widget.userEntity.username;
+
+    if (oldUserId != newUserId ||
+        userChanged ||
+        oldWidget.refreshTick != widget.refreshTick) {
+      _fullName = '${widget.userEntity.fName} ${widget.userEntity.lName}';
+      _bio = widget.userEntity.bio ?? 'No bio yet';
+      _loadUserPosts();
+    }
   }
 
   @override
@@ -500,37 +525,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Future<void> _loadUserPosts() async {
-    final userId = widget.userEntity.authId;
-    if (userId == null || userId.isEmpty) {
-      setState(() {
-        _userPosts = [];
-        _isLoadingPosts = false;
-      });
-      return;
-    }
+    final candidateUserIds = await _waitForUserIdCandidates();
+    final normalizedCurrentName = _normalizeName(_fullName);
 
     setState(() {
       _isLoadingPosts = true;
     });
 
     try {
-      final posts = await ref
-          .read(postRemoteServiceProvider)
-          .getMyPosts(authId: userId);
+      await ref.read(postViewModelProvider.notifier).fetchPosts();
+      final allPosts = ref.read(postViewModelProvider).posts;
+      final posts = allPosts
+          .where(
+            (post) =>
+                candidateUserIds.contains(_normalizeId(post.authorId)) ||
+                (normalizedCurrentName.isNotEmpty &&
+                    _normalizeName(post.name) == normalizedCurrentName),
+          )
+          .toList();
       if (!mounted) return;
       setState(() {
         _userPosts = posts;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _userPosts = [];
-      });
+      setState(() {});
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isLoadingPosts = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingPosts = false;
+        });
+      }
     }
   }
 
@@ -540,6 +565,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      final previousId = previous?.authEntity?.authId;
+      final nextId = next.authEntity?.authId;
+      if (nextId != null && nextId.isNotEmpty && previousId != nextId) {
+        _loadUserPosts();
+      }
+
       if (next.status == AuthStatus.unauthenticated) {
         SnackbarUtils.showSuccess(context, "Logged out successfully");
         AppRoutes.pushReplacement(context, const LoginScreen());
@@ -553,7 +584,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
 
     // Sample friends list - replace with actual data
-    final List<Map<String, String>> _friends = [
+    final List<Map<String, String>> friends = [
       {
         'name': 'Friend 1',
         'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
@@ -890,7 +921,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatColumn('Posts', '${_userPosts.length}'),
-                      _buildStatColumn('Friends', '${_friends.length}'),
+                      _buildStatColumn('Friends', '${friends.length}'),
                       _buildStatColumn('Following', '345'),
                     ],
                   ),
@@ -965,9 +996,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         itemBuilder: (context, index) {
                           return PostCard(
                             post: _userPosts[index],
-                            currentUserId: widget.userEntity.authId,
+                            currentUserId:
+                                authState.authEntity?.authId ??
+                                widget.userEntity.authId,
                             currentUserProfileUrl:
                                 widget.userEntity.profilePicture,
+                            onPostChanged: _loadUserPosts,
                           );
                         },
                       ),
@@ -976,7 +1010,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               // Friends Tab
               RefreshIndicator(
                 onRefresh: _onRefresh,
-                child: _friends.isEmpty
+                child: friends.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [
@@ -1005,9 +1039,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     : ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(8),
-                        itemCount: _friends.length,
+                        itemCount: friends.length,
                         itemBuilder: (context, index) {
-                          return FriendCard(friend: _friends[index]);
+                          return FriendCard(friend: friends[index]);
                         },
                       ),
               ),
@@ -1030,6 +1064,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
       ],
     );
+  }
+
+  Set<String> _currentUserIdCandidates() {
+    final authId = ref.read(authViewModelProvider).authEntity?.authId;
+    final widgetId = widget.userEntity.authId;
+    final sessionId = ref.read(userSessionServiceProvider).getCurrentUserId();
+
+    return {
+      if (authId != null && authId.trim().isNotEmpty) _normalizeId(authId),
+      if (widgetId != null && widgetId.trim().isNotEmpty)
+        _normalizeId(widgetId),
+      if (sessionId != null && sessionId.trim().isNotEmpty)
+        _normalizeId(sessionId),
+    };
+  }
+
+  Future<Set<String>> _waitForUserIdCandidates() async {
+    var ids = _currentUserIdCandidates();
+    var retries = 0;
+
+    while (ids.isEmpty && retries < 8) {
+      await Future.delayed(const Duration(milliseconds: 150));
+      ids = _currentUserIdCandidates();
+      retries++;
+    }
+
+    return ids;
+  }
+
+  String _normalizeId(String id) => id.trim().toLowerCase();
+
+  String _normalizeName(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 }
 

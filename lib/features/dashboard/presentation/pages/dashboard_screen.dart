@@ -394,6 +394,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
   double _currentIndex = 0;
+  int _profileRefreshTick = 0;
 
   late final PageController _pageController;
 
@@ -422,7 +423,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       const SearchScreen(),
       const AddPostScreen(),
       const MessageScreen(),
-      ProfileScreen(userEntity: userEntity),
+      ProfileScreen(userEntity: userEntity, refreshTick: _profileRefreshTick),
     ];
   }
 
@@ -460,6 +461,9 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
                 setState(() {
                   _selectedIndex = index;
                   _currentIndex = index.toDouble();
+                  if (index == 4) {
+                    _profileRefreshTick++;
+                  }
                 });
               },
               children: screens,
@@ -584,6 +588,9 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
         setState(() {
           _selectedIndex = index;
           _currentIndex = index.toDouble();
+          if (index == 4) {
+            _profileRefreshTick++;
+          }
         });
       },
       child: AnimatedScale(

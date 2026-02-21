@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:chautari_kurakani/features/addPost/data/post_remote_service.dart';
+import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -73,26 +73,25 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
       _isPosting = true;
     });
 
-    try {
-      await ref
-          .read(postRemoteServiceProvider)
-          .createPost(caption: caption, mediaFile: _selectedMedia);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isPosting = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to create post: $e")));
-      return;
-    }
+    final isSuccess = await ref
+        .read(postViewModelProvider.notifier)
+        .createPost(caption: caption, mediaFile: _selectedMedia);
 
     if (!mounted) return;
 
     setState(() {
       _isPosting = false;
     });
+
+    if (!isSuccess) {
+      final message =
+          ref.read(postViewModelProvider).errorMessage ??
+          "Failed to create post.";
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
 
     ScaffoldMessenger.of(
       context,

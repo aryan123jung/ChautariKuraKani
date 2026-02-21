@@ -1,20 +1,25 @@
-import 'package:chautari_kurakani/features/addPost/data/post_remote_service.dart';
+import 'dart:io';
+
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
-import 'package:chautari_kurakani/features/dashboard/data/models/post_model.dart';
+import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
+import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
 class PostCard extends ConsumerStatefulWidget {
-  final PostModel post;
+  final PostEntity post;
   final String? currentUserId;
   final String? currentUserProfileUrl;
+  final Future<void> Function()? onPostChanged;
 
   const PostCard({
     super.key,
     required this.post,
     this.currentUserId,
     this.currentUserProfileUrl,
+    this.onPostChanged,
   });
 
   @override
@@ -26,6 +31,7 @@ class _PostCardState extends ConsumerState<PostCard> {
   late int _commentsCount;
   bool _isLiking = false;
   bool _hasLiked = false;
+  bool _isBusy = false;
 
   @override
   void initState() {
@@ -43,8 +49,15 @@ class _PostCardState extends ConsumerState<PostCard> {
 
     try {
       final updatedPost = await ref
-          .read(postRemoteServiceProvider)
+          .read(postViewModelProvider.notifier)
           .likePost(widget.post.id);
+
+      if (updatedPost == null) {
+        throw Exception(
+          ref.read(postViewModelProvider).errorMessage ?? 'Failed to like post',
+        );
+      }
+
       if (!mounted) return;
       setState(() {
         _likesCount = updatedPost.likesCount;
@@ -56,14 +69,25 @@ class _PostCardState extends ConsumerState<PostCard> {
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to like post: $e')));
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isLiking = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLiking = false;
+        });
+      }
     }
   }
 
   Future<void> _showCommentsModal() async {
+    final comments = await ref
+        .read(postViewModelProvider.notifier)
+        .fetchComments(widget.post.id);
+
+    if (!mounted) return;
+
+    setState(() {
+      _commentsCount = comments.length;
+    });
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -79,7 +103,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                   children: [
                     const Text(
                       'Comments',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const Spacer(),
                     IconButton(
@@ -89,45 +116,24 @@ class _PostCardState extends ConsumerState<PostCard> {
                   ],
                 ),
                 Expanded(
-                  child: FutureBuilder<List<PostComment>>(
-                    future: ref
-                        .read(postRemoteServiceProvider)
-                        .getComments(widget.post.id),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text('Failed to load comments: ${snapshot.error}'),
-                        );
-                      }
-
-                      final comments = snapshot.data ?? [];
-                      if (comments.isEmpty) {
-                        return const Center(child: Text('No comments yet.'));
-                      }
-
-                      _commentsCount = comments.length;
-
-                      return ListView.separated(
-                        itemCount: comments.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final comment = comments[index];
-                          return ListTile(
-                            leading: const CircleAvatar(
-                              child: Icon(Icons.person, size: 18),
-                            ),
-                            title: Text(comment.text),
-                            subtitle: Text(
-                              '${comment.userId} • ${comment.createdAtText}',
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                  child: comments.isEmpty
+                      ? const Center(child: Text('No comments yet.'))
+                      : ListView.separated(
+                          itemCount: comments.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final comment = comments[index];
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                child: Icon(Icons.person, size: 18),
+                              ),
+                              title: Text(comment.text),
+                              subtitle: Text(
+                                '${comment.userId} • ${comment.createdAtText}',
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -135,40 +141,253 @@ class _PostCardState extends ConsumerState<PostCard> {
         );
       },
     );
+  }
 
-    if (!mounted) return;
-    setState(() {});
+  Future<void> _deletePost() async {
+    if (_isBusy) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    setState(() => _isBusy = true);
+    try {
+      final isDeleted = await ref
+          .read(postViewModelProvider.notifier)
+          .deletePost(widget.post.id);
+
+      if (!isDeleted) {
+        throw Exception(
+          ref.read(postViewModelProvider).errorMessage ??
+              'Failed to delete post',
+        );
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Post deleted')));
+      await widget.onPostChanged?.call();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete post: $e')));
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  Future<void> _showEditPostModal() async {
+    final captionController = TextEditingController(text: widget.post.caption);
+    final imagePicker = ImagePicker();
+    File? selectedMedia;
+    String? selectedMediaType;
+
+    Future<void> pickImage(StateSetter setModalState) async {
+      final XFile? picked = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1500,
+      );
+      if (picked == null) return;
+      setModalState(() {
+        selectedMedia = File(picked.path);
+        selectedMediaType = 'image';
+      });
+    }
+
+    Future<void> pickVideo(StateSetter setModalState) async {
+      final XFile? picked = await imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 2),
+      );
+      if (picked == null) return;
+      setModalState(() {
+        selectedMedia = File(picked.path);
+        selectedMediaType = 'video';
+      });
+    }
+
+    final shouldSave = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Edit Post',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: captionController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: 'Caption',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => pickImage(setModalState),
+                            icon: const Icon(Icons.image_outlined),
+                            label: const Text('Image'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => pickVideo(setModalState),
+                            icon: const Icon(Icons.video_library_outlined),
+                            label: const Text('Video'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (selectedMedia != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        selectedMediaType == 'video'
+                            ? 'New video selected'
+                            : 'New image selected',
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Save'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) return;
+
+    final updatedCaption = captionController.text.trim();
+
+    if (updatedCaption.isEmpty && selectedMedia == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Post must contain either caption or media'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isBusy = true);
+    try {
+      final updated = await ref
+          .read(postViewModelProvider.notifier)
+          .updatePost(
+            postId: widget.post.id,
+            caption: updatedCaption,
+            mediaFile: selectedMedia,
+          );
+
+      if (updated == null) {
+        throw Exception(
+          ref.read(postViewModelProvider).errorMessage ??
+              'Failed to update post',
+        );
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Post updated')));
+      await widget.onPostChanged?.call();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update post: $e')));
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    Orientation orientation = MediaQuery.of(context).orientation;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final orientation = MediaQuery.of(context).orientation;
 
-    bool isTablet = screenWidth > 600;
+    final isTablet = screenWidth > 600;
 
-    double cardWidth = isTablet
+    final cardWidth = isTablet
         ? (orientation == Orientation.landscape
               ? screenWidth * 0.5
               : screenWidth * 0.6)
-        : screenWidth * 1;
+        : screenWidth;
 
-    double cardPadding = isTablet ? 16 : 10;
-    double nameFont = isTablet ? 20 : 16.5;
-    double captionFont = isTablet ? 18 : 15;
-    double timeFont = isTablet ? 14 : 12;
-    double avatarRadius = isTablet ? 36 : 28;
+    final cardPadding = isTablet ? 16.0 : 10.0;
+    final nameFont = isTablet ? 20.0 : 16.5;
+    final captionFont = isTablet ? 18.0 : 15.0;
+    final timeFont = isTablet ? 14.0 : 12.0;
+    final avatarRadius = isTablet ? 36.0 : 28.0;
 
-    final bool isMyPost =
+    final isMyPost =
         widget.currentUserId != null &&
         widget.currentUserId!.isNotEmpty &&
         widget.post.authorId == widget.currentUserId;
 
-    final String? fallbackProfileUrl = isMyPost
+    final fallbackProfileUrl = isMyPost
         ? _resolveProfileInput(widget.currentUserProfileUrl)
         : null;
 
-    final String displayProfileUrl = widget.post.profileUrl.isNotEmpty
+    final displayProfileUrl = widget.post.profileUrl.isNotEmpty
         ? widget.post.profileUrl
         : (fallbackProfileUrl ?? '');
 
@@ -230,10 +449,25 @@ class _PostCardState extends ConsumerState<PostCard> {
                       ],
                     ),
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.more_horiz),
-                      onPressed: () {},
-                    ),
+                    if (isMyPost)
+                      PopupMenuButton<String>(
+                        enabled: !_isBusy,
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditPostModal();
+                          } else if (value == 'delete') {
+                            _deletePost();
+                          }
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        ],
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.more_horiz),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 10),

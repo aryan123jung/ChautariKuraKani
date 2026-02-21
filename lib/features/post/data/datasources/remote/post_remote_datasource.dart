@@ -117,4 +117,23 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
         )
         .toList();
   }
+
+  @override
+  Future<void> createComment({
+    required String postId,
+    required String text,
+  }) async {
+    await _apiClient.post(
+      ApiEndpoints.postComments(postId),
+      data: {'text': text},
+    );
+  }
+
+  @override
+  Future<void> deleteComment({
+    required String postId,
+    required String commentId,
+  }) async {
+    await _apiClient.delete(ApiEndpoints.deletePostComment(postId, commentId));
+  }
 }

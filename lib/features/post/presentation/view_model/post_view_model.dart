@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
 import 'package:chautari_kurakani/features/post/domain/usecases/create_post_usecase.dart';
+import 'package:chautari_kurakani/features/post/domain/usecases/create_post_comment_usecase.dart';
 import 'package:chautari_kurakani/features/post/domain/usecases/delete_post_usecase.dart';
+import 'package:chautari_kurakani/features/post/domain/usecases/delete_post_comment_usecase.dart';
 import 'package:chautari_kurakani/features/post/domain/usecases/get_my_posts_usecase.dart';
 import 'package:chautari_kurakani/features/post/domain/usecases/get_post_comments_usecase.dart';
 import 'package:chautari_kurakani/features/post/domain/usecases/get_posts_usecase.dart';
@@ -23,6 +25,8 @@ class PostViewModel extends Notifier<PostState> {
   late final DeletePostUsecase _deletePostUsecase;
   late final LikePostUsecase _likePostUsecase;
   late final GetPostCommentsUsecase _getPostCommentsUsecase;
+  late final CreatePostCommentUsecase _createPostCommentUsecase;
+  late final DeletePostCommentUsecase _deletePostCommentUsecase;
 
   @override
   PostState build() {
@@ -33,6 +37,8 @@ class PostViewModel extends Notifier<PostState> {
     _deletePostUsecase = ref.read(deletePostUsecaseProvider);
     _likePostUsecase = ref.read(likePostUsecaseProvider);
     _getPostCommentsUsecase = ref.read(getPostCommentsUsecaseProvider);
+    _createPostCommentUsecase = ref.read(createPostCommentUsecaseProvider);
+    _deletePostCommentUsecase = ref.read(deletePostCommentUsecaseProvider);
 
     return const PostState.initial();
   }
@@ -213,6 +219,73 @@ class PostViewModel extends Notifier<PostState> {
         return comments;
       },
     );
+  }
+
+  Future<bool> createComment({
+    required String postId,
+    required String text,
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      state = state.copyWith(
+        status: PostStatus.error,
+        errorMessage: 'Comment text is required',
+      );
+      return false;
+    }
+
+    final result = await _createPostCommentUsecase(
+      CreatePostCommentParams(postId: postId, text: trimmed),
+    );
+
+    final isSuccess = result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: PostStatus.error,
+          errorMessage: failure.message,
+        );
+        return false;
+      },
+      (success) {
+        return success;
+      },
+    );
+
+    if (isSuccess) {
+      await fetchComments(postId);
+      state = state.copyWith(status: PostStatus.success, errorMessage: null);
+    }
+
+    return isSuccess;
+  }
+
+  Future<bool> deleteComment({
+    required String postId,
+    required String commentId,
+  }) async {
+    final result = await _deletePostCommentUsecase(
+      DeletePostCommentParams(postId: postId, commentId: commentId),
+    );
+
+    final isSuccess = result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: PostStatus.error,
+          errorMessage: failure.message,
+        );
+        return false;
+      },
+      (success) {
+        return success;
+      },
+    );
+
+    if (isSuccess) {
+      await fetchComments(postId);
+      state = state.copyWith(status: PostStatus.success, errorMessage: null);
+    }
+
+    return isSuccess;
   }
 
   void _replacePostInState(PostEntity updatedPost) {

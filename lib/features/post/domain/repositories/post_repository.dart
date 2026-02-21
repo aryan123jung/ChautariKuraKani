@@ -29,4 +29,14 @@ abstract interface class IPostRepository {
   Future<Either<Failure, PostEntity>> likePost(String postId);
 
   Future<Either<Failure, List<PostCommentEntity>>> getComments(String postId);
+
+  Future<Either<Failure, bool>> createComment({
+    required String postId,
+    required String text,
+  });
+
+  Future<Either<Failure, bool>> deleteComment({
+    required String postId,
+    required String commentId,
+  });
 }

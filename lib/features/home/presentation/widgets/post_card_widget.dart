@@ -12,6 +12,7 @@ class PostCard extends ConsumerStatefulWidget {
   final PostEntity post;
   final String? currentUserId;
   final String? currentUserProfileUrl;
+  final String? currentUserName;
   final Future<void> Function()? onPostChanged;
 
   const PostCard({
@@ -19,6 +20,7 @@ class PostCard extends ConsumerStatefulWidget {
     required this.post,
     this.currentUserId,
     this.currentUserProfileUrl,
+    this.currentUserName,
     this.onPostChanged,
   });
 
@@ -78,9 +80,11 @@ class _PostCardState extends ConsumerState<PostCard> {
   }
 
   Future<void> _showCommentsModal() async {
-    final comments = await ref
+    List<PostCommentEntity> comments = await ref
         .read(postViewModelProvider.notifier)
         .fetchComments(widget.post.id);
+    final commentController = TextEditingController();
+    bool isSubmitting = false;
 
     if (!mounted) return;
 
@@ -92,55 +96,266 @@ class _PostCardState extends ConsumerState<PostCard> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return FractionallySizedBox(
-          heightFactor: 0.75,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Comments',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            Future<void> refreshComments() async {
+              comments = await ref
+                  .read(postViewModelProvider.notifier)
+                  .fetchComments(widget.post.id);
+              if (!mounted) return;
+              setState(() {
+                _commentsCount = comments.length;
+              });
+              setModalState(() {});
+            }
+
+            Future<void> onAddComment() async {
+              final text = commentController.text.trim();
+              if (text.isEmpty || isSubmitting) return;
+              setModalState(() => isSubmitting = true);
+
+              final success = await ref
+                  .read(postViewModelProvider.notifier)
+                  .createComment(postId: widget.post.id, text: text);
+
+              if (!context.mounted) return;
+              if (!success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ref.read(postViewModelProvider).errorMessage ??
+                          'Failed to add comment',
                     ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
+                  ),
+                );
+              } else {
+                commentController.clear();
+                await refreshComments();
+              }
+              if (!context.mounted) return;
+              setModalState(() => isSubmitting = false);
+            }
+
+            Future<void> onDeleteComment(String commentId) async {
+              if (isSubmitting) return;
+              setModalState(() => isSubmitting = true);
+
+              final success = await ref
+                  .read(postViewModelProvider.notifier)
+                  .deleteComment(postId: widget.post.id, commentId: commentId);
+
+              if (!context.mounted) return;
+              if (!success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ref.read(postViewModelProvider).errorMessage ??
+                          'Failed to delete comment',
+                    ),
+                  ),
+                );
+              } else {
+                await refreshComments();
+              }
+              if (!context.mounted) return;
+              setModalState(() => isSubmitting = false);
+            }
+
+            final currentUserId = (widget.currentUserId ?? '')
+                .trim()
+                .toLowerCase();
+
+            return FractionallySizedBox(
+              heightFactor: 0.8,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 14,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Comments',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: comments.isEmpty
+                          ? const Center(child: Text('No comments yet.'))
+                          : ListView.separated(
+                              itemCount: comments.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final comment = comments[index];
+                                final canDelete =
+                                    currentUserId.isNotEmpty &&
+                                    comment.userId.trim().toLowerCase() ==
+                                        currentUserId;
+                                final displayName = canDelete
+                                    ? (widget.currentUserName ?? 'You')
+                                    : comment.userName;
+                                final avatarUrl = canDelete
+                                    ? _resolveProfileInput(
+                                        widget.currentUserProfileUrl,
+                                      )
+                                    : comment.userProfileUrl;
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 4,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: Colors.grey.shade300,
+                                        backgroundImage: avatarUrl != null
+                                            ? NetworkImage(avatarUrl)
+                                            : null,
+                                        child: avatarUrl == null
+                                            ? Text(
+                                                (displayName.trim().isEmpty
+                                                        ? 'U'
+                                                        : displayName.trim()[0])
+                                                    .toUpperCase(),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Container(
+                                          padding: const EdgeInsets.fromLTRB(
+                                            12,
+                                            10,
+                                            12,
+                                            10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF4F5F7),
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      displayName.trim().isEmpty
+                                                          ? 'User'
+                                                          : displayName,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    comment.createdAtText,
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                comment.text,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      if (canDelete) ...[
+                                        const SizedBox(width: 6),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.redAccent,
+                                          ),
+                                          onPressed: isSubmitting
+                                              ? null
+                                              : () =>
+                                                    onDeleteComment(comment.id),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: commentController,
+                            minLines: 1,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              hintText: 'Write a comment...',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: isSubmitting ? null : onAddComment,
+                          child: isSubmitting
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Send'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                Expanded(
-                  child: comments.isEmpty
-                      ? const Center(child: Text('No comments yet.'))
-                      : ListView.separated(
-                          itemCount: comments.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final comment = comments[index];
-                            return ListTile(
-                              leading: const CircleAvatar(
-                                child: Icon(Icons.person, size: 18),
-                              ),
-                              title: Text(comment.text),
-                              subtitle: Text(
-                                '${comment.userId} • ${comment.createdAtText}',
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
+
+    commentController.dispose();
   }
 
   Future<void> _deletePost() async {

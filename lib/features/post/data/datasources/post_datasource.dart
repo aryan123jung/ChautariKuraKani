@@ -18,4 +18,11 @@ abstract interface class IPostRemoteDatasource {
   Future<PostApiModel> likePost(String postId);
 
   Future<List<PostCommentApiModel>> getComments(String postId);
+
+  Future<void> createComment({required String postId, required String text});
+
+  Future<void> deleteComment({
+    required String postId,
+    required String commentId,
+  });
 }

@@ -74,16 +74,27 @@ class PostEntity extends Equatable {
 class PostCommentEntity extends Equatable {
   final String id;
   final String userId;
+  final String userName;
+  final String? userProfileUrl;
   final String text;
   final String createdAtText;
 
   const PostCommentEntity({
     required this.id,
     required this.userId,
+    required this.userName,
+    this.userProfileUrl,
     required this.text,
     required this.createdAtText,
   });
 
   @override
-  List<Object?> get props => [id, userId, text, createdAtText];
+  List<Object?> get props => [
+    id,
+    userId,
+    userName,
+    userProfileUrl,
+    text,
+    createdAtText,
+  ];
 }

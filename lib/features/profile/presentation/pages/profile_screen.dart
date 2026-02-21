@@ -760,6 +760,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 widget.userEntity.authId,
                             currentUserProfileUrl:
                                 widget.userEntity.profilePicture,
+                            currentUserName: _fullName,
                             onPostChanged: _loadUserPosts,
                           );
                         },

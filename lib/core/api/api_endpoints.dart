@@ -121,6 +121,8 @@ class ApiEndpoints {
   static const String posts = '/post';
   static String likePost(String id) => '/post/$id/like';
   static String postComments(String id) => '/post/$id/comments';
+  static String deletePostComment(String postId, String commentId) =>
+      '/post/$postId/comments/$commentId';
 
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;

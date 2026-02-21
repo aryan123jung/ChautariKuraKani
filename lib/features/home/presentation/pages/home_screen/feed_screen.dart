@@ -31,6 +31,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     final postState = ref.watch(postViewModelProvider);
     final currentUserId = authState.authEntity?.authId;
     final currentUserProfile = authState.authEntity?.profilePicture;
+    final currentUserName = [
+      authState.authEntity?.fName ?? '',
+      authState.authEntity?.lName ?? '',
+    ].where((part) => part.trim().isNotEmpty).join(' ').trim();
 
     if (postState.status == PostStatus.loading && postState.posts.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -76,6 +80,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           post: postState.posts[index],
           currentUserId: currentUserId,
           currentUserProfileUrl: currentUserProfile,
+          currentUserName: currentUserName.isEmpty ? null : currentUserName,
           onPostChanged: _loadPosts,
         ),
       ),

@@ -129,21 +129,45 @@ class PostApiModel {
 class PostCommentApiModel {
   final String id;
   final String userId;
+  final String userName;
+  final String? userProfileUrl;
   final String text;
   final String createdAtText;
 
   PostCommentApiModel({
     required this.id,
     required this.userId,
+    required this.userName,
+    this.userProfileUrl,
     required this.text,
     required this.createdAtText,
   });
 
   factory PostCommentApiModel.fromJson(Map<String, dynamic> json) {
     final dynamic rawUser = json['userId'];
-    final String parsedUserId = rawUser is Map<String, dynamic>
-        ? (rawUser['_id']?.toString() ?? 'Unknown user')
-        : (rawUser?.toString() ?? 'Unknown user');
+    final bool hasUserMap = rawUser is Map<String, dynamic>;
+    final String parsedUserId = hasUserMap
+        ? (rawUser['_id']?.toString() ?? '')
+        : (rawUser?.toString() ?? '');
+
+    final String firstName = hasUserMap
+        ? (rawUser['firstName']?.toString() ?? '')
+        : '';
+    final String lastName = hasUserMap
+        ? (rawUser['lastName']?.toString() ?? '')
+        : '';
+    final String fullName = [
+      firstName,
+      lastName,
+    ].where((part) => part.trim().isNotEmpty).join(' ').trim();
+
+    final String rawProfile = hasUserMap
+        ? ((rawUser['profileImage'] ??
+                      rawUser['profileUrl'] ??
+                      rawUser['profilePicture'])
+                  ?.toString() ??
+              '')
+        : '';
 
     final DateTime? createdAt = DateTime.tryParse(
       json['createdAt']?.toString() ?? '',
@@ -151,7 +175,11 @@ class PostCommentApiModel {
 
     return PostCommentApiModel(
       id: json['_id']?.toString() ?? '',
-      userId: parsedUserId,
+      userId: parsedUserId.isNotEmpty ? parsedUserId : 'unknown',
+      userName: fullName.isNotEmpty ? fullName : 'User',
+      userProfileUrl: rawProfile.isNotEmpty
+          ? PostApiModel._resolveProfileUrl(rawProfile)
+          : null,
       text: json['text']?.toString() ?? '',
       createdAtText: PostApiModel._formatRelativeTime(createdAt),
     );
@@ -161,6 +189,8 @@ class PostCommentApiModel {
     return PostCommentEntity(
       id: id,
       userId: userId,
+      userName: userName,
+      userProfileUrl: userProfileUrl,
       text: text,
       createdAtText: createdAtText,
     );

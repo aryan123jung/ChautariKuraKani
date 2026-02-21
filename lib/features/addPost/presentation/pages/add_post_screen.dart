@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:chautari_kurakani/common/my_snackbar.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,7 +65,12 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
 
     if (!hasCaption && !hasMedia) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Add a caption, an image, or both.")),
+        // const SnackBar(content: Text("Add a caption, an image, or both.")),
+        showMySnackBar(
+          context: context,
+          message: "Add a caption, an image, or both.",
+          color: Colors.grey,
+        ),
       );
       return;
     }
@@ -93,9 +99,12 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Post created successfully.")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Colors.green,
+        content: Text("Post created successfully."),
+      ),
+    );
     if (widget.popOnSuccess) {
       Navigator.pop(context, true);
       return;

@@ -125,6 +125,24 @@ class ApiEndpoints {
   static String deletePostComment(String postId, String commentId) =>
       '/post/$postId/comments/$commentId';
 
+  // Friend requests
+  static const String friendsBase = '/friends';
+  static String sendFriendRequest(String toUserId) => '$friendsBase/requests/$toUserId';
+  static String cancelFriendRequest(String toUserId) => '$friendsBase/requests/$toUserId';
+  static const String incomingFriendRequests = '$friendsBase/requests/incoming';
+  static const String outgoingFriendRequests = '$friendsBase/requests/outgoing';
+  static String acceptFriendRequest(String requestId) =>
+      '$friendsBase/requests/$requestId/accept';
+  static String rejectFriendRequest(String requestId) =>
+      '$friendsBase/requests/$requestId/reject';
+  static String unfriend(String friendUserId) => '$friendsBase/$friendUserId';
+  static String friendStatus(String userId) => '$friendsBase/status/$userId';
+
+  // Notifications
+  static const String notifications = '/notifications';
+  static String markNotificationRead(String id) => '$notifications/$id/read';
+  static const String markAllNotificationsRead = '$notifications/read-all';
+
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;
     if (fileName.contains('/') || fileName.contains('\\')) {

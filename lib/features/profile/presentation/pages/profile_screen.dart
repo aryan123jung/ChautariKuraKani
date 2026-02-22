@@ -8,6 +8,8 @@ import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
+import 'package:chautari_kurakani/features/friend_request/presentation/state/friend_request_state.dart';
+import 'package:chautari_kurakani/features/friend_request/presentation/view_model/friend_request_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
@@ -61,6 +63,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _tabController = TabController(length: 2, vsync: this);
     _scrollController.addListener(_onScroll);
     _loadUserPosts();
+    _loadFriendStatusForReadOnly();
   }
 
   @override
@@ -79,6 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       _fullName = '${widget.userEntity.fName} ${widget.userEntity.lName}';
       _bio = widget.userEntity.bio ?? 'No bio yet';
       _loadUserPosts();
+      _loadFriendStatusForReadOnly();
     }
   }
 
@@ -284,6 +288,88 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _onRefresh() async {
     await _loadUserPosts();
+    await _loadFriendStatusForReadOnly();
+  }
+
+  bool _isOwnReadOnlyProfile(AuthState authState) {
+    if (!widget.isReadOnly) return false;
+    final currentId = _normalizeId(authState.authEntity?.authId ?? '');
+    final targetId = _normalizeId(widget.userEntity.authId ?? '');
+    return currentId.isNotEmpty && targetId.isNotEmpty && currentId == targetId;
+  }
+
+  Future<void> _loadFriendStatusForReadOnly() async {
+    if (!widget.isReadOnly) return;
+    final targetId = widget.userEntity.authId;
+    if (targetId == null || targetId.trim().isEmpty) return;
+    await ref
+        .read(friendRequestViewModelProvider.notifier)
+        .loadStatus(targetId);
+  }
+
+  Future<void> _handleFriendPrimaryAction({
+    required FriendRequestState friendState,
+  }) async {
+    final targetId = widget.userEntity.authId;
+    if (targetId == null || targetId.trim().isEmpty) return;
+
+    final status = friendState.friendStatus?.status ?? 'NONE';
+    final requestId = friendState.friendStatus?.requestId;
+    final notifier = ref.read(friendRequestViewModelProvider.notifier);
+
+    bool success = false;
+
+    if (status == 'NONE') {
+      success = await notifier.sendRequest(targetId);
+    } else if (status == 'PENDING_OUTGOING') {
+      success = await notifier.cancelRequest(targetId);
+    } else if (status == 'PENDING_INCOMING') {
+      if (requestId == null || requestId.isEmpty) return;
+      success = await notifier.acceptRequest(requestId);
+    } else if (status == 'FRIEND') {
+      success = await notifier.unfriend(targetId);
+    } else if (status == 'SELF') {
+      return;
+    }
+
+    if (!mounted) return;
+
+    final latest = ref.read(friendRequestViewModelProvider);
+    if (!success && latest.errorMessage != null) {
+      SnackbarUtils.showError(context, latest.errorMessage!);
+      return;
+    }
+
+    if (status == 'PENDING_INCOMING' && requestId != null) {
+      await notifier.loadIncoming();
+    }
+
+    await notifier.loadStatus(targetId);
+  }
+
+  Future<void> _handleFriendRejectAction({
+    required FriendRequestState friendState,
+  }) async {
+    final requestId = friendState.friendStatus?.requestId;
+    final targetId = widget.userEntity.authId;
+    if (requestId == null || requestId.isEmpty || targetId == null) return;
+
+    final success = await ref
+        .read(friendRequestViewModelProvider.notifier)
+        .rejectRequest(requestId);
+
+    if (!mounted) return;
+    if (!success) {
+      final latest = ref.read(friendRequestViewModelProvider);
+      if (latest.errorMessage != null) {
+        SnackbarUtils.showError(context, latest.errorMessage!);
+      }
+      return;
+    }
+
+    await ref
+        .read(friendRequestViewModelProvider.notifier)
+        .loadStatus(targetId);
   }
 
   Future<void> _loadUserPosts() async {
@@ -327,7 +413,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final postState = ref.watch(postViewModelProvider);
+    final friendState = ref.watch(friendRequestViewModelProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isOwnReadOnlyProfile = _isOwnReadOnlyProfile(authState);
     final readOnlyDerivedPosts = widget.isReadOnly
         ? _filterPostsForProfile(postState.posts)
         : <PostEntity>[];
@@ -632,6 +720,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               onPressed: _showEditProfile,
                               color: const Color(0XFF76C05D),
                             ),
+                          ] else if (!isOwnReadOnlyProfile) ...[
+                            _buildFriendActionButtons(friendState: friendState),
                           ],
                         ],
                       ),
@@ -906,6 +996,92 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   _normalizeName(post.name) == normalizedCurrentName),
         )
         .toList();
+  }
+
+  Widget _buildFriendActionButtons({required FriendRequestState friendState}) {
+    final status = friendState.friendStatus?.status;
+    final isBusy = friendState.status == FriendRequestStatusUi.submitting;
+
+    if (status == null &&
+        (friendState.status == FriendRequestStatusUi.loading ||
+            friendState.status == FriendRequestStatusUi.initial)) {
+      return const SizedBox(
+        height: 36,
+        width: 36,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    final normalizedStatus = status ?? 'NONE';
+
+    String label;
+    IconData icon;
+
+    switch (normalizedStatus) {
+      case 'PENDING_OUTGOING':
+        label = 'Cancel Request';
+        icon = Icons.person_remove_alt_1_outlined;
+        break;
+      case 'PENDING_INCOMING':
+        label = 'Accept Request';
+        icon = Icons.person_add_alt_1;
+        break;
+      case 'FRIEND':
+        label = 'Remove Friend';
+        icon = Icons.person_off_outlined;
+        break;
+      default:
+        label = 'Add Friend';
+        icon = Icons.person_add_alt;
+    }
+
+    final primary = ElevatedButton.icon(
+      onPressed: isBusy
+          ? null
+          : () => _handleFriendPrimaryAction(friendState: friendState),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0XFF76C05D),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      icon: isBusy
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Icon(icon, size: 16),
+      label: Text(label),
+    );
+
+    if (normalizedStatus != 'PENDING_INCOMING') {
+      return primary;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        primary,
+        const SizedBox(width: 6),
+        OutlinedButton(
+          onPressed: isBusy
+              ? null
+              : () => _handleFriendRejectAction(friendState: friendState),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.redAccent,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: const Text('Reject'),
+        ),
+      ],
+    );
   }
 }
 

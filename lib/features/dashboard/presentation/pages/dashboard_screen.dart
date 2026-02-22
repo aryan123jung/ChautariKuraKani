@@ -380,7 +380,7 @@ import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/c
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/home_screen.dart';
 import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/message_screen.dart';
 import 'package:chautari_kurakani/features/profile/presentation/pages/profile_screen.dart';
-import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/search_screen.dart';
+import 'package:chautari_kurakani/features/search/presentation/pages/search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

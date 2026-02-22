@@ -7,6 +7,7 @@ class SearchUserEntity extends Equatable {
   final String username;
   final String email;
   final String? profileUrl;
+  final String? coverUrl;
 
   const SearchUserEntity({
     required this.id,
@@ -15,6 +16,7 @@ class SearchUserEntity extends Equatable {
     required this.username,
     required this.email,
     this.profileUrl,
+    this.coverUrl,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -27,5 +29,6 @@ class SearchUserEntity extends Equatable {
     username,
     email,
     profileUrl,
+    coverUrl,
   ];
 }

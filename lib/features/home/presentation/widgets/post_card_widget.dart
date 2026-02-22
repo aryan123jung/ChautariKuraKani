@@ -13,6 +13,7 @@ class PostCard extends ConsumerStatefulWidget {
   final String? currentUserId;
   final String? currentUserProfileUrl;
   final String? currentUserName;
+  final String? postAuthorProfileUrl;
   final Future<void> Function()? onPostChanged;
 
   const PostCard({
@@ -21,6 +22,7 @@ class PostCard extends ConsumerStatefulWidget {
     this.currentUserId,
     this.currentUserProfileUrl,
     this.currentUserName,
+    this.postAuthorProfileUrl,
     this.onPostChanged,
   });
 
@@ -601,10 +603,13 @@ class _PostCardState extends ConsumerState<PostCard> {
     final fallbackProfileUrl = isMyPost
         ? _resolveProfileInput(widget.currentUserProfileUrl)
         : null;
+    final authorFallbackProfileUrl = _resolveProfileInput(
+      widget.postAuthorProfileUrl,
+    );
 
     final displayProfileUrl = widget.post.profileUrl.isNotEmpty
         ? widget.post.profileUrl
-        : (fallbackProfileUrl ?? '');
+        : (fallbackProfileUrl ?? authorFallbackProfileUrl ?? '');
 
     return Center(
       child: SizedBox(

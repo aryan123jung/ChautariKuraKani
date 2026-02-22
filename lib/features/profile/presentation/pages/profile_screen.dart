@@ -11,6 +11,7 @@ import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_s
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
+import 'package:chautari_kurakani/features/post/presentation/state/post_state.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/side_nav_widget.dart';
@@ -21,10 +22,12 @@ import 'package:image_picker/image_picker.dart';
 class ProfileScreen extends ConsumerStatefulWidget {
   final AuthEntity userEntity;
   final int refreshTick;
+  final bool isReadOnly;
   const ProfileScreen({
     super.key,
     required this.userEntity,
     this.refreshTick = 0,
+    this.isReadOnly = false,
   });
 
   @override
@@ -284,7 +287,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Future<void> _loadUserPosts() async {
-    final candidateUserIds = await _waitForUserIdCandidates();
+    final candidateUserIds = widget.isReadOnly
+        ? _readOnlyTargetIdCandidates()
+        : await _waitForUserIdCandidates();
     final normalizedCurrentName = _normalizeName(_fullName);
 
     setState(() {
@@ -321,9 +326,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
+    final postState = ref.watch(postViewModelProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final readOnlyDerivedPosts = widget.isReadOnly
+        ? _filterPostsForProfile(postState.posts)
+        : <PostEntity>[];
+    final displayPosts = widget.isReadOnly ? readOnlyDerivedPosts : _userPosts;
+    final isLoadingPostsView = widget.isReadOnly
+        ? (postState.status == PostStatus.loading && displayPosts.isEmpty)
+        : _isLoadingPosts;
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (widget.isReadOnly) return;
       final previousId = previous?.authEntity?.authId;
       final nextId = next.authEntity?.authId;
       if (nextId != null && nextId.isNotEmpty && previousId != nextId) {
@@ -378,16 +392,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: SideNavigationDrawer(
-        fullName: _fullName,
-        email: widget.userEntity.email,
-        profilePicture: getProfilePictureUrl(),
-        onLogout: _handleLogout,
-        onEditProfile: _showEditProfile,
-        onSettings: _showSettings,
-        onHelp: _showHelp,
-        onPrivacyPolicy: _showPrivacyPolicy,
-      ),
+      drawer: widget.isReadOnly
+          ? null
+          : SideNavigationDrawer(
+              fullName: _fullName,
+              email: widget.userEntity.email,
+              profilePicture: getProfilePictureUrl(),
+              onLogout: _handleLogout,
+              onEditProfile: _showEditProfile,
+              onSettings: _showSettings,
+              onHelp: _showHelp,
+              onPrivacyPolicy: _showPrivacyPolicy,
+            ),
       body: DefaultTabController(
         length: 2,
         child: NestedScrollView(
@@ -401,10 +417,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 snap: true,
                 pinned: false,
                 backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-                leading: IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                ),
+                leading: widget.isReadOnly
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.menu),
+                        onPressed: () =>
+                            _scaffoldKey.currentState?.openDrawer(),
+                      ),
                 title: _isAppBarVisible
                     ? const Text(
                         'ChautariKuraKani',
@@ -424,7 +443,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   children: [
                     // Cover Image
                     GestureDetector(
-                      onTap: () => _showImageSourceDialog(isProfile: false),
+                      onTap: widget.isReadOnly
+                          ? null
+                          : () => _showImageSourceDialog(isProfile: false),
                       child: Container(
                         height: 200,
                         width: double.infinity,
@@ -474,7 +495,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       left: 20,
                       bottom: 10,
                       child: GestureDetector(
-                        onTap: () => _showImageSourceDialog(isProfile: true),
+                        onTap: widget.isReadOnly
+                            ? null
+                            : () => _showImageSourceDialog(isProfile: true),
                         child: Stack(
                           children: [
                             Container(
@@ -529,26 +552,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     : null,
                               ),
                             ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
+                            if (!widget.isReadOnly)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
                                     color: Colors.white,
-                                    width: 2,
+                                    size: 20,
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -575,39 +599,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               ),
                             ),
                           ),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final result = await Navigator.push<bool>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const AddPostScreen(popOnSuccess: true),
+                          if (!widget.isReadOnly) ...[
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const AddPostScreen(popOnSuccess: true),
+                                  ),
+                                );
+                                if (result == true) {
+                                  await _loadUserPosts();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0XFF76C05D),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                              );
-                              if (result == true) {
-                                await _loadUserPosts();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0XFF76C05D),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text("Add Post"),
                             ),
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text("Add Post"),
-                          ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: _showEditProfile,
-                            // color: Colors.blue,
-                            color: Color(0XFF76C05D),
-                          ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: _showEditProfile,
+                              color: const Color(0XFF76C05D),
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -679,7 +704,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatColumn('Posts', '${_userPosts.length}'),
+                      _buildStatColumn('Posts', '${displayPosts.length}'),
                       _buildStatColumn('Friends', '${friends.length}'),
                       _buildStatColumn('Following', '345'),
                     ],
@@ -714,7 +739,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               // Posts Tab
               RefreshIndicator(
                 onRefresh: _onRefresh,
-                child: _isLoadingPosts
+                child: isLoadingPostsView
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [
@@ -722,7 +747,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           Center(child: CircularProgressIndicator()),
                         ],
                       )
-                    : _userPosts.isEmpty
+                    : displayPosts.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [
@@ -751,16 +776,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     : ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(8),
-                        itemCount: _userPosts.length,
+                        itemCount: displayPosts.length,
                         itemBuilder: (context, index) {
                           return PostCard(
-                            post: _userPosts[index],
+                            post: displayPosts[index],
                             currentUserId:
                                 authState.authEntity?.authId ??
                                 widget.userEntity.authId,
                             currentUserProfileUrl:
                                 widget.userEntity.profilePicture,
                             currentUserName: _fullName,
+                            postAuthorProfileUrl:
+                                widget.userEntity.profilePicture,
                             onPostChanged: _loadUserPosts,
                           );
                         },
@@ -840,6 +867,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     };
   }
 
+  Set<String> _readOnlyTargetIdCandidates() {
+    final id = widget.userEntity.authId;
+    if (id == null || id.trim().isEmpty) return {};
+    return {_normalizeId(id)};
+  }
+
   Future<Set<String>> _waitForUserIdCandidates() async {
     var ids = _currentUserIdCandidates();
     var retries = 0;
@@ -857,6 +890,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   String _normalizeName(String value) {
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  List<PostEntity> _filterPostsForProfile(List<PostEntity> allPosts) {
+    final candidateUserIds = widget.isReadOnly
+        ? _readOnlyTargetIdCandidates()
+        : _currentUserIdCandidates();
+    final normalizedCurrentName = _normalizeName(_fullName);
+
+    return allPosts
+        .where(
+          (post) =>
+              candidateUserIds.contains(_normalizeId(post.authorId)) ||
+              (normalizedCurrentName.isNotEmpty &&
+                  _normalizeName(post.name) == normalizedCurrentName),
+        )
+        .toList();
   }
 }
 

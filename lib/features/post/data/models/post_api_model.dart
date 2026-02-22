@@ -118,7 +118,16 @@ class PostApiModel {
   }
 
   static String _resolveProfileUrl(String rawProfile) {
-    if (rawProfile.startsWith('http')) return rawProfile;
+    if (rawProfile.startsWith('http')) {
+      final uri = Uri.tryParse(rawProfile);
+      if (uri != null && (uri.host == 'localhost' || uri.host == '127.0.0.1')) {
+        final path = uri.path.startsWith('/')
+            ? uri.path.substring(1)
+            : uri.path;
+        return ApiEndpoints.uploadUrl(path);
+      }
+      return rawProfile;
+    }
     if (rawProfile.contains('/') || rawProfile.contains('\\')) {
       return ApiEndpoints.uploadUrl(rawProfile);
     }

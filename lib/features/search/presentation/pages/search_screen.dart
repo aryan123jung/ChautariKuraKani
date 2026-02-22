@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
+import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
+import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
+import 'package:chautari_kurakani/features/profile/presentation/pages/profile_screen.dart';
 import 'package:chautari_kurakani/features/search/domain/entities/search_user_entity.dart';
 import 'package:chautari_kurakani/features/search/presentation/state/search_state.dart';
 import 'package:chautari_kurakani/features/search/presentation/view_model/search_view_model.dart';
@@ -103,7 +106,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 4),
                     itemBuilder: (context, index) {
                       final user = users[index];
-                      return _UserTile(user: user);
+                      return _UserTile(
+                        user: user,
+                        onTap: () async {
+                          await ref
+                              .read(postViewModelProvider.notifier)
+                              .fetchPosts();
+                          if (!context.mounted) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProfileScreen(
+                                isReadOnly: true,
+                                userEntity: AuthEntity(
+                                  authId: user.id,
+                                  fName: user.firstName,
+                                  lName: user.lastName,
+                                  email: user.email,
+                                  username: user.username,
+                                  profilePicture: user.profileUrl,
+                                  coverPicture: user.coverUrl,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
                     },
                   );
                 },
@@ -118,8 +146,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
 class _UserTile extends StatelessWidget {
   final SearchUserEntity user;
+  final VoidCallback? onTap;
 
-  const _UserTile({required this.user});
+  const _UserTile({required this.user, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +160,7 @@ class _UserTile extends StatelessWidget {
       elevation: 0.6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           radius: 24,
           backgroundColor: Colors.grey.shade300,

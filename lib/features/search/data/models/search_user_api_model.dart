@@ -7,6 +7,7 @@ class SearchUserApiModel {
   final String username;
   final String email;
   final String? profileUrl;
+  final String? coverUrl;
 
   const SearchUserApiModel({
     required this.id,
@@ -15,6 +16,7 @@ class SearchUserApiModel {
     required this.username,
     required this.email,
     this.profileUrl,
+    this.coverUrl,
   });
 
   factory SearchUserApiModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class SearchUserApiModel {
       username: json['username']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       profileUrl: json['profileUrl']?.toString(),
+      coverUrl: json['coverUrl']?.toString(),
     );
   }
 
@@ -36,6 +39,7 @@ class SearchUserApiModel {
       username: username,
       email: email,
       profileUrl: profileUrl,
+      coverUrl: coverUrl,
     );
   }
 }

@@ -35,6 +35,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       authState.authEntity?.fName ?? '',
       authState.authEntity?.lName ?? '',
     ].where((part) => part.trim().isNotEmpty).join(' ').trim();
+    final normalizedCurrentUserId = (currentUserId ?? '').trim().toLowerCase();
+    final feedPosts = postState.posts.where((post) {
+      final authorId = post.authorId.trim().toLowerCase();
+      if (normalizedCurrentUserId.isEmpty) return true;
+      return authorId != normalizedCurrentUserId;
+    }).toList();
 
     if (postState.status == PostStatus.loading && postState.posts.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -59,14 +65,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       );
     }
 
-    if (postState.posts.isEmpty) {
+    if (feedPosts.isEmpty) {
       return RefreshIndicator(
         onRefresh: _loadPosts,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 120),
-            Center(child: Text('No posts yet')),
+            Center(child: Text('No posts from other users yet')),
           ],
         ),
       );
@@ -75,9 +81,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     return RefreshIndicator(
       onRefresh: _loadPosts,
       child: ListView.builder(
-        itemCount: postState.posts.length,
+        itemCount: feedPosts.length,
         itemBuilder: (context, index) => PostCard(
-          post: postState.posts[index],
+          post: feedPosts[index],
           currentUserId: currentUserId,
           currentUserProfileUrl: currentUserProfile,
           currentUserName: currentUserName.isEmpty ? null : currentUserName,

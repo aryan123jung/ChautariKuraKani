@@ -202,4 +202,24 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     );
   }
 
+  @override
+  Future<List<AuthApiModel>> searchUsers({
+    String? search,
+    int page = 1,
+    int size = 10,
+  }) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.authUsers,
+      queryParameters: {
+        'page': page,
+        'size': size,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+
+    final rawUsers = response.data['data'] as List<dynamic>? ?? [];
+    return rawUsers
+        .map((item) => AuthApiModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
 }

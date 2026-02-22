@@ -264,4 +264,33 @@ class AuthRepository implements IAuthRepository {
       return const Left(ApiFailure(message: "No internet connection"));
     }
   }
+
+  @override
+  Future<Either<Failure, List<AuthEntity>>> searchUsers({
+    String? search,
+    int page = 1,
+    int size = 10,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ApiFailure(message: "No internet connection"));
+    }
+
+    try {
+      final users = await _authRemoteDatasource.searchUsers(
+        search: search,
+        page: page,
+        size: size,
+      );
+      return Right(users.map((user) => user.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message: e.response?.data['message'] ?? "Failed to search users",
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
 }

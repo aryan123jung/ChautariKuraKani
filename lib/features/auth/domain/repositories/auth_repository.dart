@@ -4,7 +4,7 @@ import 'package:chautari_kurakani/core/error/failures.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:dartz/dartz.dart';
 
-abstract interface class IAuthRepository { 
+abstract interface class IAuthRepository {
   Future<Either<Failure, AuthEntity>> register(AuthEntity entity);
   Future<Either<Failure, AuthEntity>> login(String email, String password);
   Future<Either<Failure, AuthEntity>> getCurrentUserById(String userId);
@@ -18,5 +18,11 @@ abstract interface class IAuthRepository {
   Future<Either<Failure, bool>> resetPassword({
     required String token,
     required String newPassword,
+  });
+
+  Future<Either<Failure, List<AuthEntity>>> searchUsers({
+    String? search,
+    int page = 1,
+    int size = 10,
   });
 }

@@ -33,4 +33,9 @@ abstract interface class IAuthRemoteDatasource {
 
   Future<void> sendResetPasswordEmail(String email);
   Future<void> resetPassword(String token, String newPassword);
+  Future<List<AuthApiModel>> searchUsers({
+    String? search,
+    int page = 1,
+    int size = 10,
+  });
 }

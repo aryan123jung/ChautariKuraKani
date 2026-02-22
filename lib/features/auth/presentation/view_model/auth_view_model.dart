@@ -6,6 +6,7 @@ import 'package:chautari_kurakani/features/auth/domain/usecases/login_usecase.da
 import 'package:chautari_kurakani/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/reset_password_usecase.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/search_users_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/upload_cover_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/upload_profile_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -24,6 +25,7 @@ class AuthViewModel extends Notifier<AuthState> {
   late final UploadCoverImageUsecase _uploadCoverImageUsecase;
   late final ForgotPasswordUsecase _forgotPasswordUsecase;
   late final ResetPasswordUsecase _resetPasswordUsecase;
+  late final SearchUsersUsecase _searchUsersUsecase;
 
   @override
   AuthState build() {
@@ -35,6 +37,7 @@ class AuthViewModel extends Notifier<AuthState> {
     _uploadCoverImageUsecase = ref.read(uploadCoverImageUsecaseProvider);
     _forgotPasswordUsecase = ref.read(forgotPasswordUsecaseProvider);
     _resetPasswordUsecase = ref.read(resetPasswordUsecaseProvider);
+    _searchUsersUsecase = ref.read(searchUsersUsecaseProvider);
 
     return const AuthState(status: AuthStatus.checking);
   }
@@ -216,6 +219,34 @@ class AuthViewModel extends Notifier<AuthState> {
       },
       (_) {
         state = state.copyWith(status: AuthStatus.passwordResetSuccess);
+      },
+    );
+  }
+
+  Future<void> searchUsers({String? query, int page = 1, int size = 10}) async {
+    state = state.copyWith(
+      status: AuthStatus.searchingUsers,
+      errorMessage: null,
+    );
+
+    final result = await _searchUsersUsecase(
+      SearchUsersParams(search: query, page: page, size: size),
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+          searchedUsers: const [],
+        );
+      },
+      (users) {
+        state = state.copyWith(
+          status: AuthStatus.usersLoaded,
+          searchedUsers: users,
+          errorMessage: null,
+        );
       },
     );
   }

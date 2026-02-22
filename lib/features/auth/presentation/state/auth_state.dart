@@ -5,12 +5,14 @@ enum AuthStatus {
   initial,
   checking,
   loading,
+  searchingUsers,
   authenticated,
   unauthenticated,
   registered,
   error,
   loaded,
   currentUserLoaded,
+  usersLoaded,
   success,
   passwordResetSuccess,
   passwordResetEmailSent,
@@ -23,6 +25,7 @@ class AuthState extends Equatable {
   //store image name temporarily
   final String? uploadProfilePhotoName;
   final String? uploadCoverPhotoName;
+  final List<AuthEntity> searchedUsers;
 
   const AuthState({
     required this.status,
@@ -30,6 +33,7 @@ class AuthState extends Equatable {
     this.errorMessage,
     this.uploadProfilePhotoName,
     this.uploadCoverPhotoName,
+    this.searchedUsers = const [],
   });
 
   const AuthState.initial(
@@ -37,7 +41,8 @@ class AuthState extends Equatable {
     this.uploadCoverPhotoName,
   ) : status = AuthStatus.initial,
       authEntity = null,
-      errorMessage = null;
+      errorMessage = null,
+      searchedUsers = const [];
 
   AuthState copyWith({
     AuthStatus? status,
@@ -46,6 +51,7 @@ class AuthState extends Equatable {
     String? errorMessage,
     String? uploadProfilePhotoName,
     String? uploadCoverPhotoName,
+    List<AuthEntity>? searchedUsers,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -54,6 +60,7 @@ class AuthState extends Equatable {
       uploadProfilePhotoName:
           uploadProfilePhotoName ?? this.uploadProfilePhotoName,
       uploadCoverPhotoName: uploadCoverPhotoName ?? this.uploadCoverPhotoName,
+      searchedUsers: searchedUsers ?? this.searchedUsers,
     );
   }
 
@@ -64,6 +71,7 @@ class AuthState extends Equatable {
     errorMessage,
     uploadProfilePhotoName,
     uploadCoverPhotoName,
+    searchedUsers,
   ];
 
   @override

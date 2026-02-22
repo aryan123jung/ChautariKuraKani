@@ -8,6 +8,7 @@ import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
+import 'package:chautari_kurakani/features/friend_request/data/repositories/friend_request_repository.dart';
 import 'package:chautari_kurakani/features/friend_request/presentation/state/friend_request_state.dart';
 import 'package:chautari_kurakani/features/friend_request/presentation/view_model/friend_request_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
@@ -17,6 +18,8 @@ import 'package:chautari_kurakani/features/post/presentation/state/post_state.da
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/side_nav_widget.dart';
+import 'package:chautari_kurakani/features/search/domain/entities/search_user_entity.dart';
+import 'package:chautari_kurakani/features/search/domain/usecases/search_users_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -54,6 +57,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool _isScrollingDown = false;
   List<PostEntity> _userPosts = [];
   bool _isLoadingPosts = true;
+  List<SearchUserEntity> _friends = [];
+  bool _isLoadingFriends = true;
 
   @override
   void initState() {
@@ -63,6 +68,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _tabController = TabController(length: 2, vsync: this);
     _scrollController.addListener(_onScroll);
     _loadUserPosts();
+    _loadFriends();
     _loadFriendStatusForReadOnly();
   }
 
@@ -82,6 +88,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       _fullName = '${widget.userEntity.fName} ${widget.userEntity.lName}';
       _bio = widget.userEntity.bio ?? 'No bio yet';
       _loadUserPosts();
+      _loadFriends();
       _loadFriendStatusForReadOnly();
     }
   }
@@ -288,6 +295,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _onRefresh() async {
     await _loadUserPosts();
+    await _loadFriends();
     await _loadFriendStatusForReadOnly();
   }
 
@@ -409,6 +417,96 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
   }
 
+  Future<void> _loadFriends() async {
+    if (widget.isReadOnly) {
+      if (!mounted) return;
+      setState(() {
+        _friends = [];
+        _isLoadingFriends = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingFriends = true;
+    });
+
+    try {
+      final currentId = _normalizeId(
+        widget.userEntity.authId ??
+            ref.read(userSessionServiceProvider).getCurrentUserId() ??
+            '',
+      );
+      if (currentId.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _friends = [];
+          _isLoadingFriends = false;
+        });
+        return;
+      }
+
+      final usersResult = await ref.read(searchUsersUsecaseProvider)(
+        const SearchUsersParams(query: '', page: 1, size: 100),
+      );
+
+      final users = usersResult.fold(
+        (_) => <SearchUserEntity>[],
+        (data) => data,
+      );
+      final candidates = users
+          .where((user) => _normalizeId(user.id) != currentId)
+          .toList();
+
+      final friendRepo = ref.read(friendRequestRepositoryProvider);
+      final checked = await Future.wait(
+        candidates.map((user) async {
+          final statusResult = await friendRepo.getStatus(user.id);
+          return statusResult.fold(
+            (_) => null,
+            (status) => status.status == 'FRIEND' ? user : null,
+          );
+        }),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _friends = checked.whereType<SearchUserEntity>().toList();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _friends = [];
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingFriends = false;
+        });
+      }
+    }
+  }
+
+  void _openFriendProfile(SearchUserEntity user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          isReadOnly: true,
+          userEntity: AuthEntity(
+            authId: user.id,
+            fName: user.firstName,
+            lName: user.lastName,
+            email: user.email,
+            username: user.username,
+            profilePicture: user.profileUrl,
+            coverPicture: user.coverUrl,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
@@ -443,40 +541,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (authState.status == AuthStatus.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
-    // Sample friends list - replace with actual data
-    final List<Map<String, String>> friends = [
-      {
-        'name': 'Friend 1',
-        'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
-        'mutualFriends': '10 mutual friends',
-      },
-      {
-        'name': 'Friend 2',
-        'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
-        'mutualFriends': '5 mutual friends',
-      },
-      {
-        'name': 'Friend 3',
-        'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
-        'mutualFriends': '15 mutual friends',
-      },
-      {
-        'name': 'Friend 4',
-        'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
-        'mutualFriends': '3 mutual friends',
-      },
-      {
-        'name': 'Friend 5',
-        'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
-        'mutualFriends': '8 mutual friends',
-      },
-      {
-        'name': 'Friend 6',
-        'profileUrl': 'https://randomuser.me/api/portraits/men/1.jpg',
-        'mutualFriends': '12 mutual friends',
-      },
-    ];
 
     return Scaffold(
       key: _scaffoldKey,
@@ -795,7 +859,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatColumn('Posts', '${displayPosts.length}'),
-                      _buildStatColumn('Friends', '${friends.length}'),
+                      _buildStatColumn('Friends', '${_friends.length}'),
                       _buildStatColumn('Following', '345'),
                     ],
                   ),
@@ -815,7 +879,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     indicatorWeight: 3,
                     tabs: const [
                       Tab(icon: Icon(Icons.grid_on), text: 'Posts'),
-                      Tab(icon: Icon(Icons.people), text: 'Friends'),
+                      Tab(icon: Icon(Icons.people), text: 'Connection'),
                     ],
                   ),
                 ),
@@ -887,7 +951,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               // Friends Tab
               RefreshIndicator(
                 onRefresh: _onRefresh,
-                child: friends.isEmpty
+                child: widget.isReadOnly
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 36),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: _buildReadOnlyConnectionPanel(
+                              friendState.friendStatus?.status,
+                              isDark,
+                            ),
+                          ),
+                        ],
+                      )
+                    : _isLoadingFriends
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 120),
+                          Center(child: CircularProgressIndicator()),
+                        ],
+                      )
+                    : _friends.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [
@@ -916,14 +1002,132 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     : ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(8),
-                        itemCount: friends.length,
+                        itemCount: _friends.length,
                         itemBuilder: (context, index) {
-                          return FriendCard(friend: friends[index]);
+                          final friend = _friends[index];
+                          return FriendCard(
+                            friend: friend,
+                            onView: () => _openFriendProfile(friend),
+                          );
                         },
                       ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyConnectionPanel(String? status, bool isDark) {
+    final normalized = status ?? 'NONE';
+    final Color accent;
+    final IconData icon;
+    final String title;
+    final String subtitle;
+
+    switch (normalized) {
+      case 'FRIEND':
+        accent = const Color(0XFF76C05D);
+        icon = Icons.handshake_rounded;
+        title = 'You are friends';
+        subtitle = 'You can see each other as connections on ChautariKuraKani.';
+        break;
+      case 'PENDING_OUTGOING':
+        accent = Colors.orange.shade700;
+        icon = Icons.schedule_rounded;
+        title = 'Request pending';
+        subtitle = 'You sent a friend request. Waiting for acceptance.';
+        break;
+      case 'PENDING_INCOMING':
+        accent = Colors.blue.shade700;
+        icon = Icons.mark_email_unread_rounded;
+        title = 'Incoming request';
+        subtitle = 'This user sent you a friend request.';
+        break;
+      default:
+        accent = Colors.grey.shade700;
+        icon = Icons.person_search_rounded;
+        title = 'Not connected';
+        subtitle = 'Send a friend request to connect with this user.';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1F2937), const Color(0xFF111827)]
+              : [const Color(0xFFF8FBF6), const Color(0xFFEAF5E6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: accent, size: 24),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    normalized,
+                    style: TextStyle(
+                      color: accent,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              subtitle,
+              style: TextStyle(
+                height: 1.35,
+                fontSize: 14.5,
+                color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+              ),
+            ),
+          ],
         ),
       ),
     );

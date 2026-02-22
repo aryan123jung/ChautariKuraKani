@@ -104,12 +104,15 @@
 //   }
 // }
 // friend_card_widget.dart
+import 'package:chautari_kurakani/core/api/api_endpoints.dart';
+import 'package:chautari_kurakani/features/search/domain/entities/search_user_entity.dart';
 import 'package:flutter/material.dart';
 
 class FriendCard extends StatelessWidget {
-  final Map<String, String> friend;
+  final SearchUserEntity friend;
+  final VoidCallback onView;
 
-  const FriendCard({super.key, required this.friend});
+  const FriendCard({super.key, required this.friend, required this.onView});
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +131,8 @@ class FriendCard extends StatelessWidget {
     double nameFont = isTablet ? 20 : 16.5;
     double mutualFont = isTablet ? 16 : 14;
     double avatarRadius = isTablet ? 40 : 32;
+    final fullName = friend.fullName.trim().isEmpty ? 'User' : friend.fullName;
+    final profileUrl = _resolveProfile(friend.profileUrl);
 
     return Center(
       child: SizedBox(
@@ -145,7 +150,16 @@ class FriendCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: avatarRadius,
-                  backgroundImage: NetworkImage(friend['profileUrl']!),
+                  backgroundColor: Colors.grey.shade300,
+                  backgroundImage: profileUrl != null
+                      ? NetworkImage(profileUrl)
+                      : null,
+                  child: profileUrl == null
+                      ? Text(
+                          fullName[0].toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -153,7 +167,7 @@ class FriendCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        friend['name']!,
+                        fullName,
                         style: TextStyle(
                           fontSize: nameFont,
                           fontWeight: FontWeight.bold,
@@ -161,7 +175,7 @@ class FriendCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        friend['mutualFriends']!,
+                        '@${friend.username}',
                         style: TextStyle(
                           fontSize: mutualFont,
                           color: Colors.grey[600],
@@ -171,9 +185,7 @@ class FriendCard extends StatelessWidget {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Navigate to friend's profile
-                  },
+                  onPressed: onView,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -196,5 +208,15 @@ class FriendCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String? _resolveProfile(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final value = raw.trim();
+    if (value.startsWith('http')) return value;
+    if (value.contains('/') || value.contains('\\')) {
+      return ApiEndpoints.uploadUrl(value);
+    }
+    return ApiEndpoints.profileImageUrl(value);
   }
 }

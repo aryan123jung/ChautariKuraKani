@@ -14,26 +14,30 @@ class NotificationScreen extends ConsumerStatefulWidget {
 
 class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   final Map<String, String> _friendRequestActionResult = {};
+  late final NotificationViewModel _notificationNotifier;
+  late final FriendRequestViewModel _friendRequestNotifier;
 
   @override
   void initState() {
     super.initState();
+    _notificationNotifier = ref.read(notificationViewModelProvider.notifier);
+    _friendRequestNotifier = ref.read(friendRequestViewModelProvider.notifier);
     Future.microtask(() async {
-      await ref.read(notificationViewModelProvider.notifier).fetchNotifications();
-      await ref.read(notificationViewModelProvider.notifier).connectRealtime();
-      await ref.read(friendRequestViewModelProvider.notifier).loadIncoming();
+      await _notificationNotifier.fetchNotifications();
+      await _notificationNotifier.connectRealtime();
+      await _friendRequestNotifier.loadIncoming();
     });
   }
 
   @override
   void dispose() {
-    ref.read(notificationViewModelProvider.notifier).disconnectRealtime();
+    _notificationNotifier.disconnectRealtime();
     super.dispose();
   }
 
   Future<void> _onRefresh() async {
-    await ref.read(notificationViewModelProvider.notifier).fetchNotifications();
-    await ref.read(friendRequestViewModelProvider.notifier).loadIncoming();
+    await _notificationNotifier.fetchNotifications();
+    await _friendRequestNotifier.loadIncoming();
   }
 
   Future<void> _acceptFromNotification(NotificationEntity item) async {
@@ -41,9 +45,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     final requestId = item.entityId.trim();
     if (requestId.isEmpty) return;
 
-    final ok = await ref
-        .read(friendRequestViewModelProvider.notifier)
-        .acceptRequest(requestId);
+    final ok = await _friendRequestNotifier.acceptRequest(requestId);
 
     if (!mounted) return;
     if (!ok) {
@@ -54,7 +56,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       return;
     }
 
-    await ref.read(notificationViewModelProvider.notifier).markRead(item.id);
+    await _notificationNotifier.markRead(item.id);
     if (mounted) {
       setState(() {
         _friendRequestActionResult[item.id] = 'Friend request accepted';
@@ -71,9 +73,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     final requestId = item.entityId.trim();
     if (requestId.isEmpty) return;
 
-    final ok = await ref
-        .read(friendRequestViewModelProvider.notifier)
-        .rejectRequest(requestId);
+    final ok = await _friendRequestNotifier.rejectRequest(requestId);
 
     if (!mounted) return;
     if (!ok) {
@@ -84,7 +84,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       return;
     }
 
-    await ref.read(notificationViewModelProvider.notifier).markRead(item.id);
+    await _notificationNotifier.markRead(item.id);
     if (mounted) {
       setState(() {
         _friendRequestActionResult[item.id] = 'Friend request rejected';
@@ -109,8 +109,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
           TextButton(
             onPressed: state.notifications.isEmpty
                 ? null
-                : () => ref.read(notificationViewModelProvider.notifier).markAllRead(),
-            child: const Text('Mark all', style: TextStyle(color: Colors.white)),
+                : () => _notificationNotifier.markAllRead(),
+            child: const Text(
+              'Mark all',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -138,7 +141,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(state.errorMessage ?? 'Failed to load notifications'),
+                      child: Text(
+                        state.errorMessage ?? 'Failed to load notifications',
+                      ),
                     ),
                   ),
                 ],
@@ -167,7 +172,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                   actionResultText: _friendRequestActionResult[item.id],
                   onTap: () {
                     if (!item.isRead) {
-                      ref.read(notificationViewModelProvider.notifier).markRead(item.id);
+                      _notificationNotifier.markRead(item.id);
                     }
                   },
                   onAccept:
@@ -266,7 +271,9 @@ class _NotificationTile extends StatelessWidget {
                               backgroundColor: const Color(0XFF76C05D),
                               foregroundColor: Colors.white,
                               minimumSize: const Size(0, 34),
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                             ),
                             child: const Text('Accept'),
                           ),
@@ -276,7 +283,9 @@ class _NotificationTile extends StatelessWidget {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.redAccent,
                               minimumSize: const Size(0, 34),
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                             ),
                             child: const Text('Reject'),
                           ),
@@ -295,7 +304,10 @@ class _NotificationTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       item.relativeTime,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

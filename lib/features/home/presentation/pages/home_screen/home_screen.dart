@@ -1,7 +1,7 @@
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/chautari_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/feed_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/friend_feed_screen.dart';
-import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/notification_screen.dart';
+import 'package:chautari_kurakani/features/notification/presentation/pages/notification_screen.dart';
 import 'package:chautari_kurakani/features/notification/presentation/view_model/notification_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,10 +15,33 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _lastNotificationCount = 0;
+  ProviderSubscription? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
+    _notificationSubscription = ref.listenManual(
+      notificationViewModelProvider,
+      (previous, next) {
+        final prevCount = previous?.notifications.length ?? _lastNotificationCount;
+        final nextCount = next.notifications.length;
+
+        if (nextCount > prevCount && next.notifications.isNotEmpty && mounted) {
+          final newest = next.notifications.first;
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(newest.title.isEmpty ? newest.message : newest.title),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+        }
+
+        _lastNotificationCount = nextCount;
+      },
+    );
+
     Future.microtask(() async {
       await ref.read(notificationViewModelProvider.notifier).fetchNotifications();
       await ref.read(notificationViewModelProvider.notifier).connectRealtime();
@@ -29,28 +52,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    _notificationSubscription?.close();
+    _notificationSubscription = null;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final notificationState = ref.watch(notificationViewModelProvider);
     final unreadCount = notificationState.unreadCount;
-
-    ref.listen(notificationViewModelProvider, (previous, next) {
-      final prevCount = previous?.notifications.length ?? _lastNotificationCount;
-      final nextCount = next.notifications.length;
-
-      if (nextCount > prevCount && next.notifications.isNotEmpty && mounted) {
-        final newest = next.notifications.first;
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(newest.title.isEmpty ? newest.message : newest.title),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-      }
-
-      _lastNotificationCount = nextCount;
-    });
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;

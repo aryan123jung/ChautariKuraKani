@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:chautari_kurakani/features/call/data/services/call_socket_service.dart';
 import 'package:chautari_kurakani/features/call/domain/entities/call_entities.dart';
 import 'package:chautari_kurakani/features/call/presentation/view_model/call_view_model.dart';
+import 'package:chautari_kurakani/features/sensor/data/services/proximity_call_service.dart';
 import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,11 +42,41 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
   bool _remoteVideoReady = false;
   bool _isMuted = false;
   bool _isSpeakerOn = true;
+  bool _isNearEar = false;
+  bool _manualNearEarMode = false;
+  bool _receivedProximityEvent = false;
+  bool _proximitySupported = true;
+  final ProximityCallService _proximityCallService = ProximityCallService();
 
   @override
   void initState() {
     super.initState();
     Future.microtask(_initRtc);
+    if (widget.callType == CallTypeEntity.audio) {
+      Future.microtask(() async {
+        final enabled = await _proximityCallService.startForAudioCall(
+          onNearEarChanged: (isNearEar) {
+            if (!mounted) return;
+            setState(() {
+              _receivedProximityEvent = true;
+              _isNearEar = isNearEar;
+            });
+          },
+        );
+        if (!mounted) return;
+        setState(() {
+          _proximitySupported = enabled;
+        });
+        if (!enabled || !Platform.isAndroid) return;
+        Future.delayed(const Duration(seconds: 5), () {
+          if (!mounted) return;
+          if (_receivedProximityEvent) return;
+          setState(() {
+            _proximitySupported = false;
+          });
+        });
+      });
+    }
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       final call = ref.read(callViewModelProvider).activeCall;
       if (call?.callId != widget.callId) return;
@@ -60,6 +92,7 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
   void dispose() {
     _signalSub?.cancel();
     _timer?.cancel();
+    _proximityCallService.stop();
     _disposeRtc();
     _localRenderer.dispose();
     _remoteRenderer.dispose();
@@ -271,7 +304,18 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
         backgroundColor: const Color(0xFF0E1116),
         body: widget.callType == CallTypeEntity.video
             ? _buildVideoBody(statusText)
-            : _buildAudioBody(statusText),
+            : Stack(
+                children: [
+                  _buildAudioBody(statusText),
+                  if (_isNearEar || _manualNearEarMode)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        ignoring: false,
+                        child: Container(color: Colors.black),
+                      ),
+                    ),
+                ],
+              ),
       ),
     );
   }
@@ -508,6 +552,20 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
                 });
               },
             ),
+            if (widget.callType == CallTypeEntity.audio && !_proximitySupported)
+              _CallActionButton(
+                icon: _manualNearEarMode
+                    ? Icons.phone_disabled_rounded
+                    : Icons.phone_in_talk_rounded,
+                label: _manualNearEarMode ? 'Ear Mode On' : 'Ear Mode',
+                color: Colors.white24,
+                onTap: () {
+                  if (!mounted) return;
+                  setState(() {
+                    _manualNearEarMode = !_manualNearEarMode;
+                  });
+                },
+              ),
           ],
         ),
         SizedBox(height: context.scale(28)),

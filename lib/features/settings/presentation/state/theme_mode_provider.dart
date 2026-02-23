@@ -174,8 +174,6 @@ class ThemeModeNotifier extends Notifier<ThemeModeState> {
   }
 
   bool _computeAutoDarkWithHysteresis(int lux) {
-    // OEM sensor ranges vary a lot. Use both absolute thresholds and
-    // calibration against a learned baseline.
     const darkThreshold = 55;
     const lightThreshold = 140;
     final sanitizedLux = lux < 0 ? 0 : lux;
@@ -186,7 +184,6 @@ class ThemeModeNotifier extends Notifier<ThemeModeState> {
     _baselineLux ??= currentLux;
     _baselineLux = (_baselineLux! * 0.985) + (currentLux * 0.015);
 
-    // First decision from initial context.
     if (state.lux == null) {
       _autoDark = currentLux <= ((darkThreshold + lightThreshold) / 2);
       return _autoDark;

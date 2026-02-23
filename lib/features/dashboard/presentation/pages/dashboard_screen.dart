@@ -410,6 +410,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   late final CallViewModel _callNotifier;
   final ShakeDetectorService _shakeDetector = ShakeDetectorService();
   String? _incomingDialogCallId;
+  BuildContext? _incomingDialogContext;
 
   @override
   void initState() {
@@ -526,9 +527,15 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
         _showIncomingCallDialog(incoming);
       }
 
+      // If call was ended/rejected/missed by caller or server, close dialog.
+      if (_incomingDialogCallId != null && next.incomingCall == null) {
+        _dismissIncomingCallDialogIfOpen();
+      }
+
       final prevActiveId = previous?.activeCall?.callId;
       final nextActiveId = next.activeCall?.callId;
       if (prevActiveId != null && nextActiveId == null) {
+        _dismissIncomingCallDialogIfOpen();
         _showTopPopup(context, 'Call ended');
       }
     });
@@ -767,17 +774,18 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   Future<void> _showIncomingCallDialog(ActiveCallEntity call) async {
     if (!mounted) return;
     final notifier = ref.read(callViewModelProvider.notifier);
+    await notifier.loadCallHistory();
+    if (!mounted) return;
     final callTypeLabel = call.callType == CallTypeEntity.video
         ? 'Video'
         : 'Audio';
-    final callerLabel = call.callerId.isEmpty
-        ? 'Someone'
-        : 'User ${call.callerId.length > 6 ? call.callerId.substring(0, 6) : call.callerId}';
+    final callerLabel = _resolveCallerDisplayName(call);
 
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
+        _incomingDialogContext = dialogContext;
         return AlertDialog(
           title: Text('Incoming $callTypeLabel Call'),
           content: Text('$callerLabel is calling you'),
@@ -818,6 +826,40 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     );
     if (mounted && _incomingDialogCallId == call.callId) {
       _incomingDialogCallId = null;
+      _incomingDialogContext = null;
     }
+  }
+
+  void _dismissIncomingCallDialogIfOpen() {
+    final dialogContext = _incomingDialogContext;
+    if (dialogContext != null && dialogContext.mounted) {
+      Navigator.of(dialogContext).pop();
+    }
+    _incomingDialogContext = null;
+    _incomingDialogCallId = null;
+  }
+
+  String _resolveCallerDisplayName(ActiveCallEntity call) {
+    final callerId = call.callerId.trim().toLowerCase();
+    if (callerId.isEmpty) return 'Someone';
+
+    final callState = ref.read(callViewModelProvider);
+    for (final log in callState.callHistory) {
+      if (log.id == call.callId && log.caller != null) {
+        return log.caller!.fullName;
+      }
+    }
+
+    final authId = ref.read(authViewModelProvider).authEntity?.authId ?? '';
+    final messageState = ref.read(messageViewModelProvider);
+    for (final conversation in messageState.conversations) {
+      final other = conversation.otherParticipant(authId);
+      if (other == null) continue;
+      if (other.id.trim().toLowerCase() == callerId) {
+        return other.fullName;
+      }
+    }
+
+    return 'User ${call.callerId.length > 6 ? call.callerId.substring(0, 6) : call.callerId}';
   }
 }

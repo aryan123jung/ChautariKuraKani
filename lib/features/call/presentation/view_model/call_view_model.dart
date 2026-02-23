@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chautari_kurakani/features/call/data/services/call_ringtone_service.dart';
 import 'package:chautari_kurakani/features/call/data/services/call_socket_service.dart';
 import 'package:chautari_kurakani/features/call/domain/entities/call_entities.dart';
 import 'package:chautari_kurakani/features/call/domain/usecases/call_usecases.dart';
@@ -13,6 +14,7 @@ final callViewModelProvider = NotifierProvider<CallViewModel, CallState>(
 class CallViewModel extends Notifier<CallState> {
   late final ListMyCallsUsecase _listMyCallsUsecase;
   late final CallSocketService _socketService;
+  late final CallRingtoneService _ringtoneService;
   StreamSubscription<CallSocketEvent>? _socketSub;
   final _signalController = StreamController<CallSocketEvent>.broadcast();
   final Map<String, List<CallSocketEvent>> _pendingSignalsByCall = {};
@@ -22,9 +24,11 @@ class CallViewModel extends Notifier<CallState> {
   CallState build() {
     _listMyCallsUsecase = ref.read(listMyCallsUsecaseProvider);
     _socketService = ref.read(callSocketServiceProvider);
+    _ringtoneService = ref.read(callRingtoneServiceProvider);
 
     ref.onDispose(() {
       _socketSub?.cancel();
+      unawaited(_ringtoneService.stopAll());
       _signalController.close();
       _socketService.disconnect();
     });
@@ -93,6 +97,7 @@ class CallViewModel extends Notifier<CallState> {
     );
 
     if (callId == null || callId.trim().isEmpty) {
+      unawaited(_ringtoneService.stopAll());
       state = state.copyWith(
         status: CallUiStatus.error,
         errorMessage:
@@ -101,6 +106,7 @@ class CallViewModel extends Notifier<CallState> {
       return null;
     }
 
+    unawaited(_ringtoneService.playOutgoing());
     state = state.copyWith(
       status: CallUiStatus.loaded,
       activeCall: ActiveCallEntity(
@@ -117,6 +123,7 @@ class CallViewModel extends Notifier<CallState> {
   }
 
   Future<bool> acceptCall(String callId) async {
+    unawaited(_ringtoneService.stopAll());
     final ok = await _socketService.acceptCall(callId);
     if (!ok) {
       state = state.copyWith(
@@ -140,6 +147,7 @@ class CallViewModel extends Notifier<CallState> {
   }
 
   Future<bool> rejectCall(String callId) async {
+    unawaited(_ringtoneService.stopAll());
     final ok = await _socketService.rejectCall(callId);
     if (!ok) {
       state = state.copyWith(
@@ -156,6 +164,7 @@ class CallViewModel extends Notifier<CallState> {
   }
 
   Future<bool> endCall(String callId) async {
+    unawaited(_ringtoneService.stopAll());
     final ok = await _socketService.endCall(callId);
     if (!ok) {
       state = state.copyWith(
@@ -215,6 +224,7 @@ class CallViewModel extends Notifier<CallState> {
 
     switch (event.type) {
       case CallSocketEventType.incoming:
+        unawaited(_ringtoneService.playIncoming());
         final call = ActiveCallEntity(
           callId: callId,
           callerId: (event.callerId ?? '').trim().toLowerCase(),
@@ -231,6 +241,10 @@ class CallViewModel extends Notifier<CallState> {
         );
         break;
       case CallSocketEventType.ringing:
+        if (state.activeCall?.callId == callId &&
+            state.activeCall?.isIncoming == false) {
+          unawaited(_ringtoneService.playOutgoing());
+        }
         if (state.activeCall?.callId == callId) {
           state = state.copyWith(
             status: CallUiStatus.loaded,
@@ -242,6 +256,7 @@ class CallViewModel extends Notifier<CallState> {
         }
         break;
       case CallSocketEventType.accepted:
+        unawaited(_ringtoneService.stopAll());
         if (state.activeCall?.callId == callId) {
           state = state.copyWith(
             status: CallUiStatus.loaded,
@@ -254,6 +269,7 @@ class CallViewModel extends Notifier<CallState> {
         }
         break;
       case CallSocketEventType.rejected:
+        unawaited(_ringtoneService.stopAll());
         if (_matchesCurrentCall(callId)) {
           state = state.copyWith(
             status: CallUiStatus.loaded,
@@ -264,6 +280,7 @@ class CallViewModel extends Notifier<CallState> {
         }
         break;
       case CallSocketEventType.missed:
+        unawaited(_ringtoneService.stopAll());
         if (_matchesCurrentCall(callId)) {
           state = state.copyWith(
             status: CallUiStatus.loaded,
@@ -274,6 +291,7 @@ class CallViewModel extends Notifier<CallState> {
         }
         break;
       case CallSocketEventType.ended:
+        unawaited(_ringtoneService.stopAll());
         if (_matchesCurrentCall(callId)) {
           state = state.copyWith(
             status: CallUiStatus.loaded,

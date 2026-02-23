@@ -368,6 +368,7 @@
 //     );
 //   }
 // }
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
@@ -411,6 +412,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   final ShakeDetectorService _shakeDetector = ShakeDetectorService();
   String? _incomingDialogCallId;
   BuildContext? _incomingDialogContext;
+  OverlayEntry? _topPopupEntry;
+  Timer? _topPopupTimer;
 
   @override
   void initState() {
@@ -437,6 +440,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     _shakeDetector.stop();
     _messageNotifier.disconnectRealtime();
     _callNotifier.disconnectRealtime();
+    _topPopupTimer?.cancel();
+    _removeTopPopup();
     _pageController.dispose();
     super.dispose();
   }
@@ -749,26 +754,85 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showTopPopup(BuildContext context, String text) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(
-        MaterialBanner(
-          content: Text(text),
-          leading: const Icon(Icons.message_outlined),
-          actions: [
-            TextButton(
-              onPressed: () => messenger.hideCurrentMaterialBanner(),
-              child: const Text('Dismiss'),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final overlay = Overlay.of(context, rootOverlay: true);
+      _removeTopPopup();
+
+      _topPopupEntry = OverlayEntry(
+        builder: (_) => Positioned(
+          top: MediaQuery.of(context).padding.top + 12,
+          left: 12,
+          right: 12,
+          child: Material(
+            color: Colors.transparent,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.86),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black38,
+                      blurRadius: 14,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.notifications_active_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        text,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _removeTopPopup,
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       );
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      messenger.hideCurrentMaterialBanner();
+      overlay.insert(_topPopupEntry!);
+
+      _topPopupTimer?.cancel();
+      _topPopupTimer = Timer(const Duration(seconds: 2), _removeTopPopup);
     });
+  }
+
+  void _removeTopPopup() {
+    _topPopupTimer?.cancel();
+    _topPopupTimer = null;
+    _topPopupEntry?.remove();
+    _topPopupEntry = null;
   }
 
   Future<void> _showIncomingCallDialog(ActiveCallEntity call) async {

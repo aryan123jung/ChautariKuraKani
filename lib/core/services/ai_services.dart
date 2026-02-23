@@ -23,10 +23,10 @@ class AiService {
         "model": "llama-3.1-8b-instant",
         "messages": [
           {"role": "system", "content": systemPrompt},
-          {"role": "user", "content": userMessage}
+          {"role": "user", "content": userMessage},
         ],
         "max_tokens": 150,
-        "temperature": 0.9
+        "temperature": 0.9,
       }),
     );
 

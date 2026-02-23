@@ -11,6 +11,7 @@ class PostEntity extends Equatable {
   final String? videoUrl;
   final String? mediaType;
   final int likesCount;
+  final List<String> likedUserIds;
   final int commentsCount;
 
   const PostEntity({
@@ -24,6 +25,7 @@ class PostEntity extends Equatable {
     this.videoUrl,
     this.mediaType,
     this.likesCount = 0,
+    this.likedUserIds = const [],
     this.commentsCount = 0,
   });
 
@@ -38,6 +40,7 @@ class PostEntity extends Equatable {
     String? videoUrl,
     String? mediaType,
     int? likesCount,
+    List<String>? likedUserIds,
     int? commentsCount,
   }) {
     return PostEntity(
@@ -51,6 +54,7 @@ class PostEntity extends Equatable {
       videoUrl: videoUrl ?? this.videoUrl,
       mediaType: mediaType ?? this.mediaType,
       likesCount: likesCount ?? this.likesCount,
+      likedUserIds: likedUserIds ?? this.likedUserIds,
       commentsCount: commentsCount ?? this.commentsCount,
     );
   }
@@ -67,6 +71,7 @@ class PostEntity extends Equatable {
     videoUrl,
     mediaType,
     likesCount,
+    likedUserIds,
     commentsCount,
   ];
 }

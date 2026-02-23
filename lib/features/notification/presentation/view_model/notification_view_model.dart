@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chautari_kurakani/features/notification/data/services/notification_sound_service.dart';
 import 'package:chautari_kurakani/features/notification/data/services/notification_socket_service.dart';
 import 'package:chautari_kurakani/features/notification/domain/entities/notification_entity.dart';
 import 'package:chautari_kurakani/features/notification/domain/usecases/notification_usecases.dart';
@@ -16,17 +17,21 @@ class NotificationViewModel extends Notifier<NotificationState> {
   late final MarkNotificationReadUsecase _markNotificationReadUsecase;
   late final MarkAllNotificationsReadUsecase _markAllNotificationsReadUsecase;
   late final NotificationSocketService _socketService;
+  late final NotificationSoundService _soundService;
 
   StreamSubscription<NotificationEntity>? _socketSubscription;
 
   @override
   NotificationState build() {
     _getNotificationsUsecase = ref.read(getNotificationsUsecaseProvider);
-    _markNotificationReadUsecase = ref.read(markNotificationReadUsecaseProvider);
+    _markNotificationReadUsecase = ref.read(
+      markNotificationReadUsecaseProvider,
+    );
     _markAllNotificationsReadUsecase = ref.read(
       markAllNotificationsReadUsecaseProvider,
     );
     _socketService = ref.read(notificationSocketServiceProvider);
+    _soundService = ref.read(notificationSoundServiceProvider);
 
     ref.onDispose(() {
       _socketSubscription?.cancel();
@@ -37,7 +42,10 @@ class NotificationViewModel extends Notifier<NotificationState> {
   }
 
   Future<void> fetchNotifications({int page = 1, int size = 20}) async {
-    state = state.copyWith(status: NotificationStatusUi.loading, errorMessage: null);
+    state = state.copyWith(
+      status: NotificationStatusUi.loading,
+      errorMessage: null,
+    );
 
     final result = await _getNotificationsUsecase(
       GetNotificationsParams(page: page, size: size),
@@ -86,7 +94,10 @@ class NotificationViewModel extends Notifier<NotificationState> {
   }
 
   Future<void> markAllRead() async {
-    state = state.copyWith(status: NotificationStatusUi.submitting, errorMessage: null);
+    state = state.copyWith(
+      status: NotificationStatusUi.submitting,
+      errorMessage: null,
+    );
 
     final result = await _markAllNotificationsReadUsecase();
 
@@ -114,9 +125,12 @@ class NotificationViewModel extends Notifier<NotificationState> {
     await _socketService.connect();
     await _socketSubscription?.cancel();
     _socketSubscription = _socketService.stream.listen((item) {
-      final exists = state.notifications.any((element) => element.id == item.id);
+      final exists = state.notifications.any(
+        (element) => element.id == item.id,
+      );
       if (exists) return;
 
+      unawaited(_soundService.play());
       state = state.copyWith(
         status: NotificationStatusUi.loaded,
         notifications: [item, ...state.notifications],

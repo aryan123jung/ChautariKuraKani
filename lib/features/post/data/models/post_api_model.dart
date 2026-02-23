@@ -12,6 +12,7 @@ class PostApiModel {
   final String? videoUrl;
   final String? mediaType;
   final int likesCount;
+  final List<String> likedUserIds;
   final int commentsCount;
 
   PostApiModel({
@@ -25,6 +26,7 @@ class PostApiModel {
     this.videoUrl,
     this.mediaType,
     this.likesCount = 0,
+    this.likedUserIds = const [],
     this.commentsCount = 0,
   });
 
@@ -58,7 +60,17 @@ class PostApiModel {
 
     final String mediaType = json['mediaType']?.toString() ?? '';
     final String rawMedia = json['mediaUrl']?.toString() ?? '';
-    final int likesCount = (json['likes'] as List<dynamic>? ?? []).length;
+    final List<dynamic> likesRaw = (json['likes'] as List<dynamic>? ?? []);
+    final List<String> likedUserIds = likesRaw
+        .map((item) {
+          if (item is Map<String, dynamic>) {
+            return item['_id']?.toString() ?? '';
+          }
+          return item?.toString() ?? '';
+        })
+        .where((id) => id.trim().isNotEmpty)
+        .toList(growable: false);
+    final int likesCount = likedUserIds.length;
     final int commentsCount = json['commentsCount'] is int
         ? json['commentsCount'] as int
         : int.tryParse(json['commentsCount']?.toString() ?? '') ?? 0;
@@ -86,6 +98,7 @@ class PostApiModel {
       videoUrl: resolvedVideoUrl,
       mediaType: mediaType.isNotEmpty ? mediaType : null,
       likesCount: likesCount,
+      likedUserIds: likedUserIds,
       commentsCount: commentsCount,
     );
   }
@@ -102,6 +115,7 @@ class PostApiModel {
       videoUrl: videoUrl,
       mediaType: mediaType,
       likesCount: likesCount,
+      likedUserIds: likedUserIds,
       commentsCount: commentsCount,
     );
   }

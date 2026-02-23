@@ -41,8 +41,34 @@ class _PostCardState extends ConsumerState<PostCard> {
   @override
   void initState() {
     super.initState();
-    _likesCount = widget.post.likesCount;
+    _syncLikeStateFromPost();
     _commentsCount = widget.post.commentsCount;
+  }
+
+  @override
+  void didUpdateWidget(covariant PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final postChanged =
+        oldWidget.post.id != widget.post.id ||
+        oldWidget.post.likesCount != widget.post.likesCount ||
+        oldWidget.post.likedUserIds != widget.post.likedUserIds;
+    final userChanged =
+        (oldWidget.currentUserId ?? '') != (widget.currentUserId ?? '');
+    if (postChanged || userChanged) {
+      _syncLikeStateFromPost();
+    }
+    if (oldWidget.post.commentsCount != widget.post.commentsCount) {
+      _commentsCount = widget.post.commentsCount;
+    }
+  }
+
+  void _syncLikeStateFromPost() {
+    final me = (widget.currentUserId ?? '').trim().toLowerCase();
+    final liked =
+        me.isNotEmpty &&
+        widget.post.likedUserIds.any((id) => id.trim().toLowerCase() == me);
+    _likesCount = widget.post.likesCount;
+    _hasLiked = liked;
   }
 
   Future<void> _likePost() async {
@@ -50,6 +76,8 @@ class _PostCardState extends ConsumerState<PostCard> {
 
     setState(() {
       _isLiking = true;
+      _hasLiked = true;
+      _likesCount += 1;
     });
 
     try {
@@ -66,10 +94,17 @@ class _PostCardState extends ConsumerState<PostCard> {
       if (!mounted) return;
       setState(() {
         _likesCount = updatedPost.likesCount;
-        _hasLiked = true;
+        final me = (widget.currentUserId ?? '').trim().toLowerCase();
+        _hasLiked =
+            me.isNotEmpty &&
+            updatedPost.likedUserIds.any((id) => id.trim().toLowerCase() == me);
       });
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _hasLiked = false;
+        _likesCount = _likesCount > 0 ? _likesCount - 1 : 0;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to like post: $e')));

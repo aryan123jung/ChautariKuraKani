@@ -214,13 +214,29 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final title = item.title.trim().isEmpty ? 'Notification' : item.title;
     final actorName = item.actor.fullName.trim().isEmpty
         ? (item.actor.username.trim().isEmpty ? 'User' : item.actor.username)
         : item.actor.fullName;
 
+    final tileColor = item.isRead
+        ? (isDark ? colorScheme.surfaceContainerHigh : Colors.white)
+        : (isDark ? const Color(0xFF233325) : const Color(0xFFEFF8EB));
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.grey.shade300;
+    final titleColor = isDark ? Colors.white : Colors.black87;
+    final bodyColor = isDark ? Colors.white70 : Colors.black87;
+    final timeColor = isDark ? Colors.white54 : Colors.grey.shade600;
+    final resultColor = isDark
+        ? const Color(0xFF8DDC7A)
+        : Colors.green.shade700;
+
     return Material(
-      color: item.isRead ? Colors.white : const Color(0xFFEFF8EB),
+      color: tileColor,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -229,7 +245,7 @@ class _NotificationTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,13 +270,14 @@ class _NotificationTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(item.message),
+                    Text(item.message, style: TextStyle(color: bodyColor)),
                     const SizedBox(height: 6),
                     if (onAccept != null && onReject != null)
                       Row(
@@ -295,7 +312,7 @@ class _NotificationTile extends StatelessWidget {
                       Text(
                         actionResultText!,
                         style: TextStyle(
-                          color: Colors.green.shade700,
+                          color: resultColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -304,10 +321,7 @@ class _NotificationTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       item.relativeTime,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: timeColor, fontSize: 12),
                     ),
                   ],
                 ),

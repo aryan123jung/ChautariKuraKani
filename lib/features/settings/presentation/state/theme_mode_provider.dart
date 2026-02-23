@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
-import 'package:chautari_kurakani/features/settings/data/services/ambient_light_service.dart';
+import 'package:chautari_kurakani/features/sensor/data/services/ambient_light_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

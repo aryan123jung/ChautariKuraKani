@@ -190,6 +190,7 @@ class ApiEndpoints {
       '$friendsBase/requests/$requestId/reject';
   static String unfriend(String friendUserId) => '$friendsBase/$friendUserId';
   static String friendStatus(String userId) => '$friendsBase/status/$userId';
+  static String friendCount(String userId) => '$friendsBase/count/$userId';
 
   // Notifications
   static const String notifications = '/notifications';

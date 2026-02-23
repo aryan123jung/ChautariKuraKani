@@ -7,6 +7,13 @@ abstract class IFriendRequestRemoteDatasource {
   Future<FriendRequestApiModel> rejectRequest(String requestId);
   Future<void> unfriend(String friendUserId);
   Future<FriendStatusApiModel> getStatus(String userId);
-  Future<List<FriendRequestApiModel>> getIncoming({int page = 1, int size = 10});
-  Future<List<FriendRequestApiModel>> getOutgoing({int page = 1, int size = 10});
+  Future<int> getFriendCount(String userId);
+  Future<List<FriendRequestApiModel>> getIncoming({
+    int page = 1,
+    int size = 10,
+  });
+  Future<List<FriendRequestApiModel>> getOutgoing({
+    int page = 1,
+    int size = 10,
+  });
 }

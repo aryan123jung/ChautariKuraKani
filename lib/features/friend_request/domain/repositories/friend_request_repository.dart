@@ -9,6 +9,7 @@ abstract class IFriendRequestRepository {
   Future<Either<Failure, FriendRequestEntity>> rejectRequest(String requestId);
   Future<Either<Failure, bool>> unfriend(String friendUserId);
   Future<Either<Failure, FriendStatusEntity>> getStatus(String userId);
+  Future<Either<Failure, int>> getFriendCount(String userId);
   Future<Either<Failure, List<FriendRequestEntity>>> getIncoming({
     int page = 1,
     int size = 10,

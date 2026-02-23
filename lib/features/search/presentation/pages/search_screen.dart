@@ -69,7 +69,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         GetCurrentUsecaseParams(userId: user.id),
       );
       profileResult.fold((_) {}, (entity) {
-        freshUser = entity;
+        freshUser = entity.copyWith(
+          authId: (entity.authId != null && entity.authId!.trim().isNotEmpty)
+              ? entity.authId
+              : user.id,
+          profilePicture: entity.profilePicture ?? freshUser.profilePicture,
+          coverPicture: entity.coverPicture ?? freshUser.coverPicture,
+        );
       });
 
       await ref

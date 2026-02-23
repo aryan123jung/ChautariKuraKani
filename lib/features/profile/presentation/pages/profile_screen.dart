@@ -65,6 +65,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool _isLoadingPosts = true;
   List<SearchUserEntity> _friends = [];
   bool _isLoadingFriends = true;
+  int? _readOnlyFriendCount;
 
   @override
   void initState() {
@@ -491,11 +492,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _loadFriends() async {
     if (widget.isReadOnly) {
-      if (!mounted) return;
+      final targetId = widget.userEntity.authId ?? '';
+      if (targetId.trim().isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _friends = [];
+          _readOnlyFriendCount = 0;
+          _isLoadingFriends = false;
+        });
+        return;
+      }
+
       setState(() {
-        _friends = [];
-        _isLoadingFriends = false;
+        _isLoadingFriends = true;
       });
+      try {
+        final friendRepo = ref.read(friendRequestRepositoryProvider);
+        final countResult = await friendRepo.getFriendCount(targetId);
+        if (!mounted) return;
+        setState(() {
+          _friends = [];
+          _readOnlyFriendCount = countResult.fold((_) => 0, (count) => count);
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _readOnlyFriendCount = 0;
+        });
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoadingFriends = false;
+          });
+        }
+      }
       return;
     }
 
@@ -586,7 +616,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       );
 
       profileResult.fold((_) {}, (entity) {
-        freshUser = entity;
+        freshUser = entity.copyWith(
+          authId: (entity.authId != null && entity.authId!.trim().isNotEmpty)
+              ? entity.authId
+              : user.id,
+          profilePicture: entity.profilePicture ?? freshUser.profilePicture,
+          coverPicture: entity.coverPicture ?? freshUser.coverPicture,
+        );
       });
 
       // Preload friend status before opening profile so action button is ready.
@@ -635,6 +671,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             friendState.statusUserId == targetProfileId
         ? friendState.friendStatus
         : null;
+    final friendsStatText = widget.isReadOnly
+        ? '${_readOnlyFriendCount ?? 0}'
+        : '${_friends.length}';
     final readOnlyDerivedPosts = widget.isReadOnly
         ? _filterPostsForProfile(postState.posts)
         : <PostEntity>[];
@@ -990,7 +1029,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatColumn('Posts', '${displayPosts.length}'),
-                      _buildStatColumn('Friends', '${_friends.length}'),
+                      _buildStatColumn('Friends', friendsStatText),
                       _buildStatColumn('Following', '345'),
                     ],
                   ),

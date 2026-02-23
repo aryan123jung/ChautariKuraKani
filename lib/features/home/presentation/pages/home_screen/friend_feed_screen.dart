@@ -20,11 +20,15 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadFriendFeed);
+    Future.microtask(() => _loadFriendFeed(forceFetchPosts: false));
   }
 
-  Future<void> _loadFriendFeed() async {
-    await ref.read(postViewModelProvider.notifier).fetchPosts();
+  Future<void> _loadFriendFeed({bool forceFetchPosts = true}) async {
+    final postState = ref.read(postViewModelProvider);
+    final hasPosts = postState.posts.isNotEmpty;
+    if (forceFetchPosts || !hasPosts) {
+      await ref.read(postViewModelProvider.notifier).fetchPosts();
+    }
     await _resolveFriendAuthorIds();
   }
 
@@ -121,7 +125,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: _loadFriendFeed,
+                onPressed: () => _loadFriendFeed(forceFetchPosts: true),
                 child: const Text('Retry'),
               ),
             ],
@@ -132,7 +136,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
 
     if (friendPosts.isEmpty) {
       return RefreshIndicator(
-        onRefresh: _loadFriendFeed,
+        onRefresh: () => _loadFriendFeed(forceFetchPosts: true),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
@@ -144,7 +148,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadFriendFeed,
+      onRefresh: () => _loadFriendFeed(forceFetchPosts: true),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 18),
         itemCount: friendPosts.length,
@@ -156,7 +160,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
             currentUserId: currentUserId,
             currentUserProfileUrl: currentUserProfile,
             currentUserName: currentUserName.isEmpty ? null : currentUserName,
-            onPostChanged: _loadFriendFeed,
+            onPostChanged: () => _loadFriendFeed(forceFetchPosts: true),
           );
         },
       ),

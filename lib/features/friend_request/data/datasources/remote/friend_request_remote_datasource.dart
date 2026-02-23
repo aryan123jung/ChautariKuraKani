@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final friendRequestRemoteDatasourceProvider =
     Provider<IFriendRequestRemoteDatasource>((ref) {
-      return FriendRequestRemoteDatasource(apiClient: ref.read(apiClientProvider));
+      return FriendRequestRemoteDatasource(
+        apiClient: ref.read(apiClientProvider),
+      );
     });
 
 class FriendRequestRemoteDatasource implements IFriendRequestRemoteDatasource {
@@ -17,8 +19,12 @@ class FriendRequestRemoteDatasource implements IFriendRequestRemoteDatasource {
 
   @override
   Future<FriendRequestApiModel> sendRequest(String toUserId) async {
-    final response = await _apiClient.post(ApiEndpoints.sendFriendRequest(toUserId));
-    return FriendRequestApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    final response = await _apiClient.post(
+      ApiEndpoints.sendFriendRequest(toUserId),
+    );
+    return FriendRequestApiModel.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
   }
 
   @override
@@ -28,14 +34,22 @@ class FriendRequestRemoteDatasource implements IFriendRequestRemoteDatasource {
 
   @override
   Future<FriendRequestApiModel> acceptRequest(String requestId) async {
-    final response = await _apiClient.post(ApiEndpoints.acceptFriendRequest(requestId));
-    return FriendRequestApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    final response = await _apiClient.post(
+      ApiEndpoints.acceptFriendRequest(requestId),
+    );
+    return FriendRequestApiModel.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
   }
 
   @override
   Future<FriendRequestApiModel> rejectRequest(String requestId) async {
-    final response = await _apiClient.post(ApiEndpoints.rejectFriendRequest(requestId));
-    return FriendRequestApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    final response = await _apiClient.post(
+      ApiEndpoints.rejectFriendRequest(requestId),
+    );
+    return FriendRequestApiModel.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
   }
 
   @override
@@ -46,7 +60,18 @@ class FriendRequestRemoteDatasource implements IFriendRequestRemoteDatasource {
   @override
   Future<FriendStatusApiModel> getStatus(String userId) async {
     final response = await _apiClient.get(ApiEndpoints.friendStatus(userId));
-    return FriendStatusApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    return FriendStatusApiModel.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
+  }
+
+  @override
+  Future<int> getFriendCount(String userId) async {
+    final response = await _apiClient.get(ApiEndpoints.friendCount(userId));
+    final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    final countRaw = data['count'];
+    if (countRaw is int) return countRaw;
+    return int.tryParse(countRaw?.toString() ?? '0') ?? 0;
   }
 
   @override
@@ -61,7 +86,10 @@ class FriendRequestRemoteDatasource implements IFriendRequestRemoteDatasource {
 
     final raw = response.data['data'] as List<dynamic>? ?? [];
     return raw
-        .map((item) => FriendRequestApiModel.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) =>
+              FriendRequestApiModel.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -77,7 +105,10 @@ class FriendRequestRemoteDatasource implements IFriendRequestRemoteDatasource {
 
     final raw = response.data['data'] as List<dynamic>? ?? [];
     return raw
-        .map((item) => FriendRequestApiModel.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) =>
+              FriendRequestApiModel.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
   }
 }

@@ -21,17 +21,21 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadPosts);
+    Future.microtask(() => _loadPosts(forceFetchPosts: false));
   }
 
-  Future<void> _loadPosts() async {
+  Future<void> _loadPosts({bool forceFetchPosts = true}) async {
     if (mounted) {
       setState(() {
         _isResolvingFriends = true;
         _friendFilterReady = false;
       });
     }
-    await ref.read(postViewModelProvider.notifier).fetchPosts();
+    final postState = ref.read(postViewModelProvider);
+    final hasPosts = postState.posts.isNotEmpty;
+    if (forceFetchPosts || !hasPosts) {
+      await ref.read(postViewModelProvider.notifier).fetchPosts();
+    }
     await _resolveFriendAuthorIds();
   }
 
@@ -135,7 +139,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              ElevatedButton(onPressed: _loadPosts, child: const Text('Retry')),
+              ElevatedButton(
+                onPressed: () => _loadPosts(forceFetchPosts: true),
+                child: const Text('Retry'),
+              ),
             ],
           ),
         ),
@@ -144,7 +151,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
     if (feedPosts.isEmpty) {
       return RefreshIndicator(
-        onRefresh: _loadPosts,
+        onRefresh: () => _loadPosts(forceFetchPosts: true),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
@@ -156,7 +163,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadPosts,
+      onRefresh: () => _loadPosts(forceFetchPosts: true),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 18),
         itemCount: feedPosts.length,
@@ -166,7 +173,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           currentUserId: currentUserId,
           currentUserProfileUrl: currentUserProfile,
           currentUserName: currentUserName.isEmpty ? null : currentUserName,
-          onPostChanged: _loadPosts,
+          onPostChanged: () => _loadPosts(forceFetchPosts: true),
         ),
       ),
     );

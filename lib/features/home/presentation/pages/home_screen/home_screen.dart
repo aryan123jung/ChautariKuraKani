@@ -16,6 +16,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _lastNotificationCount = 0;
   ProviderSubscription? _notificationSubscription;
+  bool _suppressInitialNotificationPopup = true;
 
   @override
   void initState() {
@@ -23,19 +24,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _notificationSubscription = ref.listenManual(
       notificationViewModelProvider,
       (previous, next) {
-        final prevCount = previous?.notifications.length ?? _lastNotificationCount;
+        if (_suppressInitialNotificationPopup) {
+          _lastNotificationCount = next.notifications.length;
+          return;
+        }
+
+        final prevCount =
+            previous?.notifications.length ?? _lastNotificationCount;
         final nextCount = next.notifications.length;
 
         if (nextCount > prevCount && next.notifications.isNotEmpty && mounted) {
           final newest = next.notifications.first;
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(newest.title.isEmpty ? newest.message : newest.title),
-                duration: const Duration(seconds: 2),
-              ),
-            );
+          _showTopSnack(newest.title.isEmpty ? newest.message : newest.title);
         }
 
         _lastNotificationCount = nextCount;
@@ -43,11 +43,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     Future.microtask(() async {
-      await ref.read(notificationViewModelProvider.notifier).fetchNotifications();
+      await ref
+          .read(notificationViewModelProvider.notifier)
+          .fetchNotifications();
       await ref.read(notificationViewModelProvider.notifier).connectRealtime();
       if (!mounted) return;
-      _lastNotificationCount =
-          ref.read(notificationViewModelProvider).notifications.length;
+      _lastNotificationCount = ref
+          .read(notificationViewModelProvider)
+          .notifications
+          .length;
+      _suppressInitialNotificationPopup = false;
     });
   }
 
@@ -56,6 +61,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _notificationSubscription?.close();
     _notificationSubscription = null;
     super.dispose();
+  }
+
+  void _showTopSnack(String text) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(
+        MaterialBanner(
+          content: Text(text),
+          leading: const Icon(Icons.notifications_active_outlined),
+          actions: [
+            TextButton(
+              onPressed: () => messenger.hideCurrentMaterialBanner(),
+              child: const Text('Dismiss'),
+            ),
+          ],
+        ),
+      );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      messenger.hideCurrentMaterialBanner();
+    });
   }
 
   @override

@@ -143,6 +143,15 @@ class ApiEndpoints {
   static String markNotificationRead(String id) => '$notifications/$id/read';
   static const String markAllNotificationsRead = '$notifications/read-all';
 
+  // Messages
+  static const String messagesBase = '/messages';
+  static const String conversations = '$messagesBase/conversations';
+  static String getOrCreateConversation(String otherUserId) =>
+      '$messagesBase/conversations/$otherUserId';
+  static String messages(String conversationId) => '$messagesBase/$conversationId';
+  static String markConversationRead(String conversationId) =>
+      '$messagesBase/$conversationId/read';
+
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;
     if (fileName.contains('/') || fileName.contains('\\')) {

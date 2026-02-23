@@ -379,6 +379,9 @@ import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_s
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/chatbot_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/home_screen.dart';
 import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/message_screen.dart';
+import 'package:chautari_kurakani/features/message/domain/entities/message_entities.dart';
+import 'package:chautari_kurakani/features/message/presentation/state/message_state.dart';
+import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/pages/profile_screen.dart';
 import 'package:chautari_kurakani/features/search/presentation/pages/search_screen.dart';
 import 'package:flutter/material.dart';
@@ -397,22 +400,27 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   int _profileRefreshTick = 0;
 
   late final PageController _pageController;
+  late final MessageViewModel _messageNotifier;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+    _messageNotifier = ref.read(messageViewModelProvider.notifier);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userSessionService = ref.read(userSessionServiceProvider);
       ref
           .read(authViewModelProvider.notifier)
           .getCurrentUser(userId: userSessionService.getCurrentUserId() ?? "");
+      _messageNotifier.connectRealtime();
+      _messageNotifier.loadConversations();
     });
   }
 
   @override
   void dispose() {
+    _messageNotifier.disconnectRealtime();
     _pageController.dispose();
     super.dispose();
   }
@@ -430,6 +438,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
+    final messageState = ref.watch(messageViewModelProvider);
+    _messageNotifier.setCurrentUserId(authState.authEntity?.authId);
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.error && next.errorMessage != null) {
@@ -438,6 +448,35 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           next.errorMessage ?? 'An error occurred',
         );
       }
+    });
+    ref.listen<MessageState>(messageViewModelProvider, (previous, next) {
+      final previousUnread = previous?.totalUnread ?? 0;
+      if (next.totalUnread <= previousUnread) return;
+      if (!mounted) return;
+
+      final String? newestConversationId = next.unreadByConversation.keys
+          .where((id) => next.unreadFor(id) > (previous?.unreadFor(id) ?? 0))
+          .cast<String?>()
+          .firstWhere((id) => id != null && id.isNotEmpty, orElse: () => null);
+
+      String label = 'New message received';
+      if (newestConversationId != null) {
+        ConversationEntity? conversation;
+        for (final item in next.conversations) {
+          if (item.id == newestConversationId) {
+            conversation = item;
+            break;
+          }
+        }
+        final name = conversation
+            ?.otherParticipant(authState.authEntity?.authId ?? '')
+            ?.fullName;
+        if (name != null && name.trim().isNotEmpty) {
+          label = 'New message from $name';
+        }
+      }
+
+      _showTopPopup(context, label);
     });
 
     if (authState.authEntity == null) {
@@ -475,7 +514,11 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
-              child: _buildLiquidGlassNavBar(navWidth, itemWidth),
+              child: _buildLiquidGlassNavBar(
+                navWidth,
+                itemWidth,
+                messageState.totalUnread,
+              ),
             ),
           ),
         ],
@@ -507,7 +550,11 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   }
 
   /// Liquid Glass Navbar
-  Widget _buildLiquidGlassNavBar(double width, double itemWidth) {
+  Widget _buildLiquidGlassNavBar(
+    double width,
+    double itemWidth,
+    int totalUnread,
+  ) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(40),
       child: BackdropFilter(
@@ -562,7 +609,11 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
                   _liquidNavItem(Icons.home, 0),
                   _liquidNavItem(Icons.search, 1),
                   _liquidNavItem(Icons.add_circle_outline, 2),
-                  _liquidNavItem(Icons.message_outlined, 3),
+                  _liquidNavItem(
+                    Icons.message_outlined,
+                    3,
+                    badgeCount: totalUnread,
+                  ),
                   _liquidNavItem(Icons.person_outline, 4),
                 ],
               ),
@@ -574,7 +625,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   }
 
   /// Liquid Nav Icon
-  Widget _liquidNavItem(IconData icon, int index) {
+  Widget _liquidNavItem(IconData icon, int index, {int badgeCount = 0}) {
     final isSelected = _selectedIndex == index;
 
     return GestureDetector(
@@ -597,12 +648,65 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
         duration: const Duration(milliseconds: 400),
         curve: Curves.elasticOut,
         scale: isSelected ? 1.3 : 1.0,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: isSelected ? 1 : 0.6,
-          child: Icon(icon, size: 28, color: Colors.white),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: isSelected ? 1 : 0.6,
+              child: Icon(icon, size: 28, color: Colors.white),
+            ),
+            if (badgeCount > 0)
+              Positioned(
+                right: -6,
+                top: -6,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    badgeCount > 99 ? '99+' : '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
+  }
+
+  void _showTopPopup(BuildContext context, String text) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(
+        MaterialBanner(
+          content: Text(text),
+          leading: const Icon(Icons.message_outlined),
+          actions: [
+            TextButton(
+              onPressed: () => messenger.hideCurrentMaterialBanner(),
+              child: const Text('Dismiss'),
+            ),
+          ],
+        ),
+      );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      messenger.hideCurrentMaterialBanner();
+    });
   }
 }

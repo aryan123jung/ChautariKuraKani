@@ -32,7 +32,9 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
     final currentUserId = ref.read(authViewModelProvider).authEntity?.authId;
     final posts = ref.read(postViewModelProvider).posts;
 
-    if (currentUserId == null || currentUserId.trim().isEmpty || posts.isEmpty) {
+    if (currentUserId == null ||
+        currentUserId.trim().isEmpty ||
+        posts.isEmpty) {
       if (!mounted) return;
       setState(() {
         _friendAuthorIds = <String>{};
@@ -143,8 +145,10 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadFriendFeed,
-      child: ListView.builder(
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 18),
         itemCount: friendPosts.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final post = friendPosts[index];
           return PostCard(

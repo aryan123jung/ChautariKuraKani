@@ -4,6 +4,7 @@ import 'package:chautari_kurakani/features/call/presentation/view_model/call_vie
 import 'package:chautari_kurakani/features/message/domain/entities/message_entities.dart';
 import 'package:chautari_kurakani/features/message/presentation/state/message_state.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -159,7 +160,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ? const Center(child: Text('No messages yet'))
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                    padding: EdgeInsets.fromLTRB(
+                      context.scale(12),
+                      context.scale(12),
+                      context.scale(12),
+                      context.scale(12),
+                    ),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
@@ -171,7 +177,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              padding: EdgeInsets.fromLTRB(
+                context.scale(10),
+                context.scale(8),
+                context.scale(10),
+                context.scale(10),
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -186,7 +197,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: context.scale(8)),
                   FilledButton(
                     onPressed: isSending ? null : _sendMessage,
                     child: isSending
@@ -225,8 +236,11 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: align,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        margin: EdgeInsets.symmetric(vertical: context.scale(4)),
+        padding: EdgeInsets.symmetric(
+          horizontal: context.scale(12),
+          vertical: context.scale(9),
+        ),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.76,
         ),
@@ -237,11 +251,17 @@ class _MessageBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(message.text, style: TextStyle(color: fg, fontSize: 15)),
-            const SizedBox(height: 3),
+            Text(
+              message.text,
+              style: TextStyle(color: fg, fontSize: context.fs(15)),
+            ),
+            SizedBox(height: context.scale(3)),
             Text(
               _formatTime(message.createdAt),
-              style: TextStyle(color: fg.withValues(alpha: 0.78), fontSize: 11),
+              style: TextStyle(
+                color: fg.withValues(alpha: 0.78),
+                fontSize: context.fs(11),
+              ),
             ),
           ],
         ),

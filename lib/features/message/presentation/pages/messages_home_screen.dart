@@ -6,6 +6,7 @@ import 'package:chautari_kurakani/features/friend_request/data/repositories/frie
 import 'package:chautari_kurakani/features/message/presentation/pages/chat_screen.dart';
 import 'package:chautari_kurakani/features/message/presentation/state/message_state.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -108,7 +109,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
-                  SizedBox(height: 180),
+                  SizedBox(height: 140),
                   Center(child: CircularProgressIndicator()),
                 ],
               );
@@ -119,10 +120,12 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  const SizedBox(height: 180),
+                  SizedBox(height: context.scale(140)),
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.scale(16),
+                      ),
                       child: Text(
                         state.errorMessage ?? 'Failed to load conversations',
                       ),
@@ -135,18 +138,28 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
             if (conversations.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 180),
-                  Center(child: Text('No conversations yet')),
+                children: [
+                  SizedBox(height: context.scale(140)),
+                  Center(
+                    child: Text(
+                      'No conversations yet',
+                      style: TextStyle(fontSize: context.fs(15)),
+                    ),
+                  ),
                 ],
               );
             }
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
+              padding: EdgeInsets.fromLTRB(
+                context.scale(10),
+                context.scale(10),
+                context.scale(10),
+                context.scale(16),
+              ),
               itemCount: conversations.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
+              separatorBuilder: (_, __) => SizedBox(height: context.scale(6)),
               itemBuilder: (context, index) {
                 final conversation = conversations[index];
                 final other = conversation.otherParticipant(currentUserId);
@@ -178,9 +191,9 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.scale(12),
+                        vertical: context.scale(10),
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
@@ -233,7 +246,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                                   ),
                                 ),
                                 child: CircleAvatar(
-                                  radius: 23,
+                                  radius: context.scale(22),
                                   backgroundColor: Colors.grey.shade300,
                                   backgroundImage: profile != null
                                       ? NetworkImage(profile)
@@ -270,7 +283,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                                 ),
                             ],
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: context.scale(12)),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,16 +296,16 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                                     fontWeight: hasUnread
                                         ? FontWeight.w700
                                         : FontWeight.w600,
-                                    fontSize: 15,
+                                    fontSize: context.fs(15),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: context.scale(4)),
                                 Text(
                                   subtitle.isEmpty ? 'Tap to chat' : subtitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: context.fs(13),
                                     color: hasUnread
                                         ? Colors.black87
                                         : Colors.grey.shade600,
@@ -304,14 +317,14 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: context.scale(10)),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
                                 _relativeTime(conversation.lastMessageAt),
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: context.fs(11),
                                   color: hasUnread
                                       ? const Color(0XFF76C05D)
                                       : Colors.grey.shade600,

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:flutter/material.dart';
@@ -344,10 +345,10 @@ class _PostCardState extends ConsumerState<PostCard> {
         : screenWidth;
 
     final cardPadding = isTablet ? 16.0 : 10.0;
-    final nameFont = isTablet ? 20.0 : 16.5;
-    final captionFont = isTablet ? 18.0 : 15.0;
-    final timeFont = isTablet ? 14.0 : 12.0;
-    final avatarRadius = isTablet ? 36.0 : 28.0;
+    final nameFont = context.fs(isTablet ? 20.0 : 16.5);
+    final captionFont = context.fs(isTablet ? 18.0 : 15.0);
+    final timeFont = context.fs(isTablet ? 14.0 : 12.0);
+    final avatarRadius = context.scale(isTablet ? 36.0 : 28.0);
 
     final isMyPost =
         widget.currentUserId != null &&
@@ -364,42 +365,68 @@ class _PostCardState extends ConsumerState<PostCard> {
     final displayProfileUrl = widget.post.profileUrl.isNotEmpty
         ? widget.post.profileUrl
         : (fallbackProfileUrl ?? authorFallbackProfileUrl ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Center(
       child: SizedBox(
         width: cardWidth,
-        child: Card(
-          margin: EdgeInsets.zero,
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(isTablet ? 15 : 10),
-            side: const BorderSide(color: Color(0xFFDBDBDB), width: 1.5),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [const Color(0xFF1C232E), const Color(0xFF151A23)]
+                  : [const Color(0xFFFDFEFF), const Color(0xFFF0F8F0)],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFDDE6DA),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Padding(
-            padding: EdgeInsets.all(cardPadding),
+            padding: EdgeInsets.all(cardPadding + 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      height: avatarRadius * 2,
-                      width: avatarRadius * 2,
-                      child: ClipOval(
-                        child: displayProfileUrl.isNotEmpty
-                            ? Image.network(
-                                displayProfileUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0XFF76C05D).withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: SizedBox(
+                        height: avatarRadius * 2,
+                        width: avatarRadius * 2,
+                        child: ClipOval(
+                          child: displayProfileUrl.isNotEmpty
+                              ? Image.network(
+                                  displayProfileUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey.shade300,
+                                    child: const Icon(Icons.person),
+                                  ),
+                                )
+                              : Container(
                                   color: Colors.grey.shade300,
                                   child: const Icon(Icons.person),
                                 ),
-                              )
-                            : Container(
-                                color: Colors.grey.shade300,
-                                child: const Icon(Icons.person),
-                              ),
+                        ),
                       ),
                     ),
                     SizedBox(width: isTablet ? 16 : 12),
@@ -416,7 +443,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                         Text(
                           widget.post.hoursAgo,
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: isDark ? Colors.white70 : Colors.grey[600],
                             fontSize: timeFont,
                           ),
                         ),
@@ -444,7 +471,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 if (widget.post.caption.trim().isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
@@ -453,6 +480,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                       style: TextStyle(
                         fontSize: captionFont,
                         fontWeight: FontWeight.w500,
+                        height: 1.28,
                       ),
                     ),
                   ),
@@ -471,8 +499,8 @@ class _PostCardState extends ConsumerState<PostCard> {
                         widget.post.imageUrl!,
                         width: double.infinity,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const SizedBox(
-                          height: 220,
+                        errorBuilder: (_, __, ___) => SizedBox(
+                          height: context.scale(220),
                           child: Center(child: Text('Failed to load image')),
                         ),
                       ),
@@ -480,24 +508,52 @@ class _PostCardState extends ConsumerState<PostCard> {
                   ),
                 if (widget.post.videoUrl != null)
                   _PostVideoPlayer(url: widget.post.videoUrl!),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _likePost,
-                      icon: Icon(
-                        _hasLiked ? Icons.favorite : Icons.favorite_border,
-                        color: _hasLiked ? Colors.red : null,
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : const Color(0xFFF2F6F1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      TextButton.icon(
+                        onPressed: _likePost,
+                        icon: Icon(
+                          _hasLiked ? Icons.favorite : Icons.favorite_border,
+                          color: _hasLiked ? Colors.red : null,
+                        ),
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        label: Text(
+                          '$_likesCount',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
-                      label: Text('$_likesCount'),
-                    ),
-                    TextButton.icon(
-                      onPressed: _showCommentsModal,
-                      icon: const Icon(Icons.comment_outlined),
-                      label: Text('$_commentsCount'),
-                    ),
-                  ],
+                      TextButton.icon(
+                        onPressed: _showCommentsModal,
+                        icon: const Icon(Icons.comment_outlined),
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        label: Text(
+                          '$_commentsCount',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

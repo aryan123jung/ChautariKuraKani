@@ -139,33 +139,74 @@ class FriendCard extends StatelessWidget {
     double avatarRadius = isTablet ? 40 : 32;
     final fullName = friend.fullName.trim().isEmpty ? 'User' : friend.fullName;
     final profileUrl = _resolveProfile(friend.profileUrl);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Center(
       child: SizedBox(
         width: cardWidth,
-        child: Card(
-          margin: EdgeInsets.zero, // Remove internal margin
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(isTablet ? 15 : 10),
-            side: const BorderSide(color: Color(0xFFDBDBDB), width: 1.5),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [const Color(0xFF1A2330), const Color(0xFF131A24)]
+                  : [const Color(0xFFF8FBFF), const Color(0xFFEFF8F0)],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFDCE7DF),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
+              ),
+            ],
           ),
           child: Padding(
-            padding: EdgeInsets.all(cardPadding),
+            padding: EdgeInsets.all(cardPadding + 2),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: avatarRadius,
-                  backgroundColor: Colors.grey.shade300,
-                  backgroundImage: profileUrl != null
-                      ? NetworkImage(profileUrl)
-                      : null,
-                  child: profileUrl == null
-                      ? Text(
-                          fullName[0].toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        )
-                      : null,
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: avatarRadius,
+                      backgroundColor: Colors.grey.shade300,
+                      backgroundImage: profileUrl != null
+                          ? NetworkImage(profileUrl)
+                          : null,
+                      child: profileUrl == null
+                          ? Text(
+                              fullName[0].toUpperCase(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      right: 1,
+                      bottom: 1,
+                      child: Container(
+                        width: isTablet ? 14 : 12,
+                        height: isTablet ? 14 : 12,
+                        decoration: BoxDecoration(
+                          color: const Color(0XFF76C05D),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF131A24)
+                                : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -174,17 +215,32 @@ class FriendCard extends StatelessWidget {
                     children: [
                       Text(
                         fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: nameFont,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '@${friend.username}',
-                        style: TextStyle(
-                          fontSize: mutualFont,
-                          color: Colors.grey[600],
+                      const SizedBox(height: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : const Color(0xFFE8EEF8),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '@${friend.username}',
+                          style: TextStyle(
+                            fontSize: mutualFont - 1,
+                            color: isDark ? Colors.white70 : Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -201,17 +257,20 @@ class FriendCard extends StatelessWidget {
                           backgroundColor: const Color(0XFF76C05D),
                           foregroundColor: Colors.white,
                         ),
-                        icon: const Icon(Icons.message_outlined, size: 20),
+                        icon: const Icon(Icons.message_outlined, size: 19),
                       ),
                       const SizedBox(width: 8),
                     ],
                     ElevatedButton(
                       onPressed: onView,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        elevation: 0,
+                        backgroundColor: isDark
+                            ? const Color(0xFF2D7DF4)
+                            : const Color(0xFF1E6DEB),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(22),
                         ),
                         padding: EdgeInsets.symmetric(
                           horizontal: isTablet ? 24 : 16,
@@ -220,7 +279,10 @@ class FriendCard extends StatelessWidget {
                       ),
                       child: Text(
                         'View',
-                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                        style: TextStyle(
+                          fontSize: isTablet ? 15.5 : 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],

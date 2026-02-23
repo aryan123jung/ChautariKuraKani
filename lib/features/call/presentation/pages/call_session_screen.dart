@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:chautari_kurakani/features/call/data/services/call_socket_service.dart';
 import 'package:chautari_kurakani/features/call/domain/entities/call_entities.dart';
 import 'package:chautari_kurakani/features/call/presentation/view_model/call_view_model.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -308,7 +309,12 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
         ),
         SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            padding: EdgeInsets.fromLTRB(
+              context.scale(10),
+              context.scale(8),
+              context.scale(10),
+              context.scale(8),
+            ),
             child: Column(
               children: [
                 Row(
@@ -322,43 +328,49 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
                         if (!mounted) return;
                         navigator.pop();
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.keyboard_arrow_down,
                         color: Colors.white,
-                        size: 32,
+                        size: context.scale(32),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: context.scale(8)),
                 Text(
                   widget.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 26,
+                    fontSize: context.fs(26),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: context.scale(4)),
                 Text(
                   '${widget.subtitle} • $statusText',
-                  style: const TextStyle(color: Colors.white70, fontSize: 15),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: context.fs(15),
+                  ),
                 ),
                 const Spacer(),
                 if (_remoteVideoReady)
                   Align(
                     alignment: Alignment.topRight,
                     child: Container(
-                      width: 118,
-                      height: 178,
-                      margin: const EdgeInsets.only(right: 8, bottom: 14),
+                      width: context.scale(context.isSmallPhone ? 98 : 118),
+                      height: context.scale(context.isSmallPhone ? 148 : 178),
+                      margin: EdgeInsets.only(
+                        right: context.scale(8),
+                        bottom: context.scale(14),
+                      ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(context.scale(14)),
                         border: Border.all(color: Colors.white, width: 1.4),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.35),
-                            blurRadius: 14,
+                            blurRadius: context.scale(14),
                           ),
                         ],
                       ),
@@ -371,7 +383,7 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
+                SizedBox(height: context.scale(8)),
                 _buildControls(),
               ],
             ),
@@ -384,7 +396,12 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
   Widget _buildAudioBody(String statusText) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+        padding: EdgeInsets.fromLTRB(
+          context.scale(24),
+          context.scale(20),
+          context.scale(24),
+          context.scale(28),
+        ),
         child: Column(
           children: [
             Align(
@@ -410,34 +427,38 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
               height: 1,
               child: Opacity(opacity: 0, child: RTCVideoView(_remoteRenderer)),
             ),
-            const SizedBox(height: 36),
+            SizedBox(height: context.scale(36)),
             CircleAvatar(
-              radius: 54,
+              radius: context.scale(54),
               backgroundColor: const Color(0XFF76C05D).withValues(alpha: 0.25),
-              child: const Icon(Icons.call, size: 46, color: Colors.white),
+              child: Icon(
+                Icons.call,
+                size: context.scale(46),
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: context.scale(24)),
             Text(
               widget.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 28,
+                fontSize: context.fs(28),
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: context.scale(8)),
             Text(
               widget.subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70, fontSize: 15),
+              style: TextStyle(color: Colors.white70, fontSize: context.fs(15)),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.scale(12)),
             Text(
               statusText,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white70,
-                fontSize: 16,
+                fontSize: context.fs(16),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -489,7 +510,7 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: context.scale(28)),
         _CallActionButton(
           icon: Icons.call_end,
           label: 'End',
@@ -545,13 +566,20 @@ class _CallActionButton extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: large ? 72 : 56,
-            height: large ? 72 : 56,
+            width: context.scale(large ? 72 : 56),
+            height: context.scale(large ? 72 : 56),
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, color: Colors.white, size: large ? 34 : 24),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: context.scale(large ? 34 : 24),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(color: Colors.white70)),
+          SizedBox(height: context.scale(8)),
+          Text(
+            label,
+            style: TextStyle(color: Colors.white70, fontSize: context.fs(13)),
+          ),
         ],
       ),
     );

@@ -23,6 +23,9 @@ import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_pro
 import 'package:chautari_kurakani/features/profile/presentation/widgets/side_nav_widget.dart';
 import 'package:chautari_kurakani/features/search/domain/entities/search_user_entity.dart';
 import 'package:chautari_kurakani/features/search/domain/usecases/search_users_usecase.dart';
+import 'package:chautari_kurakani/features/settings/presentation/widgets/app_settings_sheet.dart';
+import 'package:chautari_kurakani/features/settings/presentation/state/theme_mode_provider.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -265,9 +268,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   void _showSettings() {
-    //garnabaki: Navigate to settings screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Settings screen coming soon')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AppSettingsSheet(),
     );
   }
 
@@ -619,6 +624,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final authState = ref.watch(authViewModelProvider);
     final postState = ref.watch(postViewModelProvider);
     final friendState = ref.watch(friendRequestViewModelProvider);
+    final themeMode = ref.watch(themeModeProvider);
+    final themeKey = themeMode.name;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isOwnReadOnlyProfile = _isOwnReadOnlyProfile(authState);
     final targetProfileId = _normalizeId(widget.userEntity.authId ?? '');
@@ -633,6 +640,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         : <PostEntity>[];
     final displayPosts = widget.isReadOnly ? readOnlyDerivedPosts : _userPosts;
     final isLoadingPostsView = _isLoadingPosts;
+    final coverHeight = context.scale(200);
+    final profileSize = context.scale(112);
+    final sectionPaddingH = context.scale(20);
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (widget.isReadOnly) return;
@@ -650,7 +660,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       }
     });
 
-    if (authState.status == AuthStatus.loading && authState.authEntity == null) {
+    if (authState.status == AuthStatus.loading &&
+        authState.authEntity == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -689,11 +700,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             _scaffoldKey.currentState?.openDrawer(),
                       ),
                 title: _isAppBarVisible
-                    ? const Text(
+                    ? Text(
                         'ChautariKuraKani',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                          fontSize: context.fs(20),
                         ),
                       )
                     : null,
@@ -711,7 +722,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           ? null
                           : () => _showImageSourceDialog(isProfile: false),
                       child: Container(
-                        height: 200,
+                        height: coverHeight,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: isDark ? Colors.grey[900] : Colors.grey[300],
@@ -738,15 +749,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     widget.userEntity.coverPicture!.isEmpty)
                             ? Center(
                                 child: Container(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: EdgeInsets.all(context.scale(12)),
                                   decoration: BoxDecoration(
                                     color: Colors.black54,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.camera_alt,
                                     color: Colors.white,
-                                    size: 30,
+                                    size: context.scale(30),
                                   ),
                                 ),
                               )
@@ -756,8 +767,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
                     // Profile Image
                     Positioned(
-                      left: 20,
-                      bottom: 10,
+                      left: context.scale(20),
+                      bottom: context.scale(10),
                       child: GestureDetector(
                         onTap: widget.isReadOnly
                             ? null
@@ -765,19 +776,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         child: Stack(
                           children: [
                             Container(
-                              height: 120,
-                              width: 120,
+                              height: profileSize,
+                              width: profileSize,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Colors.white,
-                                  width: 4,
+                                  width: context.scale(3),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.2),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 5),
+                                    blurRadius: context.scale(10),
+                                    offset: Offset(0, context.scale(5)),
                                   ),
                                 ],
                               ),
@@ -808,9 +819,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                                 .userEntity
                                                 .profilePicture!
                                                 .isEmpty)
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.person,
-                                        size: 50,
+                                        size: context.scale(50),
                                         color: Colors.white,
                                       )
                                     : null,
@@ -821,19 +832,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 bottom: 0,
                                 right: 0,
                                 child: Container(
-                                  padding: const EdgeInsets.all(8),
+                                  padding: EdgeInsets.all(context.scale(8)),
                                   decoration: BoxDecoration(
                                     color: Colors.blue,
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: Colors.white,
-                                      width: 2,
+                                      width: context.scale(2),
                                     ),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.camera_alt,
                                     color: Colors.white,
-                                    size: 20,
+                                    size: context.scale(20),
                                   ),
                                 ),
                               ),
@@ -848,7 +859,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               // User Info
               SliverToBoxAdapter(
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                  padding: EdgeInsets.fromLTRB(
+                    sectionPaddingH,
+                    context.scale(10),
+                    sectionPaddingH,
+                    context.scale(20),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -857,8 +873,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           Expanded(
                             child: Text(
                               getFullName(),
-                              style: const TextStyle(
-                                fontSize: 24,
+                              style: TextStyle(
+                                fontSize: context.fs(24),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -880,17 +896,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0XFF76C05D),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: context.scale(12),
+                                  vertical: context.scale(8),
                                 ),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              icon: const Icon(Icons.add, size: 18),
+                              icon: Icon(Icons.add, size: context.scale(18)),
                               label: const Text("Add Post"),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: context.scale(6)),
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: _showEditProfile,
@@ -904,21 +920,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           ],
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: context.scale(4)),
                       Text(
                         _bio,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: context.fs(16),
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: context.scale(8)),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: context.scale(12),
+                              vertical: context.scale(6),
                             ),
                             decoration: BoxDecoration(
                               color: isDark
@@ -931,16 +947,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               children: [
                                 Icon(
                                   Icons.email,
-                                  size: 16,
+                                  size: context.scale(16),
                                   color: isDark
                                       ? Colors.grey[400]
                                       : Colors.grey[600],
                                 ),
-                                const SizedBox(width: 6),
+                                SizedBox(width: context.scale(6)),
                                 Text(
                                   widget.userEntity.email,
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: context.fs(14),
                                     color: isDark
                                         ? Colors.grey[400]
                                         : Colors.grey[600],
@@ -959,7 +975,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               // Stats
               SliverToBoxAdapter(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  padding: EdgeInsets.symmetric(vertical: context.scale(15)),
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
@@ -1042,12 +1058,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           ),
                         ],
                       )
-                    : ListView.builder(
+                    : ListView.separated(
+                        key: ValueKey('profile-posts-$themeKey'),
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.fromLTRB(8, 10, 8, 18),
                         itemCount: displayPosts.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           return PostCard(
+                            key: ValueKey(
+                              'profile-post-${displayPosts[index].id}-$themeKey',
+                            ),
                             post: displayPosts[index],
                             currentUserId:
                                 authState.authEntity?.authId ??
@@ -1114,13 +1135,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           ),
                         ],
                       )
-                    : ListView.builder(
+                    : ListView.separated(
+                        key: ValueKey('profile-friends-$themeKey'),
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.fromLTRB(8, 10, 8, 18),
                         itemCount: _friends.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final friend = _friends[index];
                           return FriendCard(
+                            key: ValueKey(
+                              'profile-friend-${friend.id}-$themeKey',
+                            ),
                             friend: friend,
                             onView: () => _openFriendProfile(friend),
                             onMessage: () => _startMessageWithUser(
@@ -1280,10 +1306,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: context.fs(18),
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+        SizedBox(height: context.scale(4)),
+        Text(
+          label,
+          style: TextStyle(fontSize: context.fs(14), color: Colors.grey[600]),
+        ),
       ],
     );
   }
@@ -1490,6 +1522,8 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
+    // Rebuild on inherited theme changes (light/dark) so header colors update
+    // immediately without waiting for scroll lifecycle.
+    return true;
   }
 }

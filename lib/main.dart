@@ -40,6 +40,7 @@ import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
 import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/core/services/uni_links.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_new_password.dart';
+import 'package:chautari_kurakani/features/settings/presentation/state/theme_mode_provider.dart';
 import 'package:chautari_kurakani/features/splash/presentation/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -86,16 +87,16 @@ void main() async {
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   final DeepLinkService deepLinkService;
 
   const MyApp({super.key, required this.deepLinkService});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
@@ -120,11 +121,26 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Chautari KuraKani',
       debugShowCheckedModeBanner: false,
-      theme: getApplicationTheme(),
+      theme: getLightApplicationTheme(),
+      darkTheme: getDarkApplicationTheme(),
+      themeMode: themeMode,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        final width = media.size.width;
+        final widthScale = (width / 390).clamp(0.9, 1.1);
+        final textScaleFactor = media.textScaler.scale(1) * widthScale;
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: TextScaler.linear(textScaleFactor.clamp(0.9, 1.2)),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const SplashScreen(),
       onGenerateRoute: (settings) {
         if (settings.name == '/reset-password') {

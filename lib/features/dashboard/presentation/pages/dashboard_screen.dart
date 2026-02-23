@@ -371,6 +371,7 @@
 import 'dart:ui';
 
 import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -541,7 +542,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: EdgeInsets.only(bottom: context.scale(20)),
               child: _buildLiquidGlassNavBar(
                 navWidth,
                 itemWidth,
@@ -554,7 +555,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
 
       /// Floating AI Button
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 60),
+        padding: EdgeInsets.only(bottom: context.scale(60)),
         child: FloatingActionButton(
           backgroundColor: const Color(0XFF76C05D),
           elevation: 10,

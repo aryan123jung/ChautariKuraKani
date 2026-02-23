@@ -3,6 +3,7 @@ import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/f
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/friend_feed_screen.dart';
 import 'package:chautari_kurakani/features/notification/presentation/pages/notification_screen.dart';
 import 'package:chautari_kurakani/features/notification/presentation/view_model/notification_view_model.dart';
+import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -90,12 +91,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final notificationState = ref.watch(notificationViewModelProvider);
     final unreadCount = notificationState.unreadCount;
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
+    final isTablet = context.isTablet;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const brandGreen = Color(0XFF76C05D);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(15, isTablet ? 0 : 15, 15, 15),
+      padding: EdgeInsets.fromLTRB(
+        context.scale(12),
+        isTablet ? 0 : context.scale(12),
+        context.scale(12),
+        context.scale(12),
+      ),
       child: DefaultTabController(
         length: 3,
         child: Column(
@@ -108,36 +114,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Image.asset(
                     'assets/images/green_half_logo.png',
-                    height: isTablet ? 100 : 80,
+                    height: context.scale(isTablet ? 96 : 72),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: context.scale(8)),
                   Text(
                     'ChautariKuraKani',
                     style: TextStyle(
                       fontFamily: 'OpenSans Bold',
-                      fontSize: isTablet ? 45 : 30,
+                      fontSize: context.fs(isTablet ? 40 : 28),
                     ),
                   ),
                 ],
               ),
             ),
             Container(
-              padding: EdgeInsets.fromLTRB(0, isTablet ? 0 : 10, 0, 0),
+              padding: EdgeInsets.fromLTRB(
+                0,
+                isTablet ? 0 : context.scale(8),
+                0,
+                0,
+              ),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: isTablet ? 60 : 5),
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.scale(isTablet ? 48 : 4),
+                ),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: TabBar(
-                        indicatorColor: Colors.black,
+                        indicatorColor: brandGreen,
                         indicatorWeight: 2,
-                        labelColor: Colors.black,
-                        unselectedLabelColor: Colors.grey,
+                        labelColor: brandGreen,
+                        unselectedLabelColor: isDark
+                            ? Colors.white60
+                            : Colors.grey[700],
                         labelStyle: TextStyle(
-                          fontSize: 17.5,
+                          fontSize: context.fs(15.5),
                           fontWeight: FontWeight.w600,
                         ),
-                        tabs: [
+                        tabs: const [
                           Tab(text: 'Feed'),
                           Tab(text: 'Friends'),
                           Tab(text: 'Chautari'),
@@ -153,7 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         );
                       },
-                      iconSize: 33,
+                      iconSize: context.scale(30),
                       icon: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -177,9 +192,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                                 child: Text(
                                   unreadCount > 9 ? '9+' : '$unreadCount',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 10,
+                                    fontSize: context.fs(10),
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
@@ -193,7 +208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            SizedBox(height: isTablet ? 10 : 10),
+            SizedBox(height: context.scale(8)),
             const Expanded(
               child: TabBarView(
                 children: [FeedScreen(), FriendsFeedScreen(), ChautariScreen()],

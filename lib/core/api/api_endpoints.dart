@@ -6,7 +6,29 @@ class ApiEndpoints {
   ApiEndpoints._();
   static const int port = 6060;
 
-  static const String computerIpAddress = "192.168.1.86";
+  // Runtime overrides:
+  // 1) Physical devices (Android + iOS):
+  //    flutter run --dart-define=API_HOST=192.168.1.70
+  // 2) Android emulator:
+  //    flutter run --dart-define=API_HOST_ANDROID=10.0.2.2
+  // 3) iOS simulator:
+  //    flutter run --dart-define=API_HOST_IOS=localhost
+  // 4) Full URL override (highest priority):
+  //    flutter run --dart-define=API_BASE_URL=http://192.168.1.70:6060/api
+  //    flutter run --dart-define=API_UPLOAD_BASE_URL=http://192.168.1.70:6060
+  static const String apiBaseUrlOverride = String.fromEnvironment(
+    'API_BASE_URL',
+  );
+  static const String apiUploadBaseUrlOverride = String.fromEnvironment(
+    'API_UPLOAD_BASE_URL',
+  );
+  static const String apiHost = String.fromEnvironment('API_HOST');
+  static const String apiHostAndroid = String.fromEnvironment(
+    'API_HOST_ANDROID',
+  );
+  static const String apiHostIos = String.fromEnvironment('API_HOST_IOS');
+
+  static const String computerIpAddress = "192.168.1.71";
 
   // static String get baseUrl {
   //   if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
@@ -28,37 +50,66 @@ class ApiEndpoints {
   //   return "http://localhost:$port/api";
   // }
   static String get baseUrl {
-    // Web
-    if (kIsWeb) {
-      return "http://localhost:$port/api";
+    final override = _normalizeAbsoluteUrl(apiBaseUrlOverride);
+    if (override != null) {
+      return override;
     }
-
-    // Android Emulator
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:$port/api";
-    }
-
-    // iOS Simulator
-    if (Platform.isIOS) {
-      return "http://localhost:$port/api";
-      // return "http://$computerIpAddress:$port/api";
-    }
-
-    // Physical device fallback
-    return "http://$computerIpAddress:$port/api";
+    return "http://${_resolveHost()}:$port/api";
   }
 
   static String get uploadBaseUrl {
-    if (kIsWeb) {
-      return "http://localhost:$port";
+    final override = _normalizeAbsoluteUrl(apiUploadBaseUrlOverride);
+    if (override != null) {
+      return override;
     }
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:$port";
+    return "http://${_resolveHost()}:$port";
+  }
+
+  static void debugPrintResolvedEndpoints() {
+    // Use this in app startup when diagnosing device connectivity issues.
+    // ignore: avoid_print
+    print('ApiEndpoints.baseUrl=$baseUrl');
+    // ignore: avoid_print
+    print('ApiEndpoints.uploadBaseUrl=$uploadBaseUrl');
+  }
+
+  static String _resolveHost() {
+    // Web always talks to localhost in local setup.
+    if (kIsWeb) return 'localhost';
+
+    // Global override first.
+    if (apiHost.trim().isNotEmpty) return apiHost.trim();
+
+    // Platform-specific overrides.
+    if (Platform.isAndroid && apiHostAndroid.trim().isNotEmpty) {
+      return apiHostAndroid.trim();
     }
-    if (Platform.isIOS) {
-      return "http://localhost:$port";
+    if (Platform.isIOS && apiHostIos.trim().isNotEmpty) {
+      return apiHostIos.trim();
     }
-    return "http://$computerIpAddress:$port";
+
+    // Physical-device-first default.
+    // This avoids "localhost connection refused" on real phone.
+    return computerIpAddress;
+  }
+
+  static String? _normalizeAbsoluteUrl(String raw) {
+    final value = raw.trim().replaceAll('"', '').replaceAll("'", '');
+    if (value.isEmpty) return null;
+
+    final repaired = value
+        .replaceFirst(RegExp(r'^hwhattp://', caseSensitive: false), 'http://')
+        .replaceFirst(RegExp(r'^htttp://', caseSensitive: false), 'http://')
+        .replaceFirst(RegExp(r'^ttp://', caseSensitive: false), 'http://');
+
+    final uri = Uri.tryParse(repaired);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      return null;
+    }
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return null;
+    }
+    return repaired;
   }
 
   static String uploadUrl(String relativePath) {
@@ -127,8 +178,10 @@ class ApiEndpoints {
 
   // Friend requests
   static const String friendsBase = '/friends';
-  static String sendFriendRequest(String toUserId) => '$friendsBase/requests/$toUserId';
-  static String cancelFriendRequest(String toUserId) => '$friendsBase/requests/$toUserId';
+  static String sendFriendRequest(String toUserId) =>
+      '$friendsBase/requests/$toUserId';
+  static String cancelFriendRequest(String toUserId) =>
+      '$friendsBase/requests/$toUserId';
   static const String incomingFriendRequests = '$friendsBase/requests/incoming';
   static const String outgoingFriendRequests = '$friendsBase/requests/outgoing';
   static String acceptFriendRequest(String requestId) =>
@@ -148,9 +201,13 @@ class ApiEndpoints {
   static const String conversations = '$messagesBase/conversations';
   static String getOrCreateConversation(String otherUserId) =>
       '$messagesBase/conversations/$otherUserId';
-  static String messages(String conversationId) => '$messagesBase/$conversationId';
+  static String messages(String conversationId) =>
+      '$messagesBase/$conversationId';
   static String markConversationRead(String conversationId) =>
       '$messagesBase/$conversationId/read';
+
+  // Calls
+  static const String calls = '/calls';
 
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;

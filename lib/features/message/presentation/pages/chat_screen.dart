@@ -1,3 +1,6 @@
+import 'package:chautari_kurakani/features/call/domain/entities/call_entities.dart';
+import 'package:chautari_kurakani/features/call/presentation/pages/call_session_screen.dart';
+import 'package:chautari_kurakani/features/call/presentation/view_model/call_view_model.dart';
 import 'package:chautari_kurakani/features/message/domain/entities/message_entities.dart';
 import 'package:chautari_kurakani/features/message/presentation/state/message_state.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
@@ -77,6 +80,54 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     Future.delayed(const Duration(milliseconds: 80), _scrollToBottom);
   }
 
+  Future<void> _startCall(CallTypeEntity type) async {
+    final currentId = widget.currentUserId.trim();
+    String otherId = '';
+    ChatUserEntity? other;
+    for (final participant in widget.conversation.participants) {
+      final id = participant.id.trim();
+      if (id.isEmpty) continue;
+      if (id.toLowerCase() == currentId.toLowerCase()) continue;
+      other = participant;
+      otherId = id;
+      break;
+    }
+    if (otherId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to find call recipient')),
+      );
+      return;
+    }
+
+    final callNotifier = ref.read(callViewModelProvider.notifier);
+    final callId = await callNotifier.initiateCall(
+      calleeId: otherId,
+      callType: type,
+    );
+    if (!mounted) return;
+
+    if (callId == null) {
+      final err = ref.read(callViewModelProvider).errorMessage;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(err ?? 'Failed to start call')));
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CallSessionScreen(
+          callId: callId,
+          title: other?.fullName ?? 'Calling...',
+          subtitle: type == CallTypeEntity.video ? 'Video call' : 'Audio call',
+          callType: type,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(messageViewModelProvider);
@@ -86,7 +137,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final isSending = state.status == MessageStatusUi.sending;
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          IconButton(
+            tooltip: 'Audio Call',
+            onPressed: () => _startCall(CallTypeEntity.audio),
+            icon: const Icon(Icons.call_outlined),
+          ),
+          IconButton(
+            tooltip: 'Video Call',
+            onPressed: () => _startCall(CallTypeEntity.video),
+            icon: const Icon(Icons.videocam_outlined),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(

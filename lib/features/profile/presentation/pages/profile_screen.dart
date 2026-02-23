@@ -650,7 +650,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       }
     });
 
-    if (authState.status == AuthStatus.loading) {
+    if (authState.status == AuthStatus.loading && authState.authEntity == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 

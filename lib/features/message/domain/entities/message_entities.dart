@@ -16,10 +16,10 @@ class ChatUserEntity extends Equatable {
   });
 
   String get fullName {
-    final name = [firstName, lastName]
-        .where((part) => part.trim().isNotEmpty)
-        .join(' ')
-        .trim();
+    final name = [
+      firstName,
+      lastName,
+    ].where((part) => part.trim().isNotEmpty).join(' ').trim();
     if (name.isNotEmpty) return name;
     if (username.trim().isNotEmpty) return username;
     return 'User';
@@ -47,7 +47,7 @@ class ConversationEntity extends Equatable {
     for (final user in participants) {
       if (user.id.trim().toLowerCase() != normalized) return user;
     }
-    return participants.isEmpty ? null : participants.first;
+    return null;
   }
 
   @override

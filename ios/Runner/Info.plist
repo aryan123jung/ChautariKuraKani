@@ -64,5 +64,10 @@
     <array>
         <string>NSUserActivityTypeBrowsingWeb</string>
     </array>
+
+    <key>NSCameraUsageDescription</key>
+    <string>Camera is required for video calling.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone is required for audio and video calling.</string>
 </dict>
 </plist>

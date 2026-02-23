@@ -376,6 +376,10 @@ import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
+import 'package:chautari_kurakani/features/call/domain/entities/call_entities.dart';
+import 'package:chautari_kurakani/features/call/presentation/pages/call_session_screen.dart';
+import 'package:chautari_kurakani/features/call/presentation/state/call_state.dart';
+import 'package:chautari_kurakani/features/call/presentation/view_model/call_view_model.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/chatbot_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/home_screen.dart';
 import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_nav_screen/message_screen.dart';
@@ -401,12 +405,15 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
 
   late final PageController _pageController;
   late final MessageViewModel _messageNotifier;
+  late final CallViewModel _callNotifier;
+  String? _incomingDialogCallId;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
     _messageNotifier = ref.read(messageViewModelProvider.notifier);
+    _callNotifier = ref.read(callViewModelProvider.notifier);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userSessionService = ref.read(userSessionServiceProvider);
@@ -415,12 +422,15 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           .getCurrentUser(userId: userSessionService.getCurrentUserId() ?? "");
       _messageNotifier.connectRealtime();
       _messageNotifier.loadConversations();
+      _callNotifier.connectRealtime();
+      _callNotifier.loadCallHistory();
     });
   }
 
   @override
   void dispose() {
     _messageNotifier.disconnectRealtime();
+    _callNotifier.disconnectRealtime();
     _pageController.dispose();
     super.dispose();
   }
@@ -440,6 +450,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     final authState = ref.watch(authViewModelProvider);
     final messageState = ref.watch(messageViewModelProvider);
     _messageNotifier.setCurrentUserId(authState.authEntity?.authId);
+    _callNotifier.setCurrentUserId(authState.authEntity?.authId);
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.error && next.errorMessage != null) {
@@ -477,6 +488,23 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       }
 
       _showTopPopup(context, label);
+    });
+    ref.listen<CallState>(callViewModelProvider, (previous, next) {
+      final previousIncomingId = previous?.incomingCall?.callId;
+      final incoming = next.incomingCall;
+      if (incoming != null &&
+          incoming.callId.isNotEmpty &&
+          incoming.callId != previousIncomingId &&
+          _incomingDialogCallId != incoming.callId) {
+        _incomingDialogCallId = incoming.callId;
+        _showIncomingCallDialog(incoming);
+      }
+
+      final prevActiveId = previous?.activeCall?.callId;
+      final nextActiveId = next.activeCall?.callId;
+      if (prevActiveId != null && nextActiveId == null) {
+        _showTopPopup(context, 'Call ended');
+      }
     });
 
     if (authState.authEntity == null) {
@@ -708,5 +736,62 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       if (!mounted) return;
       messenger.hideCurrentMaterialBanner();
     });
+  }
+
+  Future<void> _showIncomingCallDialog(ActiveCallEntity call) async {
+    if (!mounted) return;
+    final notifier = ref.read(callViewModelProvider.notifier);
+    final callTypeLabel = call.callType == CallTypeEntity.video
+        ? 'Video'
+        : 'Audio';
+    final callerLabel = call.callerId.isEmpty
+        ? 'Someone'
+        : 'User ${call.callerId.length > 6 ? call.callerId.substring(0, 6) : call.callerId}';
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Incoming $callTypeLabel Call'),
+          content: Text('$callerLabel is calling you'),
+          actions: [
+            TextButton.icon(
+              onPressed: () async {
+                await notifier.rejectCall(call.callId);
+                if (!dialogContext.mounted) return;
+                Navigator.of(dialogContext).pop();
+              },
+              icon: const Icon(Icons.call_end),
+              label: const Text('Reject'),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                final ok = await notifier.acceptCall(call.callId);
+                if (!dialogContext.mounted) return;
+                Navigator.of(dialogContext).pop();
+                if (!ok || !mounted) return;
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CallSessionScreen(
+                      callId: call.callId,
+                      title: callerLabel,
+                      subtitle: '$callTypeLabel call',
+                      callType: call.callType,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.call),
+              label: const Text('Accept'),
+            ),
+          ],
+        );
+      },
+    );
+    if (mounted && _incomingDialogCallId == call.callId) {
+      _incomingDialogCallId = null;
+    }
   }
 }

@@ -35,6 +35,7 @@
 // }
 
 import 'package:chautari_kurakani/app/theme/theme_data.dart';
+import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
 import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/core/services/uni_links.dart';
@@ -72,6 +73,7 @@ void main() async {
 
   // Initialize Deep Link Service
   final deepLinkService = DeepLinkService();
+  ApiEndpoints.debugPrintResolvedEndpoints();
 
   // Run app with ProviderScope
   runApp(

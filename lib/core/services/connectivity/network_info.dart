@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,21 +16,12 @@ class NetworkInfo implements INetworkInfo {
 
   @override
   Future<bool> get isConnected async {
-    final result = await _connectivity
-        .checkConnectivity(); //check wifi or mobile data is on or not
+    final result = await _connectivity.checkConnectivity();
     if (result.contains(ConnectivityResult.none)) {
       return false;
     }
-    return await _isInternetIsThereFR();
-    // return false;
-  }
-
-  Future<bool> _isInternetIsThereFR() async {
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
+    // Local-network backend should still be considered connected even if
+    // public internet DNS (e.g., google.com) is unavailable.
+    return true;
   }
 }

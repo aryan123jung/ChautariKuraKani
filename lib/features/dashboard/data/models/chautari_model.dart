@@ -3,5 +3,9 @@ class ChautariModel {
   final String caption;
   final String imageUrl;
 
-  ChautariModel({required this.name, required this.caption, required this.imageUrl});
+  ChautariModel({
+    required this.name,
+    required this.caption,
+    required this.imageUrl,
+  });
 }

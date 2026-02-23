@@ -130,6 +130,7 @@ class _PostCardState extends ConsumerState<PostCard> {
       isScrollControlled: true,
       builder: (_) => _CommentsSheet(
         postId: widget.post.id,
+        postAuthorId: widget.post.authorId,
         currentUserId: widget.currentUserId,
         currentUserName: widget.currentUserName,
         currentUserProfileUrl: widget.currentUserProfileUrl,
@@ -605,6 +606,7 @@ class _PostCardState extends ConsumerState<PostCard> {
 
 class _CommentsSheet extends ConsumerStatefulWidget {
   final String postId;
+  final String postAuthorId;
   final String? currentUserId;
   final String? currentUserName;
   final String? currentUserProfileUrl;
@@ -612,6 +614,7 @@ class _CommentsSheet extends ConsumerStatefulWidget {
 
   const _CommentsSheet({
     required this.postId,
+    required this.postAuthorId,
     required this.initialComments,
     this.currentUserId,
     this.currentUserName,
@@ -760,14 +763,24 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final comment = _comments[index];
-                          final canDelete =
+                          final postAuthorId = widget.postAuthorId
+                              .trim()
+                              .toLowerCase();
+                          final commentOwnerId = comment.userId
+                              .trim()
+                              .toLowerCase();
+                          final isCommentOwner =
                               currentUserId.isNotEmpty &&
-                              comment.userId.trim().toLowerCase() ==
-                                  currentUserId;
-                          final displayName = canDelete
+                              commentOwnerId == currentUserId;
+                          final isPostOwner =
+                              currentUserId.isNotEmpty &&
+                              postAuthorId.isNotEmpty &&
+                              currentUserId == postAuthorId;
+                          final canDelete = isCommentOwner || isPostOwner;
+                          final displayName = isCommentOwner
                               ? (widget.currentUserName ?? 'You')
                               : comment.userName;
-                          final avatarUrl = canDelete
+                          final avatarUrl = isCommentOwner
                               ? _resolveAvatarUrl(widget.currentUserProfileUrl)
                               : comment.userProfileUrl;
 

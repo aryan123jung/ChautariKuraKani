@@ -26,16 +26,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final MessageViewModel _messageNotifier;
+  late final CallViewModel _callNotifier;
 
   @override
   void initState() {
     super.initState();
     _messageNotifier = ref.read(messageViewModelProvider.notifier);
-    Future.microtask(() async {
+    _callNotifier = ref.read(callViewModelProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       _messageNotifier.joinConversationRoom(widget.conversation.id);
       await _messageNotifier.loadMessages(widget.conversation.id);
+      if (!mounted) return;
       await _messageNotifier.markRead(widget.conversation.id);
       _messageNotifier.markConversationAsReadLocal(widget.conversation.id);
+      await _callNotifier.loadCallHistory();
+      if (!mounted) return;
       _scrollToBottom();
     });
   }
@@ -43,7 +49,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void dispose() {
     _messageNotifier.leaveConversationRoom(widget.conversation.id);
-    _messageNotifier.clearActiveConversation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _messageNotifier.clearActiveConversation();
+    });
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -101,8 +109,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       return;
     }
 
-    final callNotifier = ref.read(callViewModelProvider.notifier);
-    final callId = await callNotifier.initiateCall(
+    final callId = await _callNotifier.initiateCall(
       calleeId: otherId,
       callType: type,
     );
@@ -127,14 +134,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
       ),
     );
+    if (!mounted) return;
+    await _callNotifier.loadCallHistory();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(messageViewModelProvider);
+    final callState = ref.watch(callViewModelProvider);
     final other = widget.conversation.otherParticipant(widget.currentUserId);
     final title = other?.fullName ?? 'Chat';
     final messages = state.messagesFor(widget.conversation.id);
+    final timelineItems = _buildTimelineItems(
+      messages: messages,
+      callHistory: callState.callHistory,
+      otherUserId: other?.id ?? '',
+    );
     final isSending = state.status == MessageStatusUi.sending;
 
     return Scaffold(
@@ -156,7 +171,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: messages.isEmpty
+            child: timelineItems.isEmpty
                 ? const Center(child: Text('No messages yet'))
                 : ListView.builder(
                     controller: _scrollController,
@@ -166,11 +181,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       context.scale(12),
                       context.scale(12),
                     ),
-                    itemCount: messages.length,
+                    itemCount: timelineItems.length,
                     itemBuilder: (context, index) {
-                      final message = messages[index];
-                      final mine = message.isMine(widget.currentUserId);
-                      return _MessageBubble(message: message, isMine: mine);
+                      final item = timelineItems[index];
+                      if (item.message != null) {
+                        final message = item.message!;
+                        final mine = message.isMine(widget.currentUserId);
+                        return _MessageBubble(message: message, isMine: mine);
+                      }
+
+                      final call = item.call!;
+                      return _CallTimelineBubble(
+                        call: call,
+                        currentUserId: widget.currentUserId,
+                      );
                     },
                   ),
           ),
@@ -217,6 +241,64 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  List<_ChatTimelineItem> _buildTimelineItems({
+    required List<MessageEntity> messages,
+    required List<CallLogEntity> callHistory,
+    required String otherUserId,
+  }) {
+    final normalizedMe = widget.currentUserId.trim().toLowerCase();
+    final normalizedOther = otherUserId.trim().toLowerCase();
+
+    final callItems = callHistory
+        .where((call) {
+          final caller = call.callerId.trim().toLowerCase();
+          final callee = call.calleeId.trim().toLowerCase();
+          if (normalizedMe.isEmpty || normalizedOther.isEmpty) return false;
+          final direct = caller == normalizedMe && callee == normalizedOther;
+          final reverse = caller == normalizedOther && callee == normalizedMe;
+          return direct || reverse;
+        })
+        .map(_ChatTimelineItem.call)
+        .toList();
+
+    final messageItems = messages.map(_ChatTimelineItem.message).toList();
+    final all = [...messageItems, ...callItems];
+    all.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return all;
+  }
+}
+
+class _ChatTimelineItem {
+  final MessageEntity? message;
+  final CallLogEntity? call;
+  final DateTime timestamp;
+
+  const _ChatTimelineItem._({
+    required this.message,
+    required this.call,
+    required this.timestamp,
+  });
+
+  factory _ChatTimelineItem.message(MessageEntity message) {
+    return _ChatTimelineItem._(
+      message: message,
+      call: null,
+      timestamp: message.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
+  factory _ChatTimelineItem.call(CallLogEntity call) {
+    return _ChatTimelineItem._(
+      message: null,
+      call: call,
+      timestamp:
+          call.startedAt ??
+          call.createdAt ??
+          call.endedAt ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }
@@ -267,6 +349,133 @@ class _MessageBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime? dateTime) {
+    if (dateTime == null) return '';
+    final h = dateTime.hour;
+    final m = dateTime.minute.toString().padLeft(2, '0');
+    final suffix = h >= 12 ? 'PM' : 'AM';
+    final hh = h % 12 == 0 ? 12 : h % 12;
+    return '$hh:$m $suffix';
+  }
+}
+
+class _CallTimelineBubble extends StatelessWidget {
+  final CallLogEntity call;
+  final String currentUserId;
+
+  const _CallTimelineBubble({required this.call, required this.currentUserId});
+
+  @override
+  Widget build(BuildContext context) {
+    final mine =
+        call.callerId.trim().toLowerCase() ==
+        currentUserId.trim().toLowerCase();
+    final icon = _iconFor(call.callType);
+    final peerName = _peerName(call, mine);
+    final title = _titleFor(call, mine, peerName);
+    final subtitle = _subtitleFor(call);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: context.scale(6),
+        horizontal: context.scale(8),
+      ),
+      child: Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.scale(12),
+            vertical: context.scale(10),
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F3F5),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE0E5EA)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: context.scale(16), color: Colors.black54),
+              SizedBox(width: context.scale(8)),
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: context.fs(12.5),
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: context.scale(2)),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: context.fs(11.5),
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _iconFor(CallTypeEntity type) {
+    return type == CallTypeEntity.video
+        ? Icons.videocam_rounded
+        : Icons.call_rounded;
+  }
+
+  String _titleFor(CallLogEntity call, bool mine, String peerName) {
+    switch (call.status) {
+      case CallStatusEntity.accepted:
+      case CallStatusEntity.ended:
+        return mine ? 'You called $peerName' : '$peerName called you';
+      case CallStatusEntity.rejected:
+        return mine
+            ? '$peerName declined your call'
+            : 'You declined $peerName\'s call';
+      case CallStatusEntity.missed:
+        return mine ? '$peerName did not answer' : 'Missed call from $peerName';
+      case CallStatusEntity.ringing:
+        return mine ? 'You canceled the call' : '$peerName canceled the call';
+    }
+  }
+
+  String _subtitleFor(CallLogEntity call) {
+    final when = _formatTime(call.startedAt ?? call.createdAt ?? call.endedAt);
+    final typeLabel = call.callType == CallTypeEntity.video
+        ? 'Video call'
+        : 'Voice call';
+    final duration = call.durationSeconds ?? 0;
+    if (duration <= 0) return '$typeLabel • $when';
+
+    final mins = duration ~/ 60;
+    final secs = duration % 60;
+    final text = mins > 0
+        ? '${mins}m ${secs.toString().padLeft(2, '0')}s'
+        : '${secs}s';
+    return '$typeLabel • $when • $text';
+  }
+
+  String _peerName(CallLogEntity call, bool mine) {
+    if (mine) {
+      final name = call.callee?.fullName ?? '';
+      if (name.trim().isNotEmpty) return name;
+      return 'User';
+    }
+    final name = call.caller?.fullName ?? '';
+    if (name.trim().isNotEmpty) return name;
+    return 'User';
   }
 
   String _formatTime(DateTime? dateTime) {

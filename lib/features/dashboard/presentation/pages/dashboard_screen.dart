@@ -528,20 +528,29 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           incoming.callId.isNotEmpty &&
           incoming.callId != previousIncomingId &&
           _incomingDialogCallId != incoming.callId) {
-        _incomingDialogCallId = incoming.callId;
-        _showIncomingCallDialog(incoming);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _incomingDialogCallId = incoming.callId;
+          _showIncomingCallDialog(incoming);
+        });
       }
 
       // If call was ended/rejected/missed by caller or server, close dialog.
       if (_incomingDialogCallId != null && next.incomingCall == null) {
-        _dismissIncomingCallDialogIfOpen();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _dismissIncomingCallDialogIfOpen();
+        });
       }
 
       final prevActiveId = previous?.activeCall?.callId;
       final nextActiveId = next.activeCall?.callId;
       if (prevActiveId != null && nextActiveId == null) {
-        _dismissIncomingCallDialogIfOpen();
-        _showTopPopup(context, 'Call ended');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _dismissIncomingCallDialogIfOpen();
+          _showTopPopup(context, 'Call ended');
+        });
       }
     });
 
@@ -838,8 +847,6 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   Future<void> _showIncomingCallDialog(ActiveCallEntity call) async {
     if (!mounted) return;
     final notifier = ref.read(callViewModelProvider.notifier);
-    await notifier.loadCallHistory();
-    if (!mounted) return;
     final callTypeLabel = call.callType == CallTypeEntity.video
         ? 'Video'
         : 'Audio';
@@ -858,7 +865,15 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
               onPressed: () async {
                 await notifier.rejectCall(call.callId);
                 if (!dialogContext.mounted) return;
-                Navigator.of(dialogContext).pop();
+                _incomingDialogContext = null;
+                _incomingDialogCallId = null;
+                final navigator = Navigator.of(
+                  dialogContext,
+                  rootNavigator: true,
+                );
+                if (navigator.canPop()) {
+                  navigator.pop();
+                }
               },
               icon: const Icon(Icons.call_end),
               label: const Text('Reject'),
@@ -867,7 +882,15 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
               onPressed: () async {
                 final ok = await notifier.acceptCall(call.callId);
                 if (!dialogContext.mounted) return;
-                Navigator.of(dialogContext).pop();
+                _incomingDialogContext = null;
+                _incomingDialogCallId = null;
+                final navigator = Navigator.of(
+                  dialogContext,
+                  rootNavigator: true,
+                );
+                if (navigator.canPop()) {
+                  navigator.pop();
+                }
                 if (!ok || !mounted) return;
                 await Navigator.push(
                   context,
@@ -896,11 +919,13 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
 
   void _dismissIncomingCallDialogIfOpen() {
     final dialogContext = _incomingDialogContext;
-    if (dialogContext != null && dialogContext.mounted) {
-      Navigator.of(dialogContext).pop();
-    }
     _incomingDialogContext = null;
     _incomingDialogCallId = null;
+    if (dialogContext == null || !dialogContext.mounted) return;
+    final navigator = Navigator.of(dialogContext, rootNavigator: true);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
   }
 
   String _resolveCallerDisplayName(ActiveCallEntity call) {

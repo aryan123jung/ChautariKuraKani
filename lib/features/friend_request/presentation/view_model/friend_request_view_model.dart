@@ -33,8 +33,12 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
   }
 
   Future<void> loadStatus(String userId) async {
+    final normalizedUserId = userId.trim().toLowerCase();
+    final isSameTarget = state.statusUserId == normalizedUserId;
     state = state.copyWith(
       status: FriendRequestStatusUi.loading,
+      clearFriendStatus: !isSameTarget,
+      statusUserId: normalizedUserId,
       errorMessage: null,
     );
     final result = await _getFriendStatusUsecase(GetFriendStatusParams(userId));
@@ -43,6 +47,8 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
       (failure) {
         state = state.copyWith(
           status: FriendRequestStatusUi.error,
+          clearFriendStatus: true,
+          statusUserId: normalizedUserId,
           errorMessage: failure.message,
         );
       },
@@ -50,6 +56,7 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
         state = state.copyWith(
           status: FriendRequestStatusUi.loaded,
           friendStatus: friendStatus,
+          statusUserId: normalizedUserId,
           errorMessage: null,
         );
       },
@@ -62,7 +69,9 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
       errorMessage: null,
     );
 
-    final result = await _sendFriendRequestUsecase(SendFriendRequestParams(userId));
+    final result = await _sendFriendRequestUsecase(
+      SendFriendRequestParams(userId),
+    );
     return result.fold(
       (failure) {
         state = state.copyWith(

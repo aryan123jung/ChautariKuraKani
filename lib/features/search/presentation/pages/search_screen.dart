@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
+import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/get_current_usecase.dart';
+import 'package:chautari_kurakani/features/friend_request/presentation/view_model/friend_request_view_model.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/pages/profile_screen.dart';
 import 'package:chautari_kurakani/features/search/domain/entities/search_user_entity.dart';
@@ -38,6 +41,63 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _debounce = Timer(const Duration(milliseconds: 350), () {
       ref.read(searchViewModelProvider.notifier).searchUsers(query: trimmed);
     });
+  }
+
+  Future<void> _openUserProfile(SearchUserEntity user) async {
+    if (!mounted) return;
+    var loaderOpen = false;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    loaderOpen = true;
+
+    try {
+      AuthEntity freshUser = AuthEntity(
+        authId: user.id,
+        fName: user.firstName,
+        lName: user.lastName,
+        email: user.email,
+        username: user.username,
+        profilePicture: user.profileUrl,
+        coverPicture: user.coverUrl,
+      );
+
+      final profileResult = await ref.read(getCurrentUserUsecaseProvider)(
+        GetCurrentUsecaseParams(userId: user.id),
+      );
+      profileResult.fold((_) {}, (entity) {
+        freshUser = entity;
+      });
+
+      await ref
+          .read(friendRequestViewModelProvider.notifier)
+          .loadStatus(user.id);
+      await ref.read(postViewModelProvider.notifier).fetchPosts();
+
+      if (!mounted) return;
+      if (loaderOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loaderOpen = false;
+      }
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              ProfileScreen(isReadOnly: true, userEntity: freshUser),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      if (loaderOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loaderOpen = false;
+      }
+      SnackbarUtils.showError(context, 'Failed to load user profile');
+    }
   }
 
   @override
@@ -108,29 +168,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       final user = users[index];
                       return _UserTile(
                         user: user,
-                        onTap: () async {
-                          await ref
-                              .read(postViewModelProvider.notifier)
-                              .fetchPosts();
-                          if (!context.mounted) return;
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProfileScreen(
-                                isReadOnly: true,
-                                userEntity: AuthEntity(
-                                  authId: user.id,
-                                  fName: user.firstName,
-                                  lName: user.lastName,
-                                  email: user.email,
-                                  username: user.username,
-                                  profilePicture: user.profileUrl,
-                                  coverPicture: user.coverUrl,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                        onTap: () => _openUserProfile(user),
                       );
                     },
                   );

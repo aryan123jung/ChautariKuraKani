@@ -6,6 +6,7 @@ enum FriendRequestStatusUi { initial, loading, loaded, submitting, success, erro
 class FriendRequestState extends Equatable {
   final FriendRequestStatusUi status;
   final FriendStatusEntity? friendStatus;
+  final String? statusUserId;
   final List<FriendRequestEntity> incoming;
   final List<FriendRequestEntity> outgoing;
   final String? errorMessage;
@@ -13,6 +14,7 @@ class FriendRequestState extends Equatable {
   const FriendRequestState({
     required this.status,
     this.friendStatus,
+    this.statusUserId,
     this.incoming = const [],
     this.outgoing = const [],
     this.errorMessage,
@@ -21,6 +23,7 @@ class FriendRequestState extends Equatable {
   const FriendRequestState.initial()
     : status = FriendRequestStatusUi.initial,
       friendStatus = null,
+      statusUserId = null,
       incoming = const [],
       outgoing = const [],
       errorMessage = null;
@@ -29,6 +32,8 @@ class FriendRequestState extends Equatable {
     FriendRequestStatusUi? status,
     FriendStatusEntity? friendStatus,
     bool clearFriendStatus = false,
+    String? statusUserId,
+    bool clearStatusUserId = false,
     List<FriendRequestEntity>? incoming,
     List<FriendRequestEntity>? outgoing,
     String? errorMessage,
@@ -38,6 +43,9 @@ class FriendRequestState extends Equatable {
       friendStatus: clearFriendStatus
           ? null
           : friendStatus ?? this.friendStatus,
+      statusUserId: clearStatusUserId
+          ? null
+          : statusUserId ?? this.statusUserId,
       incoming: incoming ?? this.incoming,
       outgoing: outgoing ?? this.outgoing,
       errorMessage: errorMessage,
@@ -45,5 +53,12 @@ class FriendRequestState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, friendStatus, incoming, outgoing, errorMessage];
+  List<Object?> get props => [
+    status,
+    friendStatus,
+    statusUserId,
+    incoming,
+    outgoing,
+    errorMessage,
+  ];
 }

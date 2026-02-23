@@ -53,13 +53,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 bool isUser = msg["role"] == "user";
 
                 return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.green : const Color.fromARGB(255, 174, 187, 158),
+                      color: isUser
+                          ? Colors.green
+                          : const Color.fromARGB(255, 174, 187, 158),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Text(

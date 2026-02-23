@@ -7,14 +7,15 @@ import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/get_current_usecase.dart';
 import 'package:chautari_kurakani/features/addPost/presentation/pages/add_post_screen.dart';
 import 'package:chautari_kurakani/features/friend_request/data/repositories/friend_request_repository.dart';
+import 'package:chautari_kurakani/features/friend_request/domain/entities/friend_request_entity.dart';
 import 'package:chautari_kurakani/features/friend_request/presentation/state/friend_request_state.dart';
 import 'package:chautari_kurakani/features/friend_request/presentation/view_model/friend_request_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
-import 'package:chautari_kurakani/features/post/presentation/state/post_state.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/side_nav_widget.dart';
@@ -310,20 +311,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (!widget.isReadOnly) return;
     final targetId = widget.userEntity.authId;
     if (targetId == null || targetId.trim().isEmpty) return;
+    final normalizedTarget = _normalizeId(targetId);
+    final currentState = ref.read(friendRequestViewModelProvider);
+    final alreadyLoadedForTarget =
+        currentState.statusUserId == normalizedTarget &&
+        currentState.friendStatus != null &&
+        currentState.status == FriendRequestStatusUi.loaded;
+    if (alreadyLoadedForTarget) return;
     await ref
         .read(friendRequestViewModelProvider.notifier)
         .loadStatus(targetId);
   }
 
   Future<void> _handleFriendPrimaryAction({
-    required FriendRequestState friendState,
+    required String? currentStatus,
+    required String? currentRequestId,
   }) async {
     final targetId = widget.userEntity.authId;
     if (targetId == null || targetId.trim().isEmpty) return;
 
-    final status = friendState.friendStatus?.status ?? 'NONE';
-    final requestId = friendState.friendStatus?.requestId;
     final notifier = ref.read(friendRequestViewModelProvider.notifier);
+    final normalizedTarget = _normalizeId(targetId);
+
+    // Revalidate the latest status from backend before taking action.
+    await notifier.loadStatus(targetId);
+    final latestScoped = ref.read(friendRequestViewModelProvider);
+    final scopedStatus = latestScoped.statusUserId == normalizedTarget
+        ? latestScoped.friendStatus
+        : null;
+
+    final status = scopedStatus?.status ?? currentStatus ?? 'NONE';
+    final requestId = scopedStatus?.requestId ?? currentRequestId;
 
     bool success = false;
 
@@ -344,6 +362,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
     final latest = ref.read(friendRequestViewModelProvider);
     if (!success && latest.errorMessage != null) {
+      final err = latest.errorMessage!.toLowerCase();
+      if (err.contains('friendship not found')) {
+        await notifier.loadStatus(targetId);
+        return;
+      }
       SnackbarUtils.showError(context, latest.errorMessage!);
       return;
     }
@@ -355,10 +378,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     await notifier.loadStatus(targetId);
   }
 
-  Future<void> _handleFriendRejectAction({
-    required FriendRequestState friendState,
-  }) async {
-    final requestId = friendState.friendStatus?.requestId;
+  Future<void> _handleFriendRejectAction({required String? requestId}) async {
     final targetId = widget.userEntity.authId;
     if (requestId == null || requestId.isEmpty || targetId == null) return;
 
@@ -391,7 +411,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     });
 
     try {
-      await ref.read(postViewModelProvider.notifier).fetchPosts();
+      await ref
+          .read(postViewModelProvider.notifier)
+          .fetchPosts()
+          .timeout(const Duration(seconds: 2), onTimeout: () {});
       final allPosts = ref.read(postViewModelProvider).posts;
       final posts = allPosts
           .where(
@@ -487,24 +510,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
   }
 
-  void _openFriendProfile(SearchUserEntity user) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(
-          isReadOnly: true,
-          userEntity: AuthEntity(
-            authId: user.id,
-            fName: user.firstName,
-            lName: user.lastName,
-            email: user.email,
-            username: user.username,
-            profilePicture: user.profileUrl,
-            coverPicture: user.coverUrl,
-          ),
-        ),
-      ),
+  Future<void> _openFriendProfile(SearchUserEntity user) async {
+    if (!mounted) return;
+    var loaderOpen = false;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+    loaderOpen = true;
+
+    try {
+      AuthEntity freshUser = AuthEntity(
+        authId: user.id,
+        fName: user.firstName,
+        lName: user.lastName,
+        email: user.email,
+        username: user.username,
+        profilePicture: user.profileUrl,
+        coverPicture: user.coverUrl,
+      );
+
+      final profileResult = await ref.read(getCurrentUserUsecaseProvider)(
+        GetCurrentUsecaseParams(userId: user.id),
+      );
+
+      profileResult.fold((_) {}, (entity) {
+        freshUser = entity;
+      });
+
+      // Preload friend status before opening profile so action button is ready.
+      await ref
+          .read(friendRequestViewModelProvider.notifier)
+          .loadStatus(user.id);
+
+      await ref.read(postViewModelProvider.notifier).fetchPosts();
+      if (!mounted) return;
+
+      if (loaderOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loaderOpen = false;
+      }
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              ProfileScreen(isReadOnly: true, userEntity: freshUser),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      if (loaderOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loaderOpen = false;
+      }
+      SnackbarUtils.showError(context, 'Failed to load friend profile');
+    }
   }
 
   @override
@@ -514,13 +577,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final friendState = ref.watch(friendRequestViewModelProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isOwnReadOnlyProfile = _isOwnReadOnlyProfile(authState);
+    final targetProfileId = _normalizeId(widget.userEntity.authId ?? '');
+    final scopedFriendStatus =
+        widget.isReadOnly &&
+            targetProfileId.isNotEmpty &&
+            friendState.statusUserId == targetProfileId
+        ? friendState.friendStatus
+        : null;
     final readOnlyDerivedPosts = widget.isReadOnly
         ? _filterPostsForProfile(postState.posts)
         : <PostEntity>[];
     final displayPosts = widget.isReadOnly ? readOnlyDerivedPosts : _userPosts;
-    final isLoadingPostsView = widget.isReadOnly
-        ? (postState.status == PostStatus.loading && displayPosts.isEmpty)
-        : _isLoadingPosts;
+    final isLoadingPostsView = _isLoadingPosts;
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (widget.isReadOnly) return;
@@ -785,7 +853,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               color: const Color(0XFF76C05D),
                             ),
                           ] else if (!isOwnReadOnlyProfile) ...[
-                            _buildFriendActionButtons(friendState: friendState),
+                            _buildFriendActionButtons(
+                              friendState: friendState,
+                              friendStatus: scopedFriendStatus,
+                            ),
                           ],
                         ],
                       ),
@@ -959,7 +1030,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 14),
                             child: _buildReadOnlyConnectionPanel(
-                              friendState.friendStatus?.status,
+                              scopedFriendStatus?.status,
                               isDark,
                             ),
                           ),
@@ -1202,8 +1273,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         .toList();
   }
 
-  Widget _buildFriendActionButtons({required FriendRequestState friendState}) {
-    final status = friendState.friendStatus?.status;
+  Widget _buildFriendActionButtons({
+    required FriendRequestState friendState,
+    required FriendStatusEntity? friendStatus,
+  }) {
+    final status = friendStatus?.status;
+    final requestId = friendStatus?.requestId;
     final isBusy = friendState.status == FriendRequestStatusUi.submitting;
 
     if (status == null &&
@@ -1242,7 +1317,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final primary = ElevatedButton.icon(
       onPressed: isBusy
           ? null
-          : () => _handleFriendPrimaryAction(friendState: friendState),
+          : () => _handleFriendPrimaryAction(
+              currentStatus: status,
+              currentRequestId: requestId,
+            ),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0XFF76C05D),
         foregroundColor: Colors.white,
@@ -1275,7 +1353,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         OutlinedButton(
           onPressed: isBusy
               ? null
-              : () => _handleFriendRejectAction(friendState: friendState),
+              : () => _handleFriendRejectAction(requestId: requestId),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.redAccent,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

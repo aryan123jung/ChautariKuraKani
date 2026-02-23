@@ -156,11 +156,10 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                 final unreadCount = state.unreadFor(conversation.id);
                 final hasUnread = unreadCount > 0;
 
-                return Card(
-                  color: hasUnread
-                      ? const Color(0XFF76C05D).withValues(alpha: 0.08)
-                      : null,
-                  child: ListTile(
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
                     onTap: () async {
                       _messageNotifier.markConversationAsReadLocal(
                         conversation.id,
@@ -177,41 +176,179 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                       if (!mounted) return;
                       await _refresh();
                     },
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.grey.shade300,
-                      backgroundImage: profile != null
-                          ? NetworkImage(profile)
-                          : null,
-                      child: profile == null
-                          ? Text(
-                              (name.isNotEmpty ? name[0] : 'C').toUpperCase(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: hasUnread
+                              ? const Color(0XFF76C05D).withValues(alpha: 0.35)
+                              : Colors.grey.withValues(alpha: 0.15),
+                        ),
+                        gradient: hasUnread
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  const Color(
+                                    0XFF76C05D,
+                                  ).withValues(alpha: 0.14),
+                                  const Color(
+                                    0XFF76C05D,
+                                  ).withValues(alpha: 0.03),
+                                ],
+                              )
+                            : null,
+                        color: hasUnread ? null : Theme.of(context).cardColor,
+                        boxShadow: hasUnread
+                            ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0XFF76C05D,
+                                  ).withValues(alpha: 0.14),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: hasUnread
+                                        ? const Color(0XFF76C05D)
+                                        : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 23,
+                                  backgroundColor: Colors.grey.shade300,
+                                  backgroundImage: profile != null
+                                      ? NetworkImage(profile)
+                                      : null,
+                                  child: profile == null
+                                      ? Text(
+                                          (name.isNotEmpty ? name[0] : 'C')
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        )
+                                      : null,
+                                ),
                               ),
-                            )
-                          : null,
-                    ),
-                    title: Text(
-                      name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      subtitle.isEmpty ? 'Tap to chat' : subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: Text(
-                      hasUnread
-                          ? '$unreadCount'
-                          : _relativeTime(conversation.lastMessageAt),
-                      style: TextStyle(
-                        color: hasUnread
-                            ? const Color(0XFF76C05D)
-                            : Colors.grey.shade600,
-                        fontSize: 12,
-                        fontWeight: hasUnread
-                            ? FontWeight.w700
-                            : FontWeight.w400,
+                              if (hasUnread)
+                                Positioned(
+                                  right: 1,
+                                  top: 1,
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0XFF76C05D),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).scaffoldBackgroundColor,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontWeight: hasUnread
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  subtitle.isEmpty ? 'Tap to chat' : subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: hasUnread
+                                        ? Colors.black87
+                                        : Colors.grey.shade600,
+                                    fontWeight: hasUnread
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                _relativeTime(conversation.lastMessageAt),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: hasUnread
+                                      ? const Color(0XFF76C05D)
+                                      : Colors.grey.shade600,
+                                  fontWeight: hasUnread
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              if (hasUnread)
+                                Container(
+                                  constraints: const BoxConstraints(
+                                    minWidth: 22,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0XFF76C05D),
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                  child: Text(
+                                    unreadCount > 99 ? '99+' : '$unreadCount',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                )
+                              else
+                                const SizedBox(height: 18),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),

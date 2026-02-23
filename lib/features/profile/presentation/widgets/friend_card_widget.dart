@@ -111,8 +111,14 @@ import 'package:flutter/material.dart';
 class FriendCard extends StatelessWidget {
   final SearchUserEntity friend;
   final VoidCallback onView;
+  final VoidCallback? onMessage;
 
-  const FriendCard({super.key, required this.friend, required this.onView});
+  const FriendCard({
+    super.key,
+    required this.friend,
+    required this.onView,
+    this.onMessage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -184,23 +190,40 @@ class FriendCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: onView,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onMessage != null) ...[
+                      IconButton(
+                        tooltip: 'Message',
+                        onPressed: onMessage,
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0XFF76C05D),
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.message_outlined, size: 20),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    ElevatedButton(
+                      onPressed: onView,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 24 : 16,
+                          vertical: isTablet ? 12 : 8,
+                        ),
+                      ),
+                      child: Text(
+                        'View',
+                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      ),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 24 : 16,
-                      vertical: isTablet ? 12 : 8,
-                    ),
-                  ),
-                  child: Text(
-                    'View',
-                    style: TextStyle(fontSize: isTablet ? 16 : 14),
-                  ),
+                  ],
                 ),
               ],
             ),

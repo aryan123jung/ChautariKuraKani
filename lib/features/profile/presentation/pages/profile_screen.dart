@@ -15,6 +15,8 @@ import 'package:chautari_kurakani/features/friend_request/presentation/state/fri
 import 'package:chautari_kurakani/features/friend_request/presentation/view_model/friend_request_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_card_widget.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
+import 'package:chautari_kurakani/features/message/presentation/pages/chat_screen.dart';
+import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
@@ -398,6 +400,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     await ref
         .read(friendRequestViewModelProvider.notifier)
         .loadStatus(targetId);
+  }
+
+  Future<void> _startMessageWithUser({
+    required String otherUserId,
+    String? displayName,
+  }) async {
+    final targetId = otherUserId.trim();
+    if (targetId.isEmpty) return;
+
+    final currentUserId =
+        ref.read(authViewModelProvider).authEntity?.authId ??
+        ref.read(userSessionServiceProvider).getCurrentUserId() ??
+        '';
+
+    if (currentUserId.trim().isEmpty ||
+        _normalizeId(currentUserId) == _normalizeId(targetId)) {
+      return;
+    }
+
+    final notifier = ref.read(messageViewModelProvider.notifier);
+    final conversation = await notifier.getOrCreateConversation(targetId);
+    if (!mounted) return;
+
+    if (conversation == null) {
+      final err = ref.read(messageViewModelProvider).errorMessage;
+      SnackbarUtils.showError(
+        context,
+        err ??
+            'Failed to start chat${displayName != null ? ' with $displayName' : ''}',
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          conversation: conversation,
+          currentUserId: currentUserId,
+        ),
+      ),
+    );
   }
 
   Future<void> _loadUserPosts() async {
@@ -1079,6 +1123,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           return FriendCard(
                             friend: friend,
                             onView: () => _openFriendProfile(friend),
+                            onMessage: () => _startMessageWithUser(
+                              otherUserId: friend.id,
+                              displayName: friend.fullName,
+                            ),
                           );
                         },
                       ),
@@ -1198,6 +1246,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
               ),
             ),
+            if (normalized == 'FRIEND') ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    final targetId = widget.userEntity.authId;
+                    if (targetId == null || targetId.trim().isEmpty) return;
+                    _startMessageWithUser(
+                      otherUserId: targetId,
+                      displayName: _fullName,
+                    );
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0XFF76C05D),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.message_outlined, size: 18),
+                  label: const Text('Message Friend'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -1340,6 +1410,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           : Icon(icon, size: 16),
       label: Text(label),
     );
+
+    if (normalizedStatus == 'FRIEND') {
+      final targetId = widget.userEntity.authId;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          primary,
+          const SizedBox(width: 6),
+          OutlinedButton.icon(
+            onPressed: targetId == null || targetId.trim().isEmpty
+                ? null
+                : () => _startMessageWithUser(
+                    otherUserId: targetId,
+                    displayName: _fullName,
+                  ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0XFF76C05D),
+              side: const BorderSide(color: Color(0XFF76C05D)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: const Icon(Icons.message_outlined, size: 16),
+            label: const Text('Message'),
+          ),
+        ],
+      );
+    }
 
     if (normalizedStatus != 'PENDING_INCOMING') {
       return primary;

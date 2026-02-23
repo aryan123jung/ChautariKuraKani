@@ -388,6 +388,7 @@ import 'package:chautari_kurakani/features/message/domain/entities/message_entit
 import 'package:chautari_kurakani/features/message/presentation/state/message_state.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/pages/profile_screen.dart';
+import 'package:chautari_kurakani/features/sensor/data/services/shake_detector_service.dart';
 import 'package:chautari_kurakani/features/search/presentation/pages/search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -407,6 +408,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   late final PageController _pageController;
   late final MessageViewModel _messageNotifier;
   late final CallViewModel _callNotifier;
+  final ShakeDetectorService _shakeDetector = ShakeDetectorService();
   String? _incomingDialogCallId;
 
   @override
@@ -415,6 +417,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     _pageController = PageController(initialPage: 0);
     _messageNotifier = ref.read(messageViewModelProvider.notifier);
     _callNotifier = ref.read(callViewModelProvider.notifier);
+    _shakeDetector.start(onShake: _openAddPostByShake);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userSessionService = ref.read(userSessionServiceProvider);
@@ -430,10 +433,32 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   void dispose() {
+    _shakeDetector.stop();
     _messageNotifier.disconnectRealtime();
     _callNotifier.disconnectRealtime();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _openAddPostByShake() {
+    if (!mounted) return;
+    if (_selectedIndex == 2) return;
+    _pageController.animateToPage(
+      2,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
+    setState(() {
+      _selectedIndex = 2;
+      _currentIndex = 2;
+    });
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        duration: Duration(milliseconds: 900),
+        content: Text('Shake detected • Opened Add Post'),
+      ),
+    );
   }
 
   List<Widget> _buildBottomScreens(AuthEntity userEntity) {

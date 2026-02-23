@@ -7,8 +7,8 @@ class AppSettingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
+    final themeState = ref.watch(themeModeProvider);
+    final isDark = themeState.effectiveMode == ThemeMode.dark;
 
     final gradient = isDark
         ? const [Color(0xFF1B2330), Color(0xFF121821)]
@@ -95,7 +95,7 @@ class AppSettingsSheet extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Dark Mode',
+                            'Theme Mode',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -106,9 +106,13 @@ class AppSettingsSheet extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            isDark
-                                ? 'Comfortable for low-light viewing'
-                                : 'Switch for a softer night experience',
+                            themeState.preference == ThemePreference.auto
+                                ? themeState.sensorAvailable
+                                      ? 'Auto by ambient light sensor'
+                                      : 'Auto follows system appearance on this device'
+                                : (isDark
+                                      ? 'Comfortable for low-light viewing'
+                                      : 'Bright and clear daytime look'),
                             style: TextStyle(
                               fontSize: 13.5,
                               color: isDark
@@ -119,17 +123,61 @@ class AppSettingsSheet extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    Switch.adaptive(
-                      value: isDark,
-                      onChanged: (enabled) {
-                        ref
-                            .read(themeModeProvider.notifier)
-                            .setDarkMode(enabled);
-                      },
-                    ),
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              SegmentedButton<ThemePreference>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment<ThemePreference>(
+                    value: ThemePreference.auto,
+                    icon: Icon(Icons.sensors_outlined),
+                    label: Text('Auto'),
+                  ),
+                  ButtonSegment<ThemePreference>(
+                    value: ThemePreference.light,
+                    icon: Icon(Icons.wb_sunny_outlined),
+                    label: Text('Light'),
+                  ),
+                  ButtonSegment<ThemePreference>(
+                    value: ThemePreference.dark,
+                    icon: Icon(Icons.nightlight_round),
+                    label: Text('Dark'),
+                  ),
+                ],
+                selected: {themeState.preference},
+                onSelectionChanged: (selected) {
+                  final value = selected.first;
+                  ref.read(themeModeProvider.notifier).setPreference(value);
+                },
+              ),
+              if (themeState.preference == ThemePreference.auto &&
+                  themeState.sensorAvailable &&
+                  themeState.lux != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.white.withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    'Ambient light: ${themeState.lux} lux',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF4A5668),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

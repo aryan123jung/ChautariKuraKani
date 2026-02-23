@@ -624,8 +624,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final authState = ref.watch(authViewModelProvider);
     final postState = ref.watch(postViewModelProvider);
     final friendState = ref.watch(friendRequestViewModelProvider);
-    final themeMode = ref.watch(themeModeProvider);
-    final themeKey = themeMode.name;
+    final themeState = ref.watch(themeModeProvider);
+    final themeKey = themeState.effectiveMode.name;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isOwnReadOnlyProfile = _isOwnReadOnlyProfile(authState);
     final targetProfileId = _normalizeId(widget.userEntity.authId ?? '');

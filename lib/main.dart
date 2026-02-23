@@ -96,10 +96,11 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // Initialize deep link handling
     widget.deepLinkService.init((token) {
@@ -115,20 +116,26 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.deepLinkService.dispose();
     super.dispose();
   }
 
   @override
+  void didChangePlatformBrightness() {
+    ref.read(themeModeProvider.notifier).syncWithSystemAppearance();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeModeProvider);
+    final themeState = ref.watch(themeModeProvider);
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Chautari KuraKani',
       debugShowCheckedModeBanner: false,
       theme: getLightApplicationTheme(),
       darkTheme: getDarkApplicationTheme(),
-      themeMode: themeMode,
+      themeMode: themeState.effectiveMode,
       builder: (context, child) {
         final media = MediaQuery.of(context);
         final width = media.size.width;

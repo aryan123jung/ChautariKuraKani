@@ -106,6 +106,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     ].where((part) => part.trim().isNotEmpty).join(' ').trim();
     final normalizedCurrentUserId = _normalizeId(currentUserId ?? '');
     final feedPosts = postState.posts.where((post) {
+      // Exclude Chautari posts from main feed tab.
+      final communityId = (post.communityId ?? '').trim();
+      if (communityId.isNotEmpty) return false;
+
       final authorId = _normalizeId(post.authorId);
       if (authorId.isEmpty) return false;
       if (normalizedCurrentUserId.isNotEmpty &&

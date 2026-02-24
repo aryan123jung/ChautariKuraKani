@@ -7,6 +7,7 @@ class PostEntity extends Equatable {
   final String name;
   final String hoursAgo;
   final String caption;
+  final String? communityId;
   final String? imageUrl;
   final String? videoUrl;
   final String? mediaType;
@@ -21,6 +22,7 @@ class PostEntity extends Equatable {
     required this.name,
     required this.hoursAgo,
     required this.caption,
+    this.communityId,
     this.imageUrl,
     this.videoUrl,
     this.mediaType,
@@ -36,6 +38,7 @@ class PostEntity extends Equatable {
     String? name,
     String? hoursAgo,
     String? caption,
+    String? communityId,
     String? imageUrl,
     String? videoUrl,
     String? mediaType,
@@ -50,6 +53,7 @@ class PostEntity extends Equatable {
       name: name ?? this.name,
       hoursAgo: hoursAgo ?? this.hoursAgo,
       caption: caption ?? this.caption,
+      communityId: communityId ?? this.communityId,
       imageUrl: imageUrl ?? this.imageUrl,
       videoUrl: videoUrl ?? this.videoUrl,
       mediaType: mediaType ?? this.mediaType,
@@ -67,6 +71,7 @@ class PostEntity extends Equatable {
     name,
     hoursAgo,
     caption,
+    communityId,
     imageUrl,
     videoUrl,
     mediaType,

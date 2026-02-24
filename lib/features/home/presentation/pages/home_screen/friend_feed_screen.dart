@@ -99,6 +99,10 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
 
     final normalizedCurrent = _normalizeId(currentUserId ?? '');
     final friendPosts = postState.posts.where((post) {
+      // Exclude Chautari posts from friends feed tab.
+      final communityId = (post.communityId ?? '').trim();
+      if (communityId.isNotEmpty) return false;
+
       final authorId = _normalizeId(post.authorId);
       if (authorId.isEmpty || authorId == normalizedCurrent) return false;
       return _friendAuthorIds.contains(authorId);

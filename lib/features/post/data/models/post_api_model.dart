@@ -8,6 +8,7 @@ class PostApiModel {
   final String name;
   final String hoursAgo;
   final String caption;
+  final String? communityId;
   final String? imageUrl;
   final String? videoUrl;
   final String? mediaType;
@@ -22,6 +23,7 @@ class PostApiModel {
     required this.name,
     required this.hoursAgo,
     required this.caption,
+    this.communityId,
     this.imageUrl,
     this.videoUrl,
     this.mediaType,
@@ -60,6 +62,12 @@ class PostApiModel {
 
     final String mediaType = json['mediaType']?.toString() ?? '';
     final String rawMedia = json['mediaUrl']?.toString() ?? '';
+    final dynamic rawCommunity = json['communityId'];
+    final String? communityId = rawCommunity == null
+        ? null
+        : (rawCommunity is Map<String, dynamic>
+              ? rawCommunity['_id']?.toString()
+              : rawCommunity.toString());
     final List<dynamic> likesRaw = (json['likes'] as List<dynamic>? ?? []);
     final List<String> likedUserIds = likesRaw
         .map((item) {
@@ -94,6 +102,9 @@ class PostApiModel {
       name: displayName.isNotEmpty ? displayName : 'Unknown User',
       hoursAgo: _formatRelativeTime(createdAt),
       caption: json['caption']?.toString() ?? '',
+      communityId: (communityId == null || communityId.trim().isEmpty)
+          ? null
+          : communityId.trim(),
       imageUrl: resolvedImageUrl,
       videoUrl: resolvedVideoUrl,
       mediaType: mediaType.isNotEmpty ? mediaType : null,
@@ -111,6 +122,7 @@ class PostApiModel {
       name: name,
       hoursAgo: hoursAgo,
       caption: caption,
+      communityId: communityId,
       imageUrl: imageUrl,
       videoUrl: videoUrl,
       mediaType: mediaType,

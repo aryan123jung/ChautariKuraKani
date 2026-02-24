@@ -240,11 +240,13 @@ class _ChautariScreenState extends ConsumerState<ChautariScreen> {
                           builder: (_) => ChautariDetailScreen(community: item),
                         ),
                       );
+
+                      await ref
+                          .read(homeChautariViewModelProvider.notifier)
+                          .loadMy();
+                      if (!mounted) return;
+
                       if (deleted == true) {
-                        await ref
-                            .read(homeChautariViewModelProvider.notifier)
-                            .loadMy();
-                        if (!mounted) return;
                         showTopPopup(this.context, 'Chautari deleted');
                       }
                     },

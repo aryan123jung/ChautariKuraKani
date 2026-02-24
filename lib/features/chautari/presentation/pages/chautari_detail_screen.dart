@@ -22,6 +22,10 @@ class ChautariDetailScreen extends ConsumerStatefulWidget {
 class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
   late ChautariEntity _community;
 
+  Future<void> _syncHomeChautariList() async {
+    await ref.read(homeChautariViewModelProvider.notifier).loadMy();
+  }
+
   Future<void> _showEditChautariSheet(ChautariEntity selected) async {
     final nameController = TextEditingController(text: selected.name);
     final descController = TextEditingController(text: selected.description);
@@ -132,6 +136,7 @@ class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
     }
 
     await _refresh();
+    await _syncHomeChautariList();
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
@@ -384,6 +389,8 @@ class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
                   );
                   return;
                 }
+                await _syncHomeChautariList();
+                if (!mounted) return;
                 navigator.pop(true);
               },
               icon: const Icon(Icons.delete_outline),
@@ -466,6 +473,8 @@ class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
                               .read(chautariViewModelProvider.notifier)
                               .join(selected.id);
                     if (!mounted || !ok) return;
+                    await _syncHomeChautariList();
+                    if (!mounted) return;
                     await ref
                         .read(chautariViewModelProvider.notifier)
                         .refreshSelectedMemberCount();

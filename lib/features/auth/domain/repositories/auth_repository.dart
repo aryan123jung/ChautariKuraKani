@@ -8,6 +8,15 @@ abstract interface class IAuthRepository {
   Future<Either<Failure, AuthEntity>> register(AuthEntity entity);
   Future<Either<Failure, AuthEntity>> login(String email, String password);
   Future<Either<Failure, AuthEntity>> getCurrentUserById(String userId);
+  Future<Either<Failure, AuthEntity>> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String email,
+    String? bio,
+    File? profileImage,
+    File? coverImage,
+  });
   Future<Either<Failure, bool>> logout();
   //image
   Future<Either<Failure, String>> profileImageUpload(File image);

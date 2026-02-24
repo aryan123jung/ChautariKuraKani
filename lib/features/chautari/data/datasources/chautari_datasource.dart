@@ -10,6 +10,13 @@ abstract interface class IChautariRemoteDatasource {
     File? profileImage,
   });
 
+  Future<ChautariApiModel> updateChautari({
+    required String communityId,
+    String? name,
+    String? description,
+    File? profileImage,
+  });
+
   Future<List<ChautariApiModel>> searchChautaris({
     required String search,
     int page = 1,
@@ -25,6 +32,7 @@ abstract interface class IChautariRemoteDatasource {
   Future<ChautariApiModel> leave(String communityId);
 
   Future<int> getMemberCount(String communityId);
+  Future<int> getUserChautariCount(String userId);
 
   Future<void> createPost({
     required String communityId,

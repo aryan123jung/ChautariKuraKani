@@ -74,6 +74,48 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
+  Future<Either<Failure, AuthEntity>> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String email,
+    String? bio,
+    File? profileImage,
+    File? coverImage,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ApiFailure(message: "No internet connection"));
+    }
+
+    try {
+      final user = await _authRemoteDatasource.updateProfile(
+        firstName: firstName,
+        lastName: lastName,
+        username: username,
+        email: email,
+        bio: bio,
+        profileImage: profileImage,
+        coverImage: coverImage,
+      );
+
+      if (user == null) {
+        return const Left(ApiFailure(message: "Failed to update profile"));
+      }
+
+      return Right(user.toEntity());
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message: e.response?.data['message'] ?? 'Failed to update profile',
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, AuthEntity>> login(
     String email,
     String password,

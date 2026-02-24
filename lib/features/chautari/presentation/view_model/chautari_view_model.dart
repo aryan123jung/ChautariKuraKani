@@ -13,6 +13,7 @@ final homeChautariViewModelProvider =
 class ChautariViewModel extends Notifier<ChautariState> {
   late final CreateChautariUsecase _createUsecase;
   late final SearchChautariUsecase _searchUsecase;
+  late final UpdateChautariUsecase _updateUsecase;
   late final GetMyChautariUsecase _getMyUsecase;
   late final GetChautariByIdUsecase _detailUsecase;
   late final JoinChautariUsecase _joinUsecase;
@@ -26,6 +27,7 @@ class ChautariViewModel extends Notifier<ChautariState> {
   ChautariState build() {
     _createUsecase = ref.read(createChautariUsecaseProvider);
     _searchUsecase = ref.read(searchChautariUsecaseProvider);
+    _updateUsecase = ref.read(updateChautariUsecaseProvider);
     _getMyUsecase = ref.read(getMyChautariUsecaseProvider);
     _detailUsecase = ref.read(getChautariByIdUsecaseProvider);
     _joinUsecase = ref.read(joinChautariUsecaseProvider);
@@ -151,6 +153,47 @@ class ChautariViewModel extends Notifier<ChautariState> {
           communities: next,
           selected: created,
           selectedMemberCount: created.memberCount,
+          errorMessage: null,
+        );
+        return true;
+      },
+    );
+  }
+
+  Future<bool> update({
+    required String communityId,
+    String? name,
+    String? description,
+    File? profileImage,
+  }) async {
+    state = state.copyWith(
+      status: ChautariUiStatus.submitting,
+      errorMessage: null,
+    );
+
+    final result = await _updateUsecase(
+      UpdateChautariParams(
+        communityId: communityId,
+        name: name,
+        description: description,
+        profileImage: profileImage,
+      ),
+    );
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: ChautariUiStatus.error,
+          errorMessage: failure.message,
+        );
+        return false;
+      },
+      (updated) {
+        _replaceInList(updated);
+        state = state.copyWith(
+          status: ChautariUiStatus.success,
+          selected: state.selected?.id == updated.id ? updated : state.selected,
+          selectedMemberCount: updated.memberCount,
           errorMessage: null,
         );
         return true;

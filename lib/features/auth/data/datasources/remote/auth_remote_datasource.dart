@@ -80,7 +80,8 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
         'Authorization': 'Bearer $token',
     };
 
-    try {
+    // Empty userId means "current authenticated user".
+    if (userId.trim().isEmpty) {
       final whoAmIResponse = await _apiClient.get(
         ApiEndpoints.whoAmI,
         options: Options(headers: headers),
@@ -89,14 +90,10 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
         final data = whoAmIResponse.data['data'] as Map<String, dynamic>;
         return AuthApiModel.fromJson(data);
       }
-    } on DioException {
-      // Fallback to /auth/user/:id for backward compatibility.
-    }
-
-    if (userId.trim().isEmpty) {
       return null;
     }
 
+    // Explicit userId means target that user (used by search/profile view).
     final byIdResponse = await _apiClient.get(
       ApiEndpoints.getCurrentUserById(userId),
       options: Options(headers: headers),
@@ -105,6 +102,53 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       final data = byIdResponse.data['data'] as Map<String, dynamic>;
       return AuthApiModel.fromJson(data);
     }
+    return null;
+  }
+
+  @override
+  Future<AuthApiModel?> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String email,
+    String? bio,
+    File? profileImage,
+    File? coverImage,
+  }) async {
+    final token = await _tokenService.getToken();
+    final formData = FormData.fromMap({
+      'firstName': firstName.trim(),
+      'lastName': lastName.trim(),
+      'username': username.trim(),
+      'email': email.trim(),
+      'bio': (bio ?? '').trim(),
+      if (profileImage != null)
+        'profileUrl': await MultipartFile.fromFile(
+          profileImage.path,
+          filename: profileImage.path.split('/').last,
+        ),
+      if (coverImage != null)
+        'coverUrl': await MultipartFile.fromFile(
+          coverImage.path,
+          filename: coverImage.path.split('/').last,
+        ),
+    });
+
+    final response = await _apiClient.put(
+      ApiEndpoints.updateProfileImage,
+      data: formData,
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+        contentType: 'multipart/form-data',
+      ),
+    );
+
+    if (response.data['success'] == true && response.data['data'] != null) {
+      return AuthApiModel.fromJson(
+        response.data['data'] as Map<String, dynamic>,
+      );
+    }
+
     return null;
   }
 

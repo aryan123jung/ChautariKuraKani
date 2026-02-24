@@ -28,6 +28,15 @@ abstract interface class IAuthRemoteDatasource {
   Future<AuthApiModel?> register(AuthApiModel user);
   Future<AuthApiModel?> login(String email, String password);
   Future<AuthApiModel?> getCurrentUserById(String userId);
+  Future<AuthApiModel?> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String email,
+    String? bio,
+    File? profileImage,
+    File? coverImage,
+  });
   Future<String> profileImageUpload(File image);
   Future<String> coverImageUpload(File image);
 

@@ -371,7 +371,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
@@ -425,10 +424,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     _shakeDetector.start(onShake: _openAddPostByShake);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userSessionService = ref.read(userSessionServiceProvider);
-      ref
-          .read(authViewModelProvider.notifier)
-          .getCurrentUser(userId: userSessionService.getCurrentUserId() ?? "");
+      ref.read(authViewModelProvider.notifier).getCurrentUser(userId: '');
     });
   }
 
@@ -579,14 +575,9 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 12),
                   FilledButton(
                     onPressed: () {
-                      final userSessionService = ref.read(
-                        userSessionServiceProvider,
-                      );
                       ref
                           .read(authViewModelProvider.notifier)
-                          .getCurrentUser(
-                            userId: userSessionService.getCurrentUserId() ?? "",
-                          );
+                          .getCurrentUser(userId: '');
                     },
                     child: const Text('Retry'),
                   ),

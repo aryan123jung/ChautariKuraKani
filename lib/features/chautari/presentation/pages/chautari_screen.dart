@@ -18,6 +18,14 @@ class ChautariScreen extends ConsumerStatefulWidget {
 }
 
 class _ChautariScreenState extends ConsumerState<ChautariScreen> {
+  double _fabBottomOffset(BuildContext context) {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    const navHeight = 65.0;
+    const navBottomMargin = 20.0;
+    const gapAboveNav = -30.0;
+    return safeBottom + navHeight + navBottomMargin + gapAboveNav;
+  }
+
   Future<bool> _confirmLeave(String name) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -177,11 +185,14 @@ class _ChautariScreenState extends ConsumerState<ChautariScreen> {
     final currentUserId = ref.watch(authViewModelProvider).authEntity?.authId;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'chautari_create_fab',
-        onPressed: _showCreateChautariSheet,
-        backgroundColor: const Color(0XFF76C05D),
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: _fabBottomOffset(context)),
+        child: FloatingActionButton(
+          heroTag: 'chautari_create_fab',
+          onPressed: _showCreateChautariSheet,
+          backgroundColor: const Color(0XFF76C05D),
+          child: const Icon(Icons.add),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       body: RefreshIndicator(

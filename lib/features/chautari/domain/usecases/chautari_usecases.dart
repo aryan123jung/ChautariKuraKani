@@ -16,6 +16,9 @@ final createChautariUsecaseProvider = Provider<CreateChautariUsecase>((ref) {
 final searchChautariUsecaseProvider = Provider<SearchChautariUsecase>((ref) {
   return SearchChautariUsecase(ref.read(chautariRepositoryProvider));
 });
+final updateChautariUsecaseProvider = Provider<UpdateChautariUsecase>((ref) {
+  return UpdateChautariUsecase(ref.read(chautariRepositoryProvider));
+});
 final getMyChautariUsecaseProvider = Provider<GetMyChautariUsecase>((ref) {
   return GetMyChautariUsecase(ref.read(chautariRepositoryProvider));
 });
@@ -37,6 +40,10 @@ final getChautariMemberCountUsecaseProvider =
       return GetChautariMemberCountUsecase(
         ref.read(chautariRepositoryProvider),
       );
+    });
+final getUserChautariCountUsecaseProvider =
+    Provider<GetUserChautariCountUsecase>((ref) {
+      return GetUserChautariCountUsecase(ref.read(chautariRepositoryProvider));
     });
 
 final createChautariPostUsecaseProvider = Provider<CreateChautariPostUsecase>((
@@ -85,6 +92,28 @@ class SearchChautariParams extends Equatable {
   List<Object?> get props => [search, page, size];
 }
 
+class UpdateChautariParams extends Equatable {
+  final String communityId;
+  final String? name;
+  final String? description;
+  final File? profileImage;
+
+  const UpdateChautariParams({
+    required this.communityId,
+    this.name,
+    this.description,
+    this.profileImage,
+  });
+
+  @override
+  List<Object?> get props => [
+    communityId,
+    name,
+    description,
+    profileImage?.path,
+  ];
+}
+
 class MyChautariParams extends Equatable {
   final int page;
   final int size;
@@ -109,6 +138,14 @@ class ChautariMemberCountParams extends Equatable {
 
   @override
   List<Object?> get props => [communityId];
+}
+
+class UserChautariCountParams extends Equatable {
+  final String userId;
+  const UserChautariCountParams(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
 }
 
 class CreateChautariPostParams extends Equatable {
@@ -173,6 +210,22 @@ class SearchChautariUsecase
   }
 }
 
+class UpdateChautariUsecase
+    implements UsecaseWithParams<ChautariEntity, UpdateChautariParams> {
+  final IChautariRepository _repository;
+  UpdateChautariUsecase(this._repository);
+
+  @override
+  Future<Either<Failure, ChautariEntity>> call(UpdateChautariParams params) {
+    return _repository.updateChautari(
+      communityId: params.communityId,
+      name: params.name,
+      description: params.description,
+      profileImage: params.profileImage,
+    );
+  }
+}
+
 class GetMyChautariUsecase
     implements UsecaseWithParams<List<ChautariEntity>, MyChautariParams> {
   final IChautariRepository _repository;
@@ -225,6 +278,17 @@ class GetChautariMemberCountUsecase
   @override
   Future<Either<Failure, int>> call(ChautariMemberCountParams params) {
     return _repository.getMemberCount(params.communityId);
+  }
+}
+
+class GetUserChautariCountUsecase
+    implements UsecaseWithParams<int, UserChautariCountParams> {
+  final IChautariRepository _repository;
+  GetUserChautariCountUsecase(this._repository);
+
+  @override
+  Future<Either<Failure, int>> call(UserChautariCountParams params) {
+    return _repository.getUserChautariCount(params.userId);
   }
 }
 

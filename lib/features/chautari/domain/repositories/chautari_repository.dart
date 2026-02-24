@@ -11,6 +11,13 @@ abstract interface class IChautariRepository {
     File? profileImage,
   });
 
+  Future<Either<Failure, ChautariEntity>> updateChautari({
+    required String communityId,
+    String? name,
+    String? description,
+    File? profileImage,
+  });
+
   Future<Either<Failure, List<ChautariEntity>>> searchChautaris({
     required String search,
     int page = 1,
@@ -29,6 +36,7 @@ abstract interface class IChautariRepository {
   Future<Either<Failure, ChautariEntity>> leave(String communityId);
 
   Future<Either<Failure, int>> getMemberCount(String communityId);
+  Future<Either<Failure, int>> getUserChautariCount(String userId);
 
   Future<Either<Failure, bool>> createPost({
     required String communityId,

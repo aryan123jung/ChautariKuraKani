@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class EditProfileWidget extends StatefulWidget {
-  final String fullName;
-  final String bio;
-  final String? profilePicture;
-  final Function(String name, String bio, File? newProfileImage) onSave;
+  final String firstName;
+  final String lastName;
+  final String username;
+  final Future<bool> Function(
+    String firstName,
+    String lastName,
+    String username,
+  )
+  onSave;
 
   const EditProfileWidget({
     super.key,
-    required this.fullName,
-    required this.bio,
-    this.profilePicture,
+    required this.firstName,
+    required this.lastName,
+    required this.username,
     required this.onSave,
   });
 
@@ -21,45 +24,24 @@ class EditProfileWidget extends StatefulWidget {
 }
 
 class _EditProfileWidgetState extends State<EditProfileWidget> {
-  late TextEditingController _nameController;
-  late TextEditingController _bioController;
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
+  late final TextEditingController _firstNameController;
+  late final TextEditingController _lastNameController;
+  late final TextEditingController _usernameController;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.fullName);
-    _bioController = TextEditingController(text: widget.bio);
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 500,
-        maxHeight: 500,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to pick image')));
-    }
+    _firstNameController = TextEditingController(text: widget.firstName);
+    _lastNameController = TextEditingController(text: widget.lastName);
+    _usernameController = TextEditingController(text: widget.username);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    double screenWidth = MediaQuery.of(context).size.width;
-    bool isTablet = screenWidth > 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -69,7 +51,6 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Row(
               children: [
                 const Text(
@@ -83,79 +64,12 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-
-            // Profile Image
-            Center(
-              child: Stack(
-                children: [
-                  Container(
-                    height: 120,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blue, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      backgroundColor: isDark
-                          ? Colors.grey[800]
-                          : Colors.grey[400],
-                      backgroundImage: _selectedImage != null
-                          ? FileImage(_selectedImage!)
-                          : (widget.profilePicture != null &&
-                                widget.profilePicture!.isNotEmpty)
-                          ? NetworkImage(widget.profilePicture!)
-                                as ImageProvider
-                          : null,
-                      child:
-                          _selectedImage == null &&
-                              (widget.profilePicture == null ||
-                                  widget.profilePicture!.isEmpty)
-                          ? const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Name Field
+            const SizedBox(height: 16),
             TextField(
-              controller: _nameController,
+              controller: _firstNameController,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: 'Full Name',
-                hintText: 'Enter your full name',
+                labelText: 'First name',
                 prefixIcon: const Icon(Icons.person_outline),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -164,17 +78,27 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                 fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Bio Field
+            const SizedBox(height: 12),
             TextField(
-              controller: _bioController,
-              maxLines: 4,
-              maxLength: 150,
+              controller: _lastNameController,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: 'Bio',
-                hintText: 'Tell something about yourself',
-                prefixIcon: const Icon(Icons.info_outline),
+                labelText: 'Last name',
+                prefixIcon: const Icon(Icons.badge_outlined),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _usernameController,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: 'Username',
+                prefixIcon: const Icon(Icons.alternate_email_rounded),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -183,8 +107,6 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Action Buttons
             Row(
               children: [
                 Expanded(
@@ -202,14 +124,35 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      widget.onSave(
-                        _nameController.text,
-                        _bioController.text,
-                        _selectedImage,
-                      );
-                      Navigator.pop(context);
-                    },
+                    onPressed: _isSaving
+                        ? null
+                        : () async {
+                            final firstName = _firstNameController.text.trim();
+                            final lastName = _lastNameController.text.trim();
+                            final username = _usernameController.text.trim();
+                            if (firstName.isEmpty ||
+                                lastName.isEmpty ||
+                                username.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('All fields are required'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            setState(() => _isSaving = true);
+                            final success = await widget.onSave(
+                              firstName,
+                              lastName,
+                              username,
+                            );
+                            if (!context.mounted) return;
+                            setState(() => _isSaving = false);
+                            if (success) {
+                              Navigator.pop(context);
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -218,7 +161,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Save Changes'),
+                    child: Text(_isSaving ? 'Saving...' : 'Save Changes'),
                   ),
                 ),
               ],
@@ -231,8 +174,9 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _bioController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 }

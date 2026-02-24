@@ -7,6 +7,7 @@ import 'package:chautari_kurakani/features/auth/domain/usecases/logout_usecase.d
 import 'package:chautari_kurakani/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/search_users_usecase.dart';
+import 'package:chautari_kurakani/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/upload_cover_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/upload_profile_image_usecase.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
@@ -26,6 +27,7 @@ class AuthViewModel extends Notifier<AuthState> {
   late final ForgotPasswordUsecase _forgotPasswordUsecase;
   late final ResetPasswordUsecase _resetPasswordUsecase;
   late final SearchUsersUsecase _searchUsersUsecase;
+  late final UpdateProfileUsecase _updateProfileUsecase;
 
   @override
   AuthState build() {
@@ -38,6 +40,7 @@ class AuthViewModel extends Notifier<AuthState> {
     _forgotPasswordUsecase = ref.read(forgotPasswordUsecaseProvider);
     _resetPasswordUsecase = ref.read(resetPasswordUsecaseProvider);
     _searchUsersUsecase = ref.read(searchUsersUsecaseProvider);
+    _updateProfileUsecase = ref.read(updateProfileUsecaseProvider);
 
     return const AuthState(status: AuthStatus.checking);
   }
@@ -245,6 +248,46 @@ class AuthViewModel extends Notifier<AuthState> {
         state = state.copyWith(
           status: AuthStatus.usersLoaded,
           searchedUsers: users,
+          errorMessage: null,
+        );
+      },
+    );
+  }
+
+  Future<void> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String email,
+    String? bio,
+    File? profileImage,
+    File? coverImage,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _updateProfileUsecase(
+      UpdateProfileParams(
+        firstName: firstName,
+        lastName: lastName,
+        username: username,
+        email: email,
+        bio: bio,
+        profileImage: profileImage,
+        coverImage: coverImage,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (user) {
+        state = state.copyWith(
+          status: AuthStatus.currentUserLoaded,
+          authEntity: user,
           errorMessage: null,
         );
       },

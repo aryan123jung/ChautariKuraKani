@@ -221,6 +221,7 @@ class ApiEndpoints {
       '$chautari/$communityId/leave';
   static String chautariMemberCount(String communityId) =>
       '$chautari/$communityId/member-count';
+  static String chautariCountByUser(String userId) => '$chautari/count/$userId';
   static String chautariPosts(String communityId) =>
       '$chautari/$communityId/posts';
 

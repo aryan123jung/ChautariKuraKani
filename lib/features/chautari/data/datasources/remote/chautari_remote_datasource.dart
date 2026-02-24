@@ -55,6 +55,44 @@ class ChautariRemoteDatasource implements IChautariRemoteDatasource {
   }
 
   @override
+  Future<ChautariApiModel> updateChautari({
+    required String communityId,
+    String? name,
+    String? description,
+    File? profileImage,
+  }) async {
+    final formData = FormData();
+    final cleanName = (name ?? '').trim();
+    final cleanDescription = (description ?? '').trim();
+
+    if (cleanName.isNotEmpty) {
+      formData.fields.add(MapEntry('name', cleanName));
+    }
+    if (cleanDescription.isNotEmpty) {
+      formData.fields.add(MapEntry('description', cleanDescription));
+    }
+    if (profileImage != null) {
+      final fileName = profileImage.path.split('/').last;
+      formData.files.add(
+        MapEntry(
+          'communityProfileUrl',
+          await MultipartFile.fromFile(profileImage.path, filename: fileName),
+        ),
+      );
+    }
+
+    final response = await _apiClient.put(
+      ApiEndpoints.chautariById(communityId),
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+
+    return ChautariApiModel.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
+  }
+
+  @override
   Future<List<ChautariApiModel>> searchChautaris({
     required String search,
     int page = 1,
@@ -125,6 +163,26 @@ class ChautariRemoteDatasource implements IChautariRemoteDatasource {
     final raw = (response.data['data'] as Map<String, dynamic>? ?? {})['count'];
     if (raw is int) return raw;
     return int.tryParse(raw?.toString() ?? '0') ?? 0;
+  }
+
+  @override
+  Future<int> getUserChautariCount(String userId) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.chautariCountByUser(userId),
+    );
+    final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    final joined = data['joinedCount'];
+    final created = data['createdCount'];
+
+    final joinedCount = joined is int
+        ? joined
+        : int.tryParse(joined?.toString() ?? '0') ?? 0;
+    final createdCount = created is int
+        ? created
+        : int.tryParse(created?.toString() ?? '0') ?? 0;
+
+    // Profile stat requested: total created + joined.
+    return joinedCount + createdCount;
   }
 
   @override

@@ -22,6 +22,122 @@ class ChautariDetailScreen extends ConsumerStatefulWidget {
 class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
   late ChautariEntity _community;
 
+  Future<void> _showEditChautariSheet(ChautariEntity selected) async {
+    final nameController = TextEditingController(text: selected.name);
+    final descController = TextEditingController(text: selected.description);
+    File? pickedImage;
+    final picker = ImagePicker();
+
+    final shouldSave = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Edit Chautari',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name (supports c/Name)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: descController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await picker.pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 85,
+                      );
+                      if (picked == null) return;
+                      setModalState(() => pickedImage = File(picked.path));
+                    },
+                    icon: const Icon(Icons.photo_outlined),
+                    label: Text(
+                      pickedImage == null
+                          ? 'Change profile image (optional)'
+                          : 'Image selected',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Save'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (shouldSave != true) return;
+
+    final name = nameController.text.trim();
+    final description = descController.text.trim();
+    final success = await ref
+        .read(chautariViewModelProvider.notifier)
+        .update(
+          communityId: selected.id,
+          name: name.isEmpty ? null : name,
+          description: description.isEmpty ? null : description,
+          profileImage: pickedImage,
+        );
+
+    if (!mounted) return;
+    if (!success) {
+      final err = ref.read(chautariViewModelProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err ?? 'Failed to update Chautari')),
+      );
+      return;
+    }
+
+    await _refresh();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Chautari updated')));
+  }
+
   Future<bool> _confirmLeave(String name) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -224,6 +340,12 @@ class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
       appBar: AppBar(
         title: Text(selected.name),
         actions: [
+          if (isCreator)
+            IconButton(
+              tooltip: 'Edit Chautari',
+              onPressed: () => _showEditChautariSheet(selected),
+              icon: const Icon(Icons.edit_outlined),
+            ),
           if (isCreator)
             IconButton(
               tooltip: 'Delete Chautari',

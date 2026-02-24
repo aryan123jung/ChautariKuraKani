@@ -44,19 +44,6 @@ class SideNavigationDrawer extends ConsumerWidget {
                 ),
               ),
               accountEmail: Text(email),
-              currentAccountPicture: GestureDetector(
-                onTap: onEditProfile,
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  backgroundImage:
-                      profilePicture != null && profilePicture!.isNotEmpty
-                      ? NetworkImage(profilePicture!)
-                      : null,
-                  child: profilePicture == null || profilePicture!.isEmpty
-                      ? const Icon(Icons.person, size: 40, color: Colors.blue)
-                      : null,
-                ),
-              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,

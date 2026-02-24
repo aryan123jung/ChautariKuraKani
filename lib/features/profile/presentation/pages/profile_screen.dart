@@ -17,6 +17,7 @@ import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_c
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:chautari_kurakani/features/message/presentation/pages/chat_screen.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
+import 'package:chautari_kurakani/features/chautari/domain/usecases/chautari_usecases.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/widgets/edit_profile_widget.dart';
@@ -56,7 +57,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   File? _selectedCoverImage;
 
   late String _fullName;
-  late String _bio;
+  late String _firstName;
+  late String _lastName;
+  late String _username;
+  late String _email;
+  String? _profilePicture;
+  String? _coverPicture;
 
   bool _isAppBarVisible = false;
   double _lastScrollOffset = 0;
@@ -66,16 +72,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   List<SearchUserEntity> _friends = [];
   bool _isLoadingFriends = true;
   int? _readOnlyFriendCount;
+  int _chautariCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _fullName = '${widget.userEntity.fName} ${widget.userEntity.lName}';
-    _bio = widget.userEntity.bio ?? 'No bio yet';
+    _firstName = widget.userEntity.fName;
+    _lastName = widget.userEntity.lName;
+    _fullName = '$_firstName $_lastName'.trim();
+    _username = widget.userEntity.username;
+    _email = widget.userEntity.email;
+    _profilePicture = widget.userEntity.profilePicture;
+    _coverPicture = widget.userEntity.coverPicture;
     _tabController = TabController(length: 2, vsync: this);
     _scrollController.addListener(_onScroll);
     _loadUserPosts();
     _loadFriends();
+    _loadChautariCount();
     _loadFriendStatusForReadOnly();
   }
 
@@ -92,10 +105,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (oldUserId != newUserId ||
         userChanged ||
         oldWidget.refreshTick != widget.refreshTick) {
-      _fullName = '${widget.userEntity.fName} ${widget.userEntity.lName}';
-      _bio = widget.userEntity.bio ?? 'No bio yet';
+      _firstName = widget.userEntity.fName;
+      _lastName = widget.userEntity.lName;
+      _fullName = '$_firstName $_lastName'.trim();
+      _username = widget.userEntity.username;
+      _email = widget.userEntity.email;
+      _profilePicture = widget.userEntity.profilePicture;
+      _coverPicture = widget.userEntity.coverPicture;
       _loadUserPosts();
       _loadFriends();
+      _loadChautariCount();
       _loadFriendStatusForReadOnly();
     }
   }
@@ -238,32 +257,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     await ref.read(authViewModelProvider.notifier).logout();
   }
 
+  Future<bool> _saveEditedProfile(
+    String newFirstName,
+    String newLastName,
+    String newUsername,
+  ) async {
+    await ref
+        .read(authViewModelProvider.notifier)
+        .updateProfile(
+          firstName: newFirstName.trim(),
+          lastName: newLastName.trim(),
+          username: newUsername.trim(),
+          email: _email,
+        );
+
+    if (!mounted) return false;
+    final nextState = ref.read(authViewModelProvider);
+    if (nextState.status == AuthStatus.error) {
+      SnackbarUtils.showError(
+        context,
+        nextState.errorMessage ?? 'Failed to update profile',
+      );
+      return false;
+    }
+
+    final updated = nextState.authEntity;
+    setState(() {
+      _firstName = newFirstName.trim();
+      _lastName = newLastName.trim();
+      _fullName = '$_firstName $_lastName'.trim();
+      _username = newUsername.trim();
+      if (updated != null) {
+        _username = updated.username;
+        _email = updated.email;
+        _profilePicture = updated.profilePicture ?? _profilePicture;
+        _coverPicture = updated.coverPicture ?? _coverPicture;
+      }
+    });
+
+    SnackbarUtils.showSuccess(context, 'Profile updated successfully');
+    return true;
+  }
+
   void _showEditProfile() {
     showDialog(
       context: context,
       builder: (context) => EditProfileWidget(
-        fullName: _fullName,
-        bio: _bio,
-        profilePicture: widget.userEntity.profilePicture,
-        onSave: (newName, newBio, newImage) {
-          setState(() {
-            _fullName = newName;
-            _bio = newBio;
-            if (newImage != null) {
-              _selectedProfileImage = newImage;
-              // garnabaki:Upload new profile image
-            }
-          });
-
-          // garnabaki: Update user data in backend
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        },
+        firstName: _firstName,
+        lastName: _lastName,
+        username: _username,
+        onSave: _saveEditedProfile,
       ),
     );
   }
@@ -299,13 +342,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (_selectedProfileImage != null) {
       return ''; // Will be handled by FileImage
     }
-    return widget.userEntity.profilePicture ?? '';
+    return _profilePicture ?? '';
   }
 
   Future<void> _onRefresh() async {
     await _loadUserPosts();
     await _loadFriends();
+    await _loadChautariCount();
     await _loadFriendStatusForReadOnly();
+  }
+
+  Future<void> _loadChautariCount() async {
+    final userId = widget.userEntity.authId;
+    if (userId == null || userId.trim().isEmpty) {
+      if (!mounted) return;
+      setState(() => _chautariCount = 0);
+      return;
+    }
+
+    final result = await ref.read(getUserChautariCountUsecaseProvider)(
+      UserChautariCountParams(userId),
+    );
+    if (!mounted) return;
+
+    result.fold((_) => setState(() => _chautariCount = 0), (count) {
+      setState(() => _chautariCount = count);
+    });
   }
 
   bool _isOwnReadOnlyProfile(AuthState authState) {
@@ -710,7 +772,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ? null
           : SideNavigationDrawer(
               fullName: _fullName,
-              email: widget.userEntity.email,
+              email: _email,
               profilePicture: getProfilePictureUrl(),
               onLogout: _handleLogout,
               onEditProfile: _showEditProfile,
@@ -770,13 +832,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                   image: FileImage(_selectedCoverImage!),
                                   fit: BoxFit.cover,
                                 )
-                              : (widget.userEntity.coverPicture != null &&
-                                    widget.userEntity.coverPicture!.isNotEmpty)
+                              : (_coverPicture != null &&
+                                    _coverPicture!.isNotEmpty)
                               ? DecorationImage(
                                   image: NetworkImage(
-                                    ApiEndpoints.coverImageUrl(
-                                      widget.userEntity.coverPicture!,
-                                    ),
+                                    ApiEndpoints.coverImageUrl(_coverPicture!),
                                   ),
                                   fit: BoxFit.cover,
                                 )
@@ -784,8 +844,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ),
                         child:
                             _selectedCoverImage == null &&
-                                (widget.userEntity.coverPicture == null ||
-                                    widget.userEntity.coverPicture!.isEmpty)
+                                (_coverPicture == null ||
+                                    _coverPicture!.isEmpty)
                             ? Center(
                                 child: Container(
                                   padding: EdgeInsets.all(context.scale(12)),
@@ -837,27 +897,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     : Colors.grey[400],
                                 backgroundImage: _selectedProfileImage != null
                                     ? FileImage(_selectedProfileImage!)
-                                    : (widget.userEntity.profilePicture !=
-                                              null &&
-                                          widget
-                                              .userEntity
-                                              .profilePicture!
-                                              .isNotEmpty)
+                                    : (_profilePicture != null &&
+                                          _profilePicture!.isNotEmpty)
                                     ? NetworkImage(
                                             ApiEndpoints.profileImageUrl(
-                                              widget.userEntity.profilePicture!,
+                                              _profilePicture!,
                                             ),
                                           )
                                           as ImageProvider
                                     : null,
                                 child:
                                     _selectedProfileImage == null &&
-                                        (widget.userEntity.profilePicture ==
-                                                null ||
-                                            widget
-                                                .userEntity
-                                                .profilePicture!
-                                                .isEmpty)
+                                        (_profilePicture == null ||
+                                            _profilePicture!.isEmpty)
                                     ? Icon(
                                         Icons.person,
                                         size: context.scale(50),
@@ -952,58 +1004,91 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               color: const Color(0XFF76C05D),
                             ),
                           ] else if (!isOwnReadOnlyProfile) ...[
+                            SizedBox(width: context.scale(6)),
                             _buildFriendActionButtons(
                               friendState: friendState,
                               friendStatus: scopedFriendStatus,
+                              showMessage: false,
                             ),
                           ],
                         ],
                       ),
-                      SizedBox(height: context.scale(4)),
-                      Text(
-                        _bio,
-                        style: TextStyle(
-                          fontSize: context.fs(16),
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: context.scale(8)),
+                      SizedBox(height: context.scale(14)),
                       Row(
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: context.scale(12),
-                              vertical: context.scale(6),
+                              vertical: context.scale(7),
                             ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.grey[800]
-                                  : Colors.grey[200],
+                                  ? const Color(0xFF2A313C)
+                                  : const Color(0xFFEDEFF3),
                               borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.14)
+                                    : const Color(0xFFD8DDE5),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.email,
+                                  Icons.alternate_email_rounded,
                                   size: context.scale(16),
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[600],
+                                  color: const Color(0XFF76C05D),
                                 ),
                                 SizedBox(width: context.scale(6)),
                                 Text(
-                                  widget.userEntity.email,
+                                  _username,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: context.fs(14),
+                                    fontWeight: FontWeight.w600,
                                     color: isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
+                                        ? Colors.grey[200]
+                                        : const Color(0xFF2F3744),
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          if (widget.isReadOnly &&
+                              !isOwnReadOnlyProfile &&
+                              scopedFriendStatus?.status == 'FRIEND') ...[
+                            const Spacer(),
+                            SizedBox(width: context.scale(12)),
+                            OutlinedButton.icon(
+                              onPressed:
+                                  (widget.userEntity.authId == null ||
+                                      widget.userEntity.authId!.trim().isEmpty)
+                                  ? null
+                                  : () => _startMessageWithUser(
+                                      otherUserId: widget.userEntity.authId!,
+                                      displayName: _fullName,
+                                    ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0XFF76C05D),
+                                side: const BorderSide(
+                                  color: Color(0XFF76C05D),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: const Icon(
+                                Icons.message_outlined,
+                                size: 16,
+                              ),
+                              label: const Text('Message'),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -1030,7 +1115,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     children: [
                       _buildStatColumn('Posts', '${displayPosts.length}'),
                       _buildStatColumn('Friends', friendsStatText),
-                      _buildStatColumn('Following', '345'),
+                      _buildStatColumn('Chautari', '$_chautariCount'),
                     ],
                   ),
                 ),
@@ -1112,11 +1197,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             currentUserId:
                                 authState.authEntity?.authId ??
                                 widget.userEntity.authId,
-                            currentUserProfileUrl:
-                                widget.userEntity.profilePicture,
+                            currentUserProfileUrl: _profilePicture,
                             currentUserName: _fullName,
-                            postAuthorProfileUrl:
-                                widget.userEntity.profilePicture,
+                            postAuthorProfileUrl: _profilePicture,
                             onPostChanged: _loadUserPosts,
                           );
                         },
@@ -1417,6 +1500,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Widget _buildFriendActionButtons({
     required FriendRequestState friendState,
     required FriendStatusEntity? friendStatus,
+    bool showMessage = true,
   }) {
     final status = friendStatus?.status;
     final requestId = friendStatus?.requestId;
@@ -1482,13 +1566,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       label: Text(label),
     );
 
+    if (normalizedStatus == 'FRIEND' && !showMessage) {
+      return primary;
+    }
+
     if (normalizedStatus == 'FRIEND') {
       final targetId = widget.userEntity.authId;
-      return Row(
+      return Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           primary,
-          const SizedBox(width: 6),
+          const SizedBox(height: 6),
           OutlinedButton.icon(
             onPressed: targetId == null || targetId.trim().isEmpty
                 ? null

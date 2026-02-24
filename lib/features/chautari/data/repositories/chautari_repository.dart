@@ -57,6 +57,37 @@ class ChautariRepository implements IChautariRepository {
   }
 
   @override
+  Future<Either<Failure, ChautariEntity>> updateChautari({
+    required String communityId,
+    String? name,
+    String? description,
+    File? profileImage,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ApiFailure(message: 'No internet connection'));
+    }
+
+    try {
+      final item = await _remoteDatasource.updateChautari(
+        communityId: communityId,
+        name: name,
+        description: description,
+        profileImage: profileImage,
+      );
+      return Right(item.toEntity());
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message: e.response?.data['message'] ?? 'Failed to update Chautari',
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<ChautariEntity>>> searchChautaris({
     required String search,
     int page = 1,
@@ -185,6 +216,27 @@ class ChautariRepository implements IChautariRepository {
         ApiFailure(
           message:
               e.response?.data['message'] ?? 'Failed to get Chautari members',
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> getUserChautariCount(String userId) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ApiFailure(message: 'No internet connection'));
+    }
+    try {
+      return Right(await _remoteDatasource.getUserChautariCount(userId));
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data['message'] ??
+              'Failed to get user Chautari count',
           statusCode: e.response?.statusCode,
         ),
       );

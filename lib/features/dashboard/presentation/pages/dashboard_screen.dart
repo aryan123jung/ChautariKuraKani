@@ -414,6 +414,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   BuildContext? _incomingDialogContext;
   OverlayEntry? _topPopupEntry;
   Timer? _topPopupTimer;
+  bool _realtimeBootstrapped = false;
 
   @override
   void initState() {
@@ -428,10 +429,6 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       ref
           .read(authViewModelProvider.notifier)
           .getCurrentUser(userId: userSessionService.getCurrentUserId() ?? "");
-      _messageNotifier.connectRealtime();
-      _messageNotifier.loadConversations();
-      _callNotifier.connectRealtime();
-      _callNotifier.loadCallHistory();
     });
   }
 
@@ -490,6 +487,16 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           context,
           next.errorMessage ?? 'An error occurred',
         );
+      }
+      if (!_realtimeBootstrapped &&
+          next.authEntity != null &&
+          next.authEntity!.authId != null &&
+          next.authEntity!.authId!.trim().isNotEmpty) {
+        _realtimeBootstrapped = true;
+        _messageNotifier.connectRealtime();
+        _messageNotifier.loadConversations();
+        _callNotifier.connectRealtime();
+        _callNotifier.loadCallHistory();
       }
     });
     ref.listen<MessageState>(messageViewModelProvider, (previous, next) {
@@ -555,6 +562,40 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     });
 
     if (authState.authEntity == null) {
+      if (authState.status == AuthStatus.error) {
+        return Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off_rounded, size: 40),
+                  const SizedBox(height: 12),
+                  Text(
+                    authState.errorMessage ?? 'Failed to connect to server',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () {
+                      final userSessionService = ref.read(
+                        userSessionServiceProvider,
+                      );
+                      ref
+                          .read(authViewModelProvider.notifier)
+                          .getCurrentUser(
+                            userId: userSessionService.getCurrentUserId() ?? "",
+                          );
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -603,6 +644,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: context.scale(60)),
         child: FloatingActionButton(
+          heroTag: 'dashboard_chatbot_fab',
           backgroundColor: const Color(0XFF76C05D),
           elevation: 10,
           shape: RoundedRectangleBorder(

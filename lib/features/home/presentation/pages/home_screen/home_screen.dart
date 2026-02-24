@@ -1,4 +1,4 @@
-import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/chautari_screen.dart';
+import 'package:chautari_kurakani/features/chautari/presentation/pages/chautari_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/feed_screen.dart';
 import 'package:chautari_kurakani/features/home/presentation/pages/home_screen/friend_feed_screen.dart';
 import 'package:chautari_kurakani/features/notification/presentation/pages/notification_screen.dart';

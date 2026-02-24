@@ -2,7 +2,13 @@ import 'dart:async';
 
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
+import 'package:chautari_kurakani/core/utils/top_popup.dart';
 import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
+import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:chautari_kurakani/features/chautari/presentation/pages/chautari_detail_screen.dart';
+import 'package:chautari_kurakani/features/chautari/presentation/state/chautari_state.dart';
+import 'package:chautari_kurakani/features/chautari/presentation/view_model/chautari_view_model.dart';
+import 'package:chautari_kurakani/features/chautari/presentation/widgets/chautari_tile_widget.dart';
 import 'package:chautari_kurakani/features/auth/domain/usecases/get_current_usecase.dart';
 import 'package:chautari_kurakani/features/friend_request/presentation/view_model/friend_request_view_model.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
@@ -24,6 +30,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
 
+  Future<bool> _confirmLeave(String name) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave Chautari'),
+        content: Text('Do you want to leave "$name"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+    return confirm == true;
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -36,9 +63,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _debounce?.cancel();
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
+      ref.read(searchViewModelProvider.notifier).clear();
       return;
     }
+    final isChautariQuery = trimmed.toLowerCase().startsWith('c/');
     _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (isChautariQuery) {
+        ref.read(chautariViewModelProvider.notifier).search(rawQuery: trimmed);
+        return;
+      }
       ref.read(searchViewModelProvider.notifier).searchUsers(query: trimmed);
     });
   }
@@ -109,9 +142,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(searchViewModelProvider);
+    final chautariState = ref.watch(chautariViewModelProvider);
+    final currentUserId = ref.watch(authViewModelProvider).authEntity?.authId;
     final users = searchState.users;
     final isLoading = searchState.status == SearchStatus.loading;
     final hasQuery = _searchController.text.trim().isNotEmpty;
+    final query = _searchController.text.trim();
+    final isChautariQuery = query.toLowerCase().startsWith('c/');
 
     return Scaffold(
       body: SafeArea(
@@ -124,7 +161,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 onChanged: _onSearchChanged,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Search users by name, username, or email',
+                  hintText: 'Search users or Chautari (c/...)',
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchController.text.isEmpty
                       ? null
@@ -142,12 +179,87 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
             ),
-            if (isLoading) const LinearProgressIndicator(minHeight: 2),
+            if (isChautariQuery &&
+                chautariState.status == ChautariUiStatus.loading)
+              const LinearProgressIndicator(minHeight: 2),
+            if (!isChautariQuery && isLoading)
+              const LinearProgressIndicator(minHeight: 2),
             Expanded(
               child: Builder(
                 builder: (context) {
                   if (!hasQuery) {
-                    return const Center(child: Text('Type to search users'));
+                    return const Center(
+                      child: Text('Type to search users or c/... for Chautari'),
+                    );
+                  }
+
+                  if (isChautariQuery) {
+                    if (chautariState.status == ChautariUiStatus.error) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            chautariState.errorMessage ??
+                                'Failed to search Chautari',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (chautariState.status != ChautariUiStatus.loading &&
+                        chautariState.communities.isEmpty) {
+                      return const Center(child: Text('No Chautari found'));
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
+                      itemCount: chautariState.communities.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final item = chautariState.communities[index];
+                        return ChautariTileWidget(
+                          item: item,
+                          currentUserId: currentUserId,
+                          onTap: () async {
+                            final deleted = await Navigator.push<bool>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ChautariDetailScreen(community: item),
+                              ),
+                            );
+                            if (deleted == true) {
+                              await ref
+                                  .read(chautariViewModelProvider.notifier)
+                                  .search(rawQuery: query);
+                              if (!mounted) return;
+                              showTopPopup(this.context, 'Chautari deleted');
+                            }
+                          },
+                          onJoinLeave: () async {
+                            final joined = item.isJoinedBy(currentUserId);
+                            if (joined) {
+                              final shouldLeave = await _confirmLeave(
+                                item.name,
+                              );
+                              if (!shouldLeave) return;
+                            }
+                            final ok = joined
+                                ? await ref
+                                      .read(chautariViewModelProvider.notifier)
+                                      .leave(item.id)
+                                : await ref
+                                      .read(chautariViewModelProvider.notifier)
+                                      .join(item.id);
+                            if (!ok) return;
+                            await ref
+                                .read(chautariViewModelProvider.notifier)
+                                .search(rawQuery: query);
+                          },
+                        );
+                      },
+                    );
                   }
 
                   if (searchState.status == SearchStatus.error) {

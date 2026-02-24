@@ -15,6 +15,8 @@ class PostCard extends ConsumerStatefulWidget {
   final String? currentUserProfileUrl;
   final String? currentUserName;
   final String? postAuthorProfileUrl;
+  final bool canDeleteOthersPost;
+  final bool canModerateComments;
   final Future<void> Function()? onPostChanged;
 
   const PostCard({
@@ -24,6 +26,8 @@ class PostCard extends ConsumerStatefulWidget {
     this.currentUserProfileUrl,
     this.currentUserName,
     this.postAuthorProfileUrl,
+    this.canDeleteOthersPost = false,
+    this.canModerateComments = false,
     this.onPostChanged,
   });
 
@@ -134,6 +138,7 @@ class _PostCardState extends ConsumerState<PostCard> {
         currentUserId: widget.currentUserId,
         currentUserName: widget.currentUserName,
         currentUserProfileUrl: widget.currentUserProfileUrl,
+        canModerateComments: widget.canModerateComments,
         initialComments: initialComments,
       ),
     );
@@ -390,6 +395,7 @@ class _PostCardState extends ConsumerState<PostCard> {
         widget.currentUserId != null &&
         widget.currentUserId!.isNotEmpty &&
         widget.post.authorId == widget.currentUserId;
+    final canDeleteThisPost = isMyPost || widget.canDeleteOthersPost;
 
     final fallbackProfileUrl = isMyPost
         ? _resolveProfileInput(widget.currentUserProfileUrl)
@@ -486,7 +492,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                       ],
                     ),
                     const Spacer(),
-                    if (isMyPost)
+                    if (canDeleteThisPost)
                       PopupMenuButton<String>(
                         enabled: !_isBusy,
                         onSelected: (value) {
@@ -496,9 +502,16 @@ class _PostCardState extends ConsumerState<PostCard> {
                             _deletePost();
                           }
                         },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (context) => [
+                          if (isMyPost)
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Edit'),
+                            ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
                         ],
                         child: const Padding(
                           padding: EdgeInsets.all(8),
@@ -610,6 +623,7 @@ class _CommentsSheet extends ConsumerStatefulWidget {
   final String? currentUserId;
   final String? currentUserName;
   final String? currentUserProfileUrl;
+  final bool canModerateComments;
   final List<PostCommentEntity> initialComments;
 
   const _CommentsSheet({
@@ -619,6 +633,7 @@ class _CommentsSheet extends ConsumerStatefulWidget {
     this.currentUserId,
     this.currentUserName,
     this.currentUserProfileUrl,
+    this.canModerateComments = false,
   });
 
   @override
@@ -776,7 +791,10 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                               currentUserId.isNotEmpty &&
                               postAuthorId.isNotEmpty &&
                               currentUserId == postAuthorId;
-                          final canDelete = isCommentOwner || isPostOwner;
+                          final canDelete =
+                              isCommentOwner ||
+                              isPostOwner ||
+                              widget.canModerateComments;
                           final displayName = isCommentOwner
                               ? (widget.currentUserName ?? 'You')
                               : comment.userName;

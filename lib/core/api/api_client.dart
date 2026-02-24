@@ -35,18 +35,14 @@ class ApiClient {
     _dio.interceptors.add(
       RetryInterceptor(
         dio: _dio,
-        retries: 3,
-        retryDelays: const [
-          Duration(seconds: 1),
-          Duration(seconds: 2),
-          Duration(seconds: 3),
-        ],
+        retries: 1,
+        retryDelays: const [Duration(milliseconds: 500)],
         retryEvaluator: (error, attempt) {
-          // Retry on connection errors and timeouts, not on 4xx/5xx
+          // Keep retries conservative to avoid repeated request loops
+          // when backend is unreachable (common on emulator/device mismatch).
           return error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.sendTimeout ||
-              error.type == DioExceptionType.receiveTimeout ||
-              error.type == DioExceptionType.connectionError;
+              error.type == DioExceptionType.receiveTimeout;
         },
       ),
     );

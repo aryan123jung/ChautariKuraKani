@@ -28,7 +28,7 @@ class ApiEndpoints {
   );
   static const String apiHostIos = String.fromEnvironment('API_HOST_IOS');
 
-  static const String computerIpAddress = "192.168.1.71";
+  static const String computerIpAddress = "192.168.1.78";
 
   // static String get baseUrl {
   //   if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
@@ -209,6 +209,20 @@ class ApiEndpoints {
 
   // Calls
   static const String calls = '/calls';
+
+  // Chautari (Community)
+  static const String chautari = '/chautari';
+  static const String myChautari = '$chautari/my';
+  static const String searchChautari = '$chautari/search';
+  static String chautariById(String communityId) => '$chautari/$communityId';
+  static String joinChautari(String communityId) =>
+      '$chautari/$communityId/join';
+  static String leaveChautari(String communityId) =>
+      '$chautari/$communityId/leave';
+  static String chautariMemberCount(String communityId) =>
+      '$chautari/$communityId/member-count';
+  static String chautariPosts(String communityId) =>
+      '$chautari/$communityId/posts';
 
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;

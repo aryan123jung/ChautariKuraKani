@@ -75,12 +75,34 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
   @override
   Future<AuthApiModel?> getCurrentUserById(String userId) async {
     final token = await _tokenService.getToken();
-    final response = await _apiClient.get(
+    final headers = {
+      if (token != null && token.trim().isNotEmpty)
+        'Authorization': 'Bearer $token',
+    };
+
+    try {
+      final whoAmIResponse = await _apiClient.get(
+        ApiEndpoints.whoAmI,
+        options: Options(headers: headers),
+      );
+      if (whoAmIResponse.data['success'] == true) {
+        final data = whoAmIResponse.data['data'] as Map<String, dynamic>;
+        return AuthApiModel.fromJson(data);
+      }
+    } on DioException {
+      // Fallback to /auth/user/:id for backward compatibility.
+    }
+
+    if (userId.trim().isEmpty) {
+      return null;
+    }
+
+    final byIdResponse = await _apiClient.get(
       ApiEndpoints.getCurrentUserById(userId),
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: Options(headers: headers),
     );
-    if (response.data['success'] == true) {
-      final data = response.data['data'] as Map<String, dynamic>;
+    if (byIdResponse.data['success'] == true) {
+      final data = byIdResponse.data['data'] as Map<String, dynamic>;
       return AuthApiModel.fromJson(data);
     }
     return null;

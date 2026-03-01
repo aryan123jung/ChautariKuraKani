@@ -52,10 +52,16 @@ class CallViewModel extends Notifier<CallState> {
     _socketService.disconnect();
   }
 
-  Future<void> loadCallHistory({int page = 1, int size = 20}) async {
-    state = state.copyWith(status: CallUiStatus.loading, errorMessage: null);
+  Future<void> loadCallHistory({
+    int page = 1,
+    int size = 20,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh || state.callHistory.isEmpty) {
+      state = state.copyWith(status: CallUiStatus.loading, errorMessage: null);
+    }
     final result = await _listMyCallsUsecase(
-      ListMyCallsParams(page: page, size: size),
+      ListMyCallsParams(page: page, size: size, bypassCache: forceRefresh),
     );
     result.fold(
       (failure) {

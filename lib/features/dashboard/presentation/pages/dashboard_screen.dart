@@ -387,6 +387,9 @@ import 'package:chautari_kurakani/features/dashboard/presentation/pages/bottom_n
 import 'package:chautari_kurakani/features/message/domain/entities/message_entities.dart';
 import 'package:chautari_kurakani/features/message/presentation/state/message_state.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
+import 'package:chautari_kurakani/features/notification/presentation/state/notification_state.dart';
+import 'package:chautari_kurakani/features/notification/presentation/view_model/notification_view_model.dart';
+import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
 import 'package:chautari_kurakani/features/profile/presentation/pages/profile_screen.dart';
 import 'package:chautari_kurakani/features/sensor/data/services/shake_detector_service.dart';
 import 'package:chautari_kurakani/features/search/presentation/pages/search_screen.dart';
@@ -403,17 +406,22 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
   double _currentIndex = 0;
-  int _profileRefreshTick = 0;
+  String _boundRealtimeUserId = '';
 
   late final PageController _pageController;
   late final MessageViewModel _messageNotifier;
   late final CallViewModel _callNotifier;
+  late final NotificationViewModel _notificationNotifier;
+  late final PostViewModel _postNotifier;
   final ShakeDetectorService _shakeDetector = ShakeDetectorService();
   String? _incomingDialogCallId;
   BuildContext? _incomingDialogContext;
   OverlayEntry? _topPopupEntry;
   Timer? _topPopupTimer;
+  Timer? _postSyncTimer;
   bool _realtimeBootstrapped = false;
+  List<Widget>? _screensCache;
+  String _screensCacheUserId = '';
 
   @override
   void initState() {
@@ -421,10 +429,15 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     _pageController = PageController(initialPage: 0);
     _messageNotifier = ref.read(messageViewModelProvider.notifier);
     _callNotifier = ref.read(callViewModelProvider.notifier);
+    _notificationNotifier = ref.read(notificationViewModelProvider.notifier);
+    _postNotifier = ref.read(postViewModelProvider.notifier);
     _shakeDetector.start(onShake: _openAddPostByShake);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authViewModelProvider.notifier).getCurrentUser(userId: '');
+      final auth = ref.read(authViewModelProvider).authEntity;
+      if (auth == null || (auth.authId ?? '').trim().isEmpty) {
+        ref.read(authViewModelProvider.notifier).getCurrentUser(userId: '');
+      }
     });
   }
 
@@ -433,10 +446,19 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     _shakeDetector.stop();
     _messageNotifier.disconnectRealtime();
     _callNotifier.disconnectRealtime();
+    _notificationNotifier.disconnectRealtime();
+    _postSyncTimer?.cancel();
     _topPopupTimer?.cancel();
     _removeTopPopup();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _startPostSyncLoop() {
+    _postSyncTimer?.cancel();
+    _postSyncTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      _postNotifier.refreshPostsIfChanged();
+    });
   }
 
   void _openAddPostByShake() {
@@ -461,21 +483,28 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   }
 
   List<Widget> _buildBottomScreens(AuthEntity userEntity) {
-    return [
+    final userId = (userEntity.authId ?? '').trim();
+    if (_screensCache != null && _screensCacheUserId == userId) {
+      return _screensCache!;
+    }
+
+    _screensCacheUserId = userId;
+    _screensCache = [
       const HomeScreen(),
       const SearchScreen(),
       const AddPostScreen(),
       const MessageScreen(),
-      ProfileScreen(userEntity: userEntity, refreshTick: _profileRefreshTick),
+      ProfileScreen(userEntity: userEntity),
     ];
+    return _screensCache!;
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
-    final messageState = ref.watch(messageViewModelProvider);
-    _messageNotifier.setCurrentUserId(authState.authEntity?.authId);
-    _callNotifier.setCurrentUserId(authState.authEntity?.authId);
+    final totalUnread = ref.watch(
+      messageViewModelProvider.select((state) => state.totalUnread),
+    );
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.error && next.errorMessage != null) {
@@ -488,12 +517,44 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           next.authEntity != null &&
           next.authEntity!.authId != null &&
           next.authEntity!.authId!.trim().isNotEmpty) {
+        _boundRealtimeUserId = next.authEntity!.authId!.trim();
+        _messageNotifier.setCurrentUserId(_boundRealtimeUserId);
+        _callNotifier.setCurrentUserId(_boundRealtimeUserId);
         _realtimeBootstrapped = true;
         _messageNotifier.connectRealtime();
         _messageNotifier.loadConversations();
         _callNotifier.connectRealtime();
         _callNotifier.loadCallHistory();
+        _postNotifier.fetchPosts(forceRefresh: false);
+        _postNotifier.refreshPostsIfChanged();
+        _startPostSyncLoop();
+        _notificationNotifier.fetchNotifications();
+        _notificationNotifier.connectRealtime();
       }
+
+      if (next.authEntity != null &&
+          next.authEntity!.authId != null &&
+          next.authEntity!.authId!.trim().isNotEmpty &&
+          _boundRealtimeUserId != next.authEntity!.authId!.trim()) {
+        _boundRealtimeUserId = next.authEntity!.authId!.trim();
+        _messageNotifier.setCurrentUserId(_boundRealtimeUserId);
+        _callNotifier.setCurrentUserId(_boundRealtimeUserId);
+      }
+    });
+    ref.listen<NotificationState>(notificationViewModelProvider, (
+      previous,
+      next,
+    ) {
+      final previousCount = previous?.notifications.length ?? 0;
+      final nextCount = next.notifications.length;
+      if (nextCount <= previousCount || next.notifications.isEmpty) return;
+      if (!mounted) return;
+
+      final newest = next.notifications.first;
+      final title = newest.title.trim().isNotEmpty
+          ? newest.title.trim()
+          : newest.message.trim();
+      _showTopPopup(context, title.isEmpty ? 'New notification' : title);
     });
     ref.listen<MessageState>(messageViewModelProvider, (previous, next) {
       final previousUnread = previous?.totalUnread ?? 0;
@@ -531,6 +592,10 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           incoming.callId.isNotEmpty &&
           incoming.callId != previousIncomingId &&
           _incomingDialogCallId != incoming.callId) {
+        final incomingLabel = incoming.callType == CallTypeEntity.video
+            ? 'Incoming video call'
+            : 'Incoming audio call';
+        _showTopPopup(context, incomingLabel);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           _incomingDialogCallId = incoming.callId;
@@ -607,9 +672,6 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
                 setState(() {
                   _selectedIndex = index;
                   _currentIndex = index.toDouble();
-                  if (index == 4) {
-                    _profileRefreshTick++;
-                  }
                 });
               },
               children: screens,
@@ -621,11 +683,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: EdgeInsets.only(bottom: context.scale(20)),
-              child: _buildLiquidGlassNavBar(
-                navWidth,
-                itemWidth,
-                messageState.totalUnread,
-              ),
+              child: _buildLiquidGlassNavBar(navWidth, itemWidth, totalUnread),
             ),
           ),
         ],
@@ -747,9 +805,6 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
         setState(() {
           _selectedIndex = index;
           _currentIndex = index.toDouble();
-          if (index == 4) {
-            _profileRefreshTick++;
-          }
         });
       },
       child: AnimatedScale(

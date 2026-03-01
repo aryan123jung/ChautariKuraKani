@@ -143,7 +143,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final state = ref.watch(messageViewModelProvider);
     final callState = ref.watch(callViewModelProvider);
     final other = widget.conversation.otherParticipant(widget.currentUserId);
-    final title = other?.fullName ?? 'Chat';
+    final title = other?.fullName ?? 'Unknown user';
     final messages = state.messagesFor(widget.conversation.id);
     final timelineItems = _buildTimelineItems(
       messages: messages,

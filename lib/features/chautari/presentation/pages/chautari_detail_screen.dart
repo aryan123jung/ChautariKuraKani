@@ -5,6 +5,8 @@ import 'package:chautari_kurakani/features/chautari/domain/entities/chautari_ent
 import 'package:chautari_kurakani/features/chautari/presentation/state/chautari_state.dart';
 import 'package:chautari_kurakani/features/chautari/presentation/view_model/chautari_view_model.dart';
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
+import 'package:chautari_kurakani/features/report/presentation/view_model/report_view_model.dart';
+import 'package:chautari_kurakani/features/report/presentation/widgets/report_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -326,6 +328,32 @@ class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text('Post created')));
   }
 
+  Future<void> _reportChautari() async {
+    final payload = await showReportBottomSheet(
+      context: context,
+      title: 'Report Chautari',
+      hintText: 'Describe why this Chautari should be reviewed',
+    );
+    if (payload == null) return;
+
+    final success = await ref
+        .read(reportViewModelProvider.notifier)
+        .reportChautari(_community.id, payload);
+
+    if (!mounted) return;
+    if (!success) {
+      final err = ref.read(reportViewModelProvider).errorMessage;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(err ?? 'Failed to submit report')));
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Report submitted successfully')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chautariViewModelProvider);
@@ -345,6 +373,12 @@ class _ChautariDetailScreenState extends ConsumerState<ChautariDetailScreen> {
       appBar: AppBar(
         title: Text(selected.name),
         actions: [
+          if (!isCreator)
+            IconButton(
+              tooltip: 'Report Chautari',
+              onPressed: _reportChautari,
+              icon: const Icon(Icons.flag_outlined),
+            ),
           if (isCreator)
             IconButton(
               tooltip: 'Edit Chautari',

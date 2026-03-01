@@ -17,6 +17,8 @@ import 'package:chautari_kurakani/features/profile/presentation/widgets/friend_c
 import 'package:chautari_kurakani/features/home/presentation/widgets/post_card_widget.dart';
 import 'package:chautari_kurakani/features/message/presentation/pages/chat_screen.dart';
 import 'package:chautari_kurakani/features/message/presentation/view_model/message_view_model.dart';
+import 'package:chautari_kurakani/features/report/presentation/view_model/report_view_model.dart';
+import 'package:chautari_kurakani/features/report/presentation/widgets/report_bottom_sheet.dart';
 import 'package:chautari_kurakani/features/chautari/domain/usecases/chautari_usecases.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
@@ -70,8 +72,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   List<PostEntity> _userPosts = [];
   bool _isLoadingPosts = true;
   List<SearchUserEntity> _friends = [];
-  bool _isLoadingFriends = true;
+  bool _isLoadingFriends = false;
+  bool _hasLoadedFriendsOnce = false;
   int? _readOnlyFriendCount;
+  int _ownFriendCount = 0;
   int _chautariCount = 0;
 
   @override
@@ -85,9 +89,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _profilePicture = widget.userEntity.profilePicture;
     _coverPicture = widget.userEntity.coverPicture;
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _scrollController.addListener(_onScroll);
     _loadUserPosts();
-    _loadFriends();
+    if (widget.isReadOnly) {
+      _ensureFriendsLoaded(force: true);
+    } else {
+      _ensureFriendsLoaded(force: true);
+      _loadOwnFriendCount();
+    }
     _loadChautariCount();
     _loadFriendStatusForReadOnly();
   }
@@ -112,19 +122,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       _email = widget.userEntity.email;
       _profilePicture = widget.userEntity.profilePicture;
       _coverPicture = widget.userEntity.coverPicture;
+      _hasLoadedFriendsOnce = false;
+      _friends = [];
       _loadUserPosts();
-      _loadFriends();
+      if (widget.isReadOnly) {
+        _readOnlyFriendCount = 0;
+      } else {
+        _ownFriendCount = 0;
+        _ensureFriendsLoaded(force: true);
+        _loadOwnFriendCount();
+      }
       _loadChautariCount();
       _loadFriendStatusForReadOnly();
+      if (widget.isReadOnly) {
+        _ensureFriendsLoaded(force: true);
+      } else if (_tabController.index == 1) {
+        _ensureFriendsLoaded(force: true);
+      }
     }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index == 1) {
+      _ensureFriendsLoaded();
+    }
+  }
+
+  Future<void> _ensureFriendsLoaded({bool force = false}) async {
+    if (_isLoadingFriends) return;
+    if (_hasLoadedFriendsOnce && !force) return;
+    await _loadFriends();
+    _hasLoadedFriendsOnce = true;
   }
 
   void _onScroll() {
@@ -321,17 +359,142 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   void _showHelp() {
-    // garnabaki: Navigate to help screen
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Help screen coming soon')));
+    _showInfoSheet(
+      title: 'Help Center',
+      icon: Icons.support_agent_rounded,
+      sections: const [
+        _InfoSection(
+          heading: 'Account & Login',
+          body:
+              'Use Settings to change theme and profile details. If Face ID login fails, log in once with email/password and enable Remember account for Face ID.',
+        ),
+        _InfoSection(
+          heading: 'Posts & Comments',
+          body:
+              'Use the three-dot menu on posts to edit, delete, or report. In comments, you can add, delete your own comments, and moderators/owners can remove as permitted.',
+        ),
+        _InfoSection(
+          heading: 'Messages & Calls',
+          body:
+              'You can chat and call only with friends. If calls do not connect, check that both devices are on stable network and app permissions (microphone/camera) are enabled.',
+        ),
+      ],
+    );
   }
 
   void _showPrivacyPolicy() {
-    // garnabaki: Navigate to privacy policy screen
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Privacy policy coming soon')));
+    _showInfoSheet(
+      title: 'Privacy Policy',
+      icon: Icons.privacy_tip_outlined,
+      sections: const [
+        _InfoSection(
+          heading: 'Data We Use',
+          body:
+              'We use account details, profile photos, posts, comments, messages, and call metadata to operate core app features.',
+        ),
+        _InfoSection(
+          heading: 'How Data Is Used',
+          body:
+              'Your data is used to show your profile, connect with friends, deliver notifications, and support moderation/report workflows.',
+        ),
+        _InfoSection(
+          heading: 'Security',
+          body:
+              'Authenticated APIs require a valid token. Sensitive actions such as reporting and moderation are permission-controlled on backend.',
+        ),
+        _InfoSection(
+          heading: 'Your Controls',
+          body:
+              'You can update profile info, remove posts/comments you own, manage friend connections, and report harmful content or users.',
+        ),
+      ],
+    );
+  }
+
+  void _showInfoSheet({
+    required String title,
+    required IconData icon,
+    required List<_InfoSection> sections,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.78,
+          minChildSize: 0.5,
+          maxChildSize: 0.92,
+          expand: false,
+          builder: (_, controller) => Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF111827) : Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+            ),
+            child: ListView(
+              controller: controller,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0XFF76C05D).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, color: const Color(0XFF76C05D)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        Icons.close,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                for (final section in sections) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    section.heading,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    section.body,
+                    style: TextStyle(
+                      height: 1.4,
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   String getFullName() {
@@ -347,7 +510,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _onRefresh() async {
     await _loadUserPosts();
-    await _loadFriends();
+    await _loadOwnFriendCount();
+    if (_tabController.index == 1 || _hasLoadedFriendsOnce) {
+      await _ensureFriendsLoaded(force: true);
+    }
     await _loadChautariCount();
     await _loadFriendStatusForReadOnly();
   }
@@ -512,6 +678,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
+  Future<void> _reportCurrentProfile() async {
+    final targetId = widget.userEntity.authId?.trim() ?? '';
+    if (targetId.isEmpty) return;
+
+    final payload = await showReportBottomSheet(
+      context: context,
+      title: 'Report user',
+      hintText: 'Describe why this user should be reviewed',
+    );
+    if (payload == null) return;
+
+    final success = await ref
+        .read(reportViewModelProvider.notifier)
+        .reportUser(targetId, payload);
+
+    if (!mounted) return;
+    if (!success) {
+      final error = ref.read(reportViewModelProvider).errorMessage;
+      SnackbarUtils.showError(context, error ?? 'Failed to submit report');
+      return;
+    }
+
+    SnackbarUtils.showSuccess(context, 'Report submitted successfully');
+  }
+
   Future<void> _loadUserPosts() async {
     final candidateUserIds = widget.isReadOnly
         ? _readOnlyTargetIdCandidates()
@@ -542,7 +733,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {});
     } finally {
       if (mounted) {
         setState(() {
@@ -610,32 +800,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         return;
       }
 
-      final usersResult = await ref.read(searchUsersUsecaseProvider)(
-        const SearchUsersParams(query: '', page: 1, size: 100),
-      );
-
-      final users = usersResult.fold(
-        (_) => <SearchUserEntity>[],
-        (data) => data,
-      );
+      final users = await _fetchUsersForFriendScan();
       final candidates = users
           .where((user) => _normalizeId(user.id) != currentId)
           .toList();
 
       final friendRepo = ref.read(friendRequestRepositoryProvider);
-      final checked = await Future.wait(
-        candidates.map((user) async {
-          final statusResult = await friendRepo.getStatus(user.id);
-          return statusResult.fold(
-            (_) => null,
-            (status) => status.status == 'FRIEND' ? user : null,
-          );
-        }),
-      );
+      const batchSize = 20;
+      final foundFriends = <SearchUserEntity>[];
+      for (var i = 0; i < candidates.length; i += batchSize) {
+        final batch = candidates.skip(i).take(batchSize);
+        final checked = await Future.wait(
+          batch.map((user) async {
+            final statusResult = await friendRepo.getStatus(user.id);
+            return statusResult.fold(
+              (_) => null,
+              (status) => status.status == 'FRIEND' ? user : null,
+            );
+          }),
+        );
+        foundFriends.addAll(checked.whereType<SearchUserEntity>());
+      }
 
       if (!mounted) return;
       setState(() {
-        _friends = checked.whereType<SearchUserEntity>().toList();
+        _friends = foundFriends;
+        _ownFriendCount = foundFriends.length;
       });
     } catch (_) {
       if (!mounted) return;
@@ -649,6 +839,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         });
       }
     }
+  }
+
+  Future<void> _loadOwnFriendCount() async {
+    if (widget.isReadOnly) return;
+    if (_hasLoadedFriendsOnce) return;
+    final currentId = _normalizeId(
+      widget.userEntity.authId ??
+          ref.read(userSessionServiceProvider).getCurrentUserId() ??
+          '',
+    );
+    if (currentId.isEmpty) {
+      if (!mounted) return;
+      setState(() => _ownFriendCount = 0);
+      return;
+    }
+
+    try {
+      final friendRepo = ref.read(friendRequestRepositoryProvider);
+      final result = await friendRepo.getFriendCount(currentId);
+      if (!mounted) return;
+      if (_hasLoadedFriendsOnce) return;
+      result.fold((_) {}, (count) {
+        setState(() => _ownFriendCount = count);
+      });
+    } catch (_) {}
+  }
+
+  Future<List<SearchUserEntity>> _fetchUsersForFriendScan() async {
+    const int size = 100;
+    const int maxPages = 6;
+
+    final Map<String, SearchUserEntity> deduped = {};
+
+    for (var page = 1; page <= maxPages; page++) {
+      final result = await ref.read(searchUsersUsecaseProvider)(
+        SearchUsersParams(query: '', page: page, size: size),
+      );
+
+      final users = result.fold((_) => <SearchUserEntity>[], (data) => data);
+      for (final user in users) {
+        deduped[user.id] = user;
+      }
+
+      if (users.length < size) {
+        break;
+      }
+    }
+
+    return deduped.values.toList();
   }
 
   Future<void> _openFriendProfile(SearchUserEntity user) async {
@@ -720,7 +959,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
-    final postState = ref.watch(postViewModelProvider);
+    final readOnlyPosts = widget.isReadOnly
+        ? ref.watch(postViewModelProvider.select((state) => state.posts))
+        : const <PostEntity>[];
     final friendState = ref.watch(friendRequestViewModelProvider);
     final themeState = ref.watch(themeModeProvider);
     final themeKey = themeState.effectiveMode.name;
@@ -735,9 +976,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         : null;
     final friendsStatText = widget.isReadOnly
         ? '${_readOnlyFriendCount ?? 0}'
-        : '${_friends.length}';
+        : '$_ownFriendCount';
     final readOnlyDerivedPosts = widget.isReadOnly
-        ? _filterPostsForProfile(postState.posts)
+        ? _filterPostsForProfile(readOnlyPosts)
         : <PostEntity>[];
     final displayPosts = widget.isReadOnly ? readOnlyDerivedPosts : _userPosts;
     final isLoadingPostsView = _isLoadingPosts;
@@ -1010,6 +1251,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               friendStatus: scopedFriendStatus,
                               showMessage: false,
                             ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'report_user') {
+                                  _reportCurrentProfile();
+                                }
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'report_user',
+                                  child: Text('Report user'),
+                                ),
+                              ],
+                              icon: const Icon(Icons.more_horiz),
+                            ),
                           ],
                         ],
                       ),
@@ -1126,6 +1381,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 delegate: _SliverAppBarDelegate(
                   TabBar(
                     controller: _tabController,
+                    onTap: (index) {
+                      if (index == 1) {
+                        _ensureFriendsLoaded();
+                      }
+                    },
                     labelColor: Colors.blue,
                     unselectedLabelColor: isDark
                         ? Colors.grey
@@ -1654,4 +1914,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     // immediately without waiting for scroll lifecycle.
     return true;
   }
+}
+
+class _InfoSection {
+  final String heading;
+  final String body;
+
+  const _InfoSection({required this.heading, required this.body});
 }

@@ -16,4 +16,11 @@ class ForgotPasswordUsecase {
   Future<Either<Failure, bool>> call(String email) {
     return repository.sendResetPasswordEmail(email);
   }
+
+  Future<Either<Failure, bool>> verifyCode({
+    required String email,
+    required String code,
+  }) {
+    return repository.verifyResetPasswordMobileCode(email: email, code: code);
+  }
 }

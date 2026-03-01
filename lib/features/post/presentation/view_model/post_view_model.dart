@@ -43,11 +43,17 @@ class PostViewModel extends Notifier<PostState> {
     return const PostState.initial();
   }
 
-  Future<void> fetchPosts({int page = 1, int size = 20}) async {
-    state = state.copyWith(status: PostStatus.loading, errorMessage: null);
+  Future<void> fetchPosts({
+    int page = 1,
+    int size = 20,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh || state.posts.isEmpty) {
+      state = state.copyWith(status: PostStatus.loading, errorMessage: null);
+    }
 
     final result = await _getPostsUsecase(
-      GetPostsParams(page: page, size: size),
+      GetPostsParams(page: page, size: size, bypassCache: forceRefresh),
     );
     result.fold(
       (failure) {
@@ -64,6 +70,36 @@ class PostViewModel extends Notifier<PostState> {
         );
       },
     );
+  }
+
+  Future<bool> refreshPostsIfChanged({
+    int probePage = 1,
+    int probeSize = 1,
+    int fullPage = 1,
+    int fullSize = 20,
+  }) async {
+    final currentFirstPostId = state.posts.isNotEmpty
+        ? state.posts.first.id
+        : '';
+
+    final probeResult = await _getPostsUsecase(
+      GetPostsParams(page: probePage, size: probeSize, bypassCache: true),
+    );
+
+    return probeResult.fold((_) => false, (latestPosts) async {
+      final latestFirstPostId = latestPosts.isNotEmpty
+          ? latestPosts.first.id
+          : '';
+      final changed =
+          latestFirstPostId.isNotEmpty &&
+          latestFirstPostId != currentFirstPostId;
+      if (!changed) {
+        return false;
+      }
+
+      await fetchPosts(page: fullPage, size: fullSize, forceRefresh: true);
+      return true;
+    });
   }
 
   Future<void> fetchMyPosts({

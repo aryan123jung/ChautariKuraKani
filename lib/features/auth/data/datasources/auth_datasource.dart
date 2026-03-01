@@ -41,7 +41,16 @@ abstract interface class IAuthRemoteDatasource {
   Future<String> coverImageUpload(File image);
 
   Future<void> sendResetPasswordEmail(String email);
+  Future<void> verifyResetPasswordMobileCode({
+    required String email,
+    required String code,
+  });
   Future<void> resetPassword(String token, String newPassword);
+  Future<void> resetPasswordWithMobileCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  });
   Future<List<AuthApiModel>> searchUsers({
     String? search,
     int page = 1,

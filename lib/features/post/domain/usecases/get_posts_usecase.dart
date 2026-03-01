@@ -10,11 +10,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class GetPostsParams extends Equatable {
   final int page;
   final int size;
+  final bool bypassCache;
 
-  const GetPostsParams({this.page = 1, this.size = 20});
+  const GetPostsParams({
+    this.page = 1,
+    this.size = 20,
+    this.bypassCache = false,
+  });
 
   @override
-  List<Object?> get props => [page, size];
+  List<Object?> get props => [page, size, bypassCache];
 }
 
 final getPostsUsecaseProvider = Provider<GetPostsUsecase>((ref) {
@@ -30,6 +35,10 @@ class GetPostsUsecase
 
   @override
   Future<Either<Failure, List<PostEntity>>> call(GetPostsParams params) {
-    return _repository.getPosts(page: params.page, size: params.size);
+    return _repository.getPosts(
+      page: params.page,
+      size: params.size,
+      bypassCache: params.bypassCache,
+    );
   }
 }

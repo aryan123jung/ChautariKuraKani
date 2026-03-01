@@ -25,6 +25,8 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
     super.initState();
     _messageNotifier = ref.read(messageViewModelProvider.notifier);
     Future.microtask(() async {
+      final authState = ref.read(authViewModelProvider);
+      _messageNotifier.setCurrentUserId(authState.authEntity?.authId);
       await _messageNotifier.loadConversations();
     });
   }
@@ -163,7 +165,11 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
               itemBuilder: (context, index) {
                 final conversation = conversations[index];
                 final other = conversation.otherParticipant(currentUserId);
-                final name = other?.fullName ?? 'Chat';
+                final otherId = (other?.id ?? '').trim();
+                if (otherId.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                final name = other?.fullName ?? 'Unknown user';
                 final subtitle = (conversation.lastMessage ?? '').trim();
                 final profile = _resolveProfile(other?.profileUrl);
                 final unreadCount = state.unreadFor(conversation.id);

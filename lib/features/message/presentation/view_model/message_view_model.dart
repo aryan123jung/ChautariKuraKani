@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chautari_kurakani/features/friend_request/domain/usecases/get_friend_status_usecase.dart';
 import 'package:chautari_kurakani/features/message/data/services/message_socket_service.dart';
 import 'package:chautari_kurakani/features/message/domain/entities/message_entities.dart';
 import 'package:chautari_kurakani/features/message/domain/usecases/message_usecases.dart';
@@ -15,6 +16,7 @@ class MessageViewModel extends Notifier<MessageState> {
   late final ListMessagesUsecase _listMessagesUsecase;
   late final SendMessageUsecase _sendMessageUsecase;
   late final MarkConversationReadUsecase _markConversationReadUsecase;
+  late final GetFriendStatusUsecase _getFriendStatusUsecase;
   late final MessageSocketService _socketService;
 
   StreamSubscription<MessageEntity>? _messageSub;
@@ -31,6 +33,7 @@ class MessageViewModel extends Notifier<MessageState> {
     _markConversationReadUsecase = ref.read(
       markConversationReadUsecaseProvider,
     );
+    _getFriendStatusUsecase = ref.read(getFriendStatusUsecaseProvider);
     _socketService = ref.read(messageSocketServiceProvider);
 
     ref.onDispose(() {
@@ -74,27 +77,41 @@ class MessageViewModel extends Notifier<MessageState> {
     state = state.copyWith(clearActiveConversationId: true);
   }
 
-  Future<void> loadConversations({int page = 1, int size = 20}) async {
-    state = state.copyWith(status: MessageStatusUi.loading, errorMessage: null);
+  Future<void> loadConversations({
+    int page = 1,
+    int size = 20,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh || state.conversations.isEmpty) {
+      state = state.copyWith(
+        status: MessageStatusUi.loading,
+        errorMessage: null,
+      );
+    }
 
     final result = await _listConversationsUsecase(
-      ListConversationsParams(page: page, size: size),
+      ListConversationsParams(
+        page: page,
+        size: size,
+        bypassCache: forceRefresh,
+      ),
     );
 
-    result.fold(
-      (failure) {
-        state = state.copyWith(
-          status: MessageStatusUi.error,
-          errorMessage: failure.message,
-        );
-      },
-      (items) {
-        state = state.copyWith(
-          status: MessageStatusUi.loaded,
-          conversations: items,
-          errorMessage: null,
-        );
-      },
+    final maybeItems = result.fold<List<ConversationEntity>?>((failure) {
+      state = state.copyWith(
+        status: MessageStatusUi.error,
+        errorMessage: failure.message,
+      );
+      return null;
+    }, (items) => items);
+
+    if (maybeItems == null) return;
+
+    final filtered = await _sanitizeConversations(maybeItems);
+    state = state.copyWith(
+      status: MessageStatusUi.loaded,
+      conversations: filtered,
+      errorMessage: null,
     );
   }
 
@@ -299,5 +316,56 @@ class MessageViewModel extends Notifier<MessageState> {
     final nextUnread = Map<String, int>.from(state.unreadByConversation);
     nextUnread[conversationId] = (nextUnread[conversationId] ?? 0) + 1;
     state = state.copyWith(unreadByConversation: nextUnread);
+  }
+
+  Future<List<ConversationEntity>> _sanitizeConversations(
+    List<ConversationEntity> items,
+  ) async {
+    final currentId = _currentUserId.trim().toLowerCase();
+    if (items.isEmpty) return const [];
+
+    final withValidParticipant = <ConversationEntity>[];
+    for (final conversation in items) {
+      ChatUserEntity? other;
+      if (currentId.isNotEmpty) {
+        other = conversation.otherParticipant(currentId);
+      } else if (conversation.participants.length >= 2) {
+        other = conversation.participants.firstWhere(
+          (item) => item.id.trim().isNotEmpty,
+          orElse: () => const ChatUserEntity(
+            id: '',
+            firstName: '',
+            lastName: '',
+            username: '',
+          ),
+        );
+      }
+
+      if (other == null || other.id.trim().isEmpty) {
+        continue;
+      }
+      withValidParticipant.add(conversation);
+    }
+
+    if (withValidParticipant.isEmpty) return const [];
+
+    // Keep chats only with active friends.
+    final filteredByFriendship = await Future.wait(
+      withValidParticipant.map((conversation) async {
+        final other = conversation.otherParticipant(currentId);
+        final otherId = other?.id.trim() ?? '';
+        if (otherId.isEmpty) return null;
+
+        final statusResult = await _getFriendStatusUsecase(
+          GetFriendStatusParams(otherId),
+        );
+        return statusResult.fold(
+          (_) => null,
+          (status) => status.status == 'FRIEND' ? conversation : null,
+        );
+      }),
+    );
+
+    return filteredByFriendship.whereType<ConversationEntity>().toList();
   }
 }

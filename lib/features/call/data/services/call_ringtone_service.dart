@@ -23,31 +23,45 @@ class CallRingtoneService {
 
   Future<void> playIncoming() async {
     if (_incomingPlaying) return;
-    await stopOutgoing();
-
-    await _incomingPlayer.setReleaseMode(ReleaseMode.loop);
-    await _incomingPlayer.play(AssetSource(_incomingAsset));
-    _incomingPlaying = true;
+    try {
+      await stopOutgoing();
+      await _incomingPlayer.setReleaseMode(ReleaseMode.loop);
+      await _incomingPlayer
+          .play(AssetSource(_incomingAsset))
+          .timeout(const Duration(seconds: 4));
+      _incomingPlaying = true;
+    } catch (_) {
+      _incomingPlaying = false;
+    }
   }
 
   Future<void> playOutgoing() async {
     if (_outgoingPlaying) return;
-    await stopIncoming();
-
-    await _outgoingPlayer.setReleaseMode(ReleaseMode.loop);
-    await _outgoingPlayer.play(AssetSource(_outgoingAsset));
-    _outgoingPlaying = true;
+    try {
+      await stopIncoming();
+      await _outgoingPlayer.setReleaseMode(ReleaseMode.loop);
+      await _outgoingPlayer
+          .play(AssetSource(_outgoingAsset))
+          .timeout(const Duration(seconds: 4));
+      _outgoingPlaying = true;
+    } catch (_) {
+      _outgoingPlaying = false;
+    }
   }
 
   Future<void> stopIncoming() async {
     if (!_incomingPlaying) return;
-    await _incomingPlayer.stop();
+    try {
+      await _incomingPlayer.stop();
+    } catch (_) {}
     _incomingPlaying = false;
   }
 
   Future<void> stopOutgoing() async {
     if (!_outgoingPlaying) return;
-    await _outgoingPlayer.stop();
+    try {
+      await _outgoingPlayer.stop();
+    } catch (_) {}
     _outgoingPlaying = false;
   }
 

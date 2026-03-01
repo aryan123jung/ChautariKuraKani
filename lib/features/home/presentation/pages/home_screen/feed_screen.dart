@@ -13,10 +13,12 @@ class FeedScreen extends ConsumerStatefulWidget {
   ConsumerState<FeedScreen> createState() => _FeedScreenState();
 }
 
-class _FeedScreenState extends ConsumerState<FeedScreen> {
+class _FeedScreenState extends ConsumerState<FeedScreen>
+    with AutomaticKeepAliveClientMixin {
   Set<String> _friendAuthorIds = <String>{};
   bool _isResolvingFriends = false;
   bool _friendFilterReady = false;
+  String _lastResolvedPostsSignature = '';
 
   @override
   void initState() {
@@ -25,16 +27,18 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   Future<void> _loadPosts({bool forceFetchPosts = true}) async {
-    if (mounted) {
+    final postState = ref.read(postViewModelProvider);
+    final hasPosts = postState.posts.isNotEmpty;
+    if (mounted && (forceFetchPosts || !hasPosts)) {
       setState(() {
         _isResolvingFriends = true;
         _friendFilterReady = false;
       });
     }
-    final postState = ref.read(postViewModelProvider);
-    final hasPosts = postState.posts.isNotEmpty;
     if (forceFetchPosts || !hasPosts) {
-      await ref.read(postViewModelProvider.notifier).fetchPosts();
+      await ref
+          .read(postViewModelProvider.notifier)
+          .fetchPosts(forceRefresh: forceFetchPosts);
     }
     await _resolveFriendAuthorIds();
   }
@@ -96,6 +100,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    ref.listen<PostState>(postViewModelProvider, (previous, next) {
+      final signature = next.posts.map((post) => post.id).join('|');
+      if (signature == _lastResolvedPostsSignature) return;
+      _lastResolvedPostsSignature = signature;
+      Future.microtask(_resolveFriendAuthorIds);
+    });
+
     final authState = ref.watch(authViewModelProvider);
     final postState = ref.watch(postViewModelProvider);
     final currentUserId = authState.authEntity?.authId;
@@ -182,4 +194,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

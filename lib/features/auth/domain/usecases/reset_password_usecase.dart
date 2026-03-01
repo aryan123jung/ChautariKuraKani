@@ -19,4 +19,16 @@ class ResetPasswordUsecase {
   }) {
     return repository.resetPassword(token: token, newPassword: newPassword);
   }
+
+  Future<Either<Failure, bool>> mobileCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) {
+    return repository.resetPasswordWithMobileCode(
+      email: email,
+      code: code,
+      newPassword: newPassword,
+    );
+  }
 }

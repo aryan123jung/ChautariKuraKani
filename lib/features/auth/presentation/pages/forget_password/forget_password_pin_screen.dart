@@ -1,29 +1,36 @@
+import 'package:chautari_kurakani/common/my_snackbar.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_new_password.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_screen.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
+import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
+import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
-class ForgetPasswordPinScreen extends StatefulWidget {
-  const ForgetPasswordPinScreen({super.key});
+class ForgetPasswordPinScreen extends ConsumerStatefulWidget {
+  final String email;
+  const ForgetPasswordPinScreen({super.key, required this.email});
 
   @override
-  State<ForgetPasswordPinScreen> createState() => _ForgetPasswordScreenState();
+  ConsumerState<ForgetPasswordPinScreen> createState() =>
+      _ForgetPasswordPinScreenState();
 }
 
-class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
+class _ForgetPasswordPinScreenState
+    extends ConsumerState<ForgetPasswordPinScreen> {
   final _forgetPinKey = GlobalKey<FormState>();
+  String _code = '';
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    bool isTablet = screenWidth > 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return Scaffold(
       backgroundColor: const Color(0xFF76C05D),
-
       body: SafeArea(
         child: Stack(
           children: [
@@ -31,7 +38,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
               child: Column(
                 children: [
                   SizedBox(height: isTablet ? 40 : 40),
-
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -50,9 +56,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                       width: isTablet ? 200 : 100,
                     ),
                   ),
-
                   SizedBox(height: isTablet ? 30 : 20),
-
                   Text(
                     "ChautariKuraKani",
                     style: TextStyle(
@@ -67,9 +71,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                       ],
                     ),
                   ),
-
                   SizedBox(height: isTablet ? 0 : 5),
-
                   Text(
                     "Chautarimah Sabai Kura",
                     style: TextStyle(
@@ -78,9 +80,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-
                   SizedBox(height: isTablet ? 100 : 60),
-
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: isTablet ? screenWidth * 0.2 : 13,
@@ -117,18 +117,16 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-
                               SizedBox(height: isTablet ? 55 : 40),
-
                               Padding(
                                 padding: EdgeInsets.fromLTRB(
                                   0,
                                   0,
-                                  isTablet ? 200 : 60,
+                                  isTablet ? 120 : 0,
                                   0,
                                 ),
                                 child: Text(
-                                  "Enter the code sent to your mail.",
+                                  "Enter the 6-digit code sent to ${widget.email}",
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: isTablet
@@ -137,18 +135,17 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   ),
                                 ),
                               ),
-
                               SizedBox(height: isTablet ? 50 : 40),
-
                               Padding(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 120 : 30,
+                                  horizontal: isTablet ? 80 : 10,
                                 ),
                                 child: PinCodeTextField(
-                                  length: 4,
+                                  length: 6,
                                   appContext: context,
                                   cursorHeight: 20,
                                   enableActiveFill: true,
+                                  keyboardType: TextInputType.number,
                                   textStyle: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -156,16 +153,13 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
                                   ],
-
                                   pinTheme: PinTheme(
                                     shape: PinCodeFieldShape.box,
                                     borderRadius: BorderRadius.circular(8),
-                                    fieldWidth: isTablet ? 60 : 50,
-
+                                    fieldWidth: isTablet ? 52 : 42,
                                     activeColor: Colors.grey,
                                     inactiveColor: Colors.grey,
                                     selectedColor: Colors.grey,
-
                                     activeFillColor: Colors.white,
                                     inactiveFillColor: Colors.white,
                                     selectedFillColor: const Color.fromARGB(
@@ -175,13 +169,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                       212,
                                     ),
                                   ),
-
-                                  onChanged: (value) {},
+                                  onChanged: (value) => _code = value.trim(),
                                 ),
                               ),
-
                               SizedBox(height: isTablet ? 5 : 15),
-
                               Padding(
                                 padding: EdgeInsets.fromLTRB(
                                   isTablet ? 400 : 240,
@@ -190,7 +181,32 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   0,
                                 ),
                                 child: MyTextButton(
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    await ref
+                                        .read(authViewModelProvider.notifier)
+                                        .sendResetEmail(widget.email);
+                                    if (!context.mounted) return;
+                                    final state = ref.read(
+                                      authViewModelProvider,
+                                    );
+                                    if (state.status ==
+                                        AuthStatus.passwordResetEmailSent) {
+                                      showMySnackBar(
+                                        context: context,
+                                        message: "Code resent successfully.",
+                                        color: Colors.blueGrey,
+                                      );
+                                    } else if (state.status ==
+                                        AuthStatus.error) {
+                                      showMySnackBar(
+                                        context: context,
+                                        message:
+                                            state.errorMessage ??
+                                            "Failed to resend code",
+                                        color: Colors.red,
+                                      );
+                                    }
+                                  },
                                   text: "Resend",
                                   textColor: const Color.fromARGB(
                                     255,
@@ -200,9 +216,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   ),
                                 ),
                               ),
-
-                              SizedBox(height: 20),
-
+                              const SizedBox(height: 20),
                               Padding(
                                 padding: EdgeInsets.fromLTRB(
                                   isTablet ? 100 : 0,
@@ -211,12 +225,46 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   0,
                                 ),
                                 child: MyElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
+                                    if (!RegExp(r'^\d{6}$').hasMatch(_code)) {
+                                      showMySnackBar(
+                                        context: context,
+                                        message:
+                                            "Please enter valid 6-digit code",
+                                        color: Colors.red,
+                                      );
+                                      return;
+                                    }
+
+                                    await ref
+                                        .read(authViewModelProvider.notifier)
+                                        .verifyResetCode(
+                                          email: widget.email,
+                                          code: _code,
+                                        );
+                                    if (!context.mounted) return;
+                                    final state = ref.read(
+                                      authViewModelProvider,
+                                    );
+                                    if (state.status == AuthStatus.error) {
+                                      showMySnackBar(
+                                        context: context,
+                                        message:
+                                            state.errorMessage ??
+                                            "Invalid or expired code",
+                                        color: Colors.red,
+                                      );
+                                      return;
+                                    }
+
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            ForgetPasswordNewPassword(),
+                                            ForgetPasswordNewPassword(
+                                              email: widget.email,
+                                              code: _code,
+                                            ),
                                       ),
                                     );
                                   },
@@ -229,8 +277,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                                   ),
                                 ),
                               ),
-
-                              SizedBox(height: 20),
+                              const SizedBox(height: 20),
                             ],
                           ),
                         ),
@@ -240,7 +287,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                 ],
               ),
             ),
-
             Positioned(
               top: 10,
               left: 10,
@@ -251,10 +297,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordPinScreen> {
                   size: 26,
                 ),
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ForgetPasswordScreen(),
+                      builder: (context) => const ForgetPasswordScreen(),
                     ),
                   );
                 },

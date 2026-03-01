@@ -171,18 +171,20 @@ class ChautariRemoteDatasource implements IChautariRemoteDatasource {
       ApiEndpoints.chautariCountByUser(userId),
     );
     final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    final totalRaw = data['total'];
     final joined = data['joinedCount'];
-    final created = data['createdCount'];
+
+    final totalCount = totalRaw is int
+        ? totalRaw
+        : int.tryParse(totalRaw?.toString() ?? '');
+    if (totalCount != null) {
+      return totalCount;
+    }
 
     final joinedCount = joined is int
         ? joined
         : int.tryParse(joined?.toString() ?? '0') ?? 0;
-    final createdCount = created is int
-        ? created
-        : int.tryParse(created?.toString() ?? '0') ?? 0;
-
-    // Profile stat requested: total created + joined.
-    return joinedCount + createdCount;
+    return joinedCount;
   }
 
   @override

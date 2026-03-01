@@ -17,9 +17,14 @@ class GetOrCreateConversationParams extends Equatable {
 class ListConversationsParams extends Equatable {
   final int page;
   final int size;
-  const ListConversationsParams({this.page = 1, this.size = 20});
+  final bool bypassCache;
+  const ListConversationsParams({
+    this.page = 1,
+    this.size = 20,
+    this.bypassCache = false,
+  });
   @override
-  List<Object?> get props => [page, size];
+  List<Object?> get props => [page, size, bypassCache];
 }
 
 class ListMessagesParams extends Equatable {
@@ -64,7 +69,9 @@ final getOrCreateConversationUsecaseProvider =
 final listConversationsUsecaseProvider = Provider<ListConversationsUsecase>((
   ref,
 ) {
-  return ListConversationsUsecase(repository: ref.read(messageRepositoryProvider));
+  return ListConversationsUsecase(
+    repository: ref.read(messageRepositoryProvider),
+  );
 });
 
 final listMessagesUsecaseProvider = Provider<ListMessagesUsecase>((ref) {
@@ -75,13 +82,12 @@ final sendMessageUsecaseProvider = Provider<SendMessageUsecase>((ref) {
   return SendMessageUsecase(repository: ref.read(messageRepositoryProvider));
 });
 
-final markConversationReadUsecaseProvider = Provider<MarkConversationReadUsecase>((
-  ref,
-) {
-  return MarkConversationReadUsecase(
-    repository: ref.read(messageRepositoryProvider),
-  );
-});
+final markConversationReadUsecaseProvider =
+    Provider<MarkConversationReadUsecase>((ref) {
+      return MarkConversationReadUsecase(
+        repository: ref.read(messageRepositoryProvider),
+      );
+    });
 
 class GetOrCreateConversationUsecase
     implements
@@ -100,7 +106,8 @@ class GetOrCreateConversationUsecase
 }
 
 class ListConversationsUsecase
-    implements UsecaseWithParams<List<ConversationEntity>, ListConversationsParams> {
+    implements
+        UsecaseWithParams<List<ConversationEntity>, ListConversationsParams> {
   final IMessageRepository _repository;
 
   ListConversationsUsecase({required IMessageRepository repository})
@@ -110,7 +117,11 @@ class ListConversationsUsecase
   Future<Either<Failure, List<ConversationEntity>>> call(
     ListConversationsParams params,
   ) {
-    return _repository.listConversations(page: params.page, size: params.size);
+    return _repository.listConversations(
+      page: params.page,
+      size: params.size,
+      bypassCache: params.bypassCache,
+    );
   }
 }
 

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:chautari_kurakani/core/error/failures.dart';
 import 'package:chautari_kurakani/core/services/connectivity/network_info.dart';
+import 'package:chautari_kurakani/core/services/hive/app_cache_service.dart';
+import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/features/chautari/data/datasources/chautari_datasource.dart';
 import 'package:chautari_kurakani/features/chautari/data/datasources/remote/chautari_remote_datasource.dart';
 import 'package:chautari_kurakani/features/chautari/domain/entities/chautari_entity.dart';
@@ -14,18 +16,114 @@ final chautariRepositoryProvider = Provider<IChautariRepository>((ref) {
   return ChautariRepository(
     remoteDatasource: ref.read(chautariRemoteDatasourceProvider),
     networkInfo: ref.read(networkInfoProvider),
+    cacheService: ref.read(appCacheServiceProvider),
+    userSessionService: ref.read(userSessionServiceProvider),
   );
 });
 
 class ChautariRepository implements IChautariRepository {
   final IChautariRemoteDatasource _remoteDatasource;
   final NetworkInfo _networkInfo;
+  final AppCacheService _cacheService;
+  final UserSessionService _userSessionService;
 
   ChautariRepository({
     required IChautariRemoteDatasource remoteDatasource,
     required NetworkInfo networkInfo,
+    required AppCacheService cacheService,
+    required UserSessionService userSessionService,
   }) : _remoteDatasource = remoteDatasource,
-       _networkInfo = networkInfo;
+       _networkInfo = networkInfo,
+       _cacheService = cacheService,
+       _userSessionService = userSessionService;
+
+  static const _myChautariTtl = Duration(minutes: 2);
+
+  String _myChautariKey(int page, int size) {
+    final userId = (_userSessionService.getCurrentUserId() ?? '')
+        .trim()
+        .toLowerCase();
+    return 'my_chautari_${userId}_${page}_$size';
+  }
+
+  String _countKey(String userId) =>
+      'chautari_count_${userId.trim().toLowerCase()}';
+
+  Future<void> _clearMembershipCaches() async {
+    final userId = (_userSessionService.getCurrentUserId() ?? '')
+        .trim()
+        .toLowerCase();
+    await _cacheService.clearByPrefix('my_chautari_${userId}_');
+    await _cacheService.clearByPrefix('chautari_count_');
+  }
+
+  Future<void> _writeMyChautariCache(
+    List<ChautariEntity> list,
+    int page,
+    int size,
+  ) async {
+    final payload = list
+        .map(
+          (item) => {
+            'id': item.id,
+            'name': item.name,
+            'slug': item.slug,
+            'description': item.description,
+            'profileUrl': item.profileUrl,
+            'creatorId': item.creatorId,
+            'memberIds': item.memberIds,
+            'createdAt': item.createdAt?.toIso8601String(),
+          },
+        )
+        .toList(growable: false);
+    await _cacheService.write(key: _myChautariKey(page, size), data: payload);
+  }
+
+  List<ChautariEntity>? _readMyChautariCache(int page, int size) {
+    return _cacheService.read<List<ChautariEntity>>(
+      key: _myChautariKey(page, size),
+      maxAge: _myChautariTtl,
+      decoder: (raw) {
+        final list = (raw as List).cast<dynamic>();
+        return list
+            .map((item) {
+              final map = (item as Map).cast<String, dynamic>();
+              return ChautariEntity(
+                id: map['id']?.toString() ?? '',
+                name: map['name']?.toString() ?? '',
+                slug: map['slug']?.toString() ?? '',
+                description: map['description']?.toString() ?? '',
+                profileUrl: map['profileUrl']?.toString(),
+                creatorId: map['creatorId']?.toString() ?? '',
+                memberIds: (map['memberIds'] as List<dynamic>? ?? const [])
+                    .map((id) => id.toString())
+                    .toList(growable: false),
+                createdAt: DateTime.tryParse(
+                  map['createdAt']?.toString() ?? '',
+                ),
+              );
+            })
+            .toList(growable: false);
+      },
+    );
+  }
+
+  Future<void> _writeCountCache(String userId, int value) async {
+    await _cacheService.write(key: _countKey(userId), data: {'count': value});
+  }
+
+  int? _readCountCache(String userId, {Duration? maxAge}) {
+    return _cacheService.read<int>(
+      key: _countKey(userId),
+      maxAge: maxAge,
+      decoder: (raw) {
+        final map = (raw as Map).cast<String, dynamic>();
+        final countRaw = map['count'];
+        if (countRaw is int) return countRaw;
+        return int.tryParse(countRaw?.toString() ?? '0') ?? 0;
+      },
+    );
+  }
 
   @override
   Future<Either<Failure, ChautariEntity>> createChautari({
@@ -43,6 +141,7 @@ class ChautariRepository implements IChautariRepository {
         description: description,
         profileImage: profileImage,
       );
+      await _clearMembershipCaches();
       return Right(item.toEntity());
     } on DioException catch (e) {
       return Left(
@@ -74,6 +173,7 @@ class ChautariRepository implements IChautariRepository {
         description: description,
         profileImage: profileImage,
       );
+      await _clearMembershipCaches();
       return Right(item.toEntity());
     } on DioException catch (e) {
       return Left(
@@ -121,7 +221,13 @@ class ChautariRepository implements IChautariRepository {
     int page = 1,
     int size = 20,
   }) async {
+    final cached = _readMyChautariCache(page, size);
+    if (cached != null && cached.isNotEmpty) {
+      return Right(cached);
+    }
+
     if (!await _networkInfo.isConnected) {
+      if (cached != null) return Right(cached);
       return const Left(ApiFailure(message: 'No internet connection'));
     }
 
@@ -130,8 +236,11 @@ class ChautariRepository implements IChautariRepository {
         page: page,
         size: size,
       );
-      return Right(list.map((e) => e.toEntity()).toList());
+      final entities = list.map((e) => e.toEntity()).toList();
+      await _writeMyChautariCache(entities, page, size);
+      return Right(entities);
     } on DioException catch (e) {
+      if (cached != null) return Right(cached);
       return Left(
         ApiFailure(
           message: e.response?.data['message'] ?? 'Failed to load my Chautari',
@@ -139,6 +248,7 @@ class ChautariRepository implements IChautariRepository {
         ),
       );
     } catch (e) {
+      if (cached != null) return Right(cached);
       return Left(ApiFailure(message: e.toString()));
     }
   }
@@ -171,6 +281,7 @@ class ChautariRepository implements IChautariRepository {
     }
     try {
       final item = await _remoteDatasource.join(communityId);
+      await _clearMembershipCaches();
       return Right(item.toEntity());
     } on DioException catch (e) {
       return Left(
@@ -191,6 +302,7 @@ class ChautariRepository implements IChautariRepository {
     }
     try {
       final item = await _remoteDatasource.leave(communityId);
+      await _clearMembershipCaches();
       return Right(item.toEntity());
     } on DioException catch (e) {
       return Left(
@@ -227,11 +339,17 @@ class ChautariRepository implements IChautariRepository {
   @override
   Future<Either<Failure, int>> getUserChautariCount(String userId) async {
     if (!await _networkInfo.isConnected) {
+      final cachedAnyAge = _readCountCache(userId);
+      if (cachedAnyAge != null) return Right(cachedAnyAge);
       return const Left(ApiFailure(message: 'No internet connection'));
     }
     try {
-      return Right(await _remoteDatasource.getUserChautariCount(userId));
+      final total = await _remoteDatasource.getUserChautariCount(userId);
+      await _writeCountCache(userId, total);
+      return Right(total);
     } on DioException catch (e) {
+      final cachedAnyAge = _readCountCache(userId);
+      if (cachedAnyAge != null) return Right(cachedAnyAge);
       return Left(
         ApiFailure(
           message:
@@ -241,6 +359,8 @@ class ChautariRepository implements IChautariRepository {
         ),
       );
     } catch (e) {
+      final cachedAnyAge = _readCountCache(userId);
+      if (cachedAnyAge != null) return Right(cachedAnyAge);
       return Left(ApiFailure(message: e.toString()));
     }
   }
@@ -318,6 +438,7 @@ class ChautariRepository implements IChautariRepository {
     }
     try {
       await _remoteDatasource.deleteChautari(communityId);
+      await _clearMembershipCaches();
       return const Right(true);
     } on DioException catch (e) {
       return Left(

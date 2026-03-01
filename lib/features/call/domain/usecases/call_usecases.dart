@@ -10,11 +10,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ListMyCallsParams extends Equatable {
   final int page;
   final int size;
+  final bool bypassCache;
 
-  const ListMyCallsParams({this.page = 1, this.size = 20});
+  const ListMyCallsParams({
+    this.page = 1,
+    this.size = 20,
+    this.bypassCache = false,
+  });
 
   @override
-  List<Object?> get props => [page, size];
+  List<Object?> get props => [page, size, bypassCache];
 }
 
 final listMyCallsUsecaseProvider = Provider<ListMyCallsUsecase>((ref) {
@@ -30,6 +35,10 @@ class ListMyCallsUsecase
 
   @override
   Future<Either<Failure, List<CallLogEntity>>> call(ListMyCallsParams params) {
-    return _repository.listMyCalls(page: params.page, size: params.size);
+    return _repository.listMyCalls(
+      page: params.page,
+      size: params.size,
+      bypassCache: params.bypassCache,
+    );
   }
 }

@@ -69,5 +69,7 @@
     <string>Camera is required for video calling.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Microphone is required for audio and video calling.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Use Face ID to quickly and securely login to your account.</string>
 </dict>
 </plist>

@@ -241,6 +241,8 @@
 //     );
 //   }
 // }
+import 'package:chautari_kurakani/common/my_snackbar.dart';
+import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
@@ -250,8 +252,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ForgetPasswordNewPassword extends ConsumerStatefulWidget {
-  final String? token; // Receive token from deep link
-  const ForgetPasswordNewPassword({super.key, this.token});
+  final String? token;
+  final String? email;
+  final String? code;
+  const ForgetPasswordNewPassword({
+    super.key,
+    this.token,
+    this.email,
+    this.code,
+  });
 
   @override
   ConsumerState<ForgetPasswordNewPassword> createState() =>
@@ -260,7 +269,7 @@ class ForgetPasswordNewPassword extends ConsumerStatefulWidget {
 
 class _ForgetPasswordNewPasswordState
     extends ConsumerState<ForgetPasswordNewPassword> {
-  final _forgetkey = GlobalKey<FormState>();
+  final _forgetKey = GlobalKey<FormState>();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
@@ -275,7 +284,11 @@ class _ForgetPasswordNewPasswordState
   @override
   Widget build(BuildContext context) {
     final String token = widget.token?.trim() ?? '';
+    final String email = widget.email?.trim() ?? '';
+    final String code = widget.code?.trim() ?? '';
     final bool hasToken = token.isNotEmpty;
+    final bool hasEmail = email.isNotEmpty;
+    final bool hasCode = code.isNotEmpty;
     double screenWidth = MediaQuery.of(context).size.width;
     bool isTablet = screenWidth > 600;
 
@@ -361,7 +374,7 @@ class _ForgetPasswordNewPasswordState
                         ],
                       ),
                       child: Form(
-                        key: _forgetkey,
+                        key: _forgetKey,
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(
                             isTablet ? 45 : 15,
@@ -416,7 +429,7 @@ class _ForgetPasswordNewPasswordState
 
                               SizedBox(height: 30),
 
-                              if (!hasToken)
+                              if (!hasToken && (!hasEmail || !hasCode))
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(12),
@@ -425,7 +438,7 @@ class _ForgetPasswordNewPasswordState
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Text(
-                                    "Invalid or expired reset link. Please request a new password reset email.",
+                                    "Missing reset data. Please request reset code again.",
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -441,16 +454,14 @@ class _ForgetPasswordNewPasswordState
                                 ),
                                 child: MyElevatedButton(
                                   onPressed: () async {
-                                    if (_forgetkey.currentState!.validate()) {
-                                      if (!hasToken) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Reset link is invalid. Please request a new one.",
-                                            ),
-                                          ),
+                                    if (_forgetKey.currentState!.validate()) {
+                                      if (!hasToken &&
+                                          (!hasEmail || !hasCode)) {
+                                        showMySnackBar(
+                                          context: context,
+                                          message:
+                                              "Missing reset data. Please request reset code again.",
+                                          color: Colors.red,
                                         );
                                         return;
                                       }
@@ -458,25 +469,51 @@ class _ForgetPasswordNewPasswordState
                                       // Check passwords match
                                       if (newPasswordController.text !=
                                           confirmPasswordController.text) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Passwords do not match",
-                                            ),
-                                          ),
+                                        showMySnackBar(
+                                          context: context,
+                                          message: "Passwords do not match",
+                                          color: Colors.red,
                                         );
                                         return;
                                       }
 
-                                      await ref
-                                          .read(authViewModelProvider.notifier)
-                                          .resetPassword(
-                                            token: token,
-                                            newPassword:
-                                                newPasswordController.text,
-                                          );
+                                      if (newPasswordController.text
+                                              .trim()
+                                              .length <
+                                          6) {
+                                        showMySnackBar(
+                                          context: context,
+                                          message:
+                                              "Password must be at least 6 characters",
+                                          color: Colors.red,
+                                        );
+                                        return;
+                                      }
+
+                                      if (hasToken) {
+                                        await ref
+                                            .read(
+                                              authViewModelProvider.notifier,
+                                            )
+                                            .resetPassword(
+                                              token: token,
+                                              newPassword: newPasswordController
+                                                  .text
+                                                  .trim(),
+                                            );
+                                      } else {
+                                        await ref
+                                            .read(
+                                              authViewModelProvider.notifier,
+                                            )
+                                            .resetPasswordWithCode(
+                                              email: email,
+                                              code: code,
+                                              newPassword: newPasswordController
+                                                  .text
+                                                  .trim(),
+                                            );
+                                      }
 
                                       final authState = ref.read(
                                         authViewModelProvider,
@@ -484,14 +521,11 @@ class _ForgetPasswordNewPasswordState
                                       if (authState.status ==
                                           AuthStatus.passwordResetSuccess) {
                                         if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
+                                        showMySnackBar(
+                                          context: context,
+                                          message:
                                               "Password reset successful. Please log in.",
-                                            ),
-                                          ),
+                                          color: Colors.green,
                                         );
                                         Navigator.pushReplacement(
                                           context,
@@ -502,15 +536,12 @@ class _ForgetPasswordNewPasswordState
                                       } else if (authState.status ==
                                           AuthStatus.error) {
                                         if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
+                                        showMySnackBar(
+                                          context: context,
+                                          message:
                                               authState.errorMessage ??
-                                                  "Failed to reset password.",
-                                            ),
-                                          ),
+                                              "Failed to reset password.",
+                                          color: Colors.red,
                                         );
                                       }
                                     }
@@ -547,9 +578,13 @@ class _ForgetPasswordNewPasswordState
                   size: 26,
                 ),
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => hasToken
+                          ? const LoginScreen()
+                          : const ForgetPasswordScreen(),
+                    ),
                   );
                 },
               ),

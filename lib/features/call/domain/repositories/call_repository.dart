@@ -6,5 +6,6 @@ abstract class ICallRepository {
   Future<Either<Failure, List<CallLogEntity>>> listMyCalls({
     int page = 1,
     int size = 20,
+    bool bypassCache = false,
   });
 }

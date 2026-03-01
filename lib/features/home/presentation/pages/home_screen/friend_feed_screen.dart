@@ -13,9 +13,11 @@ class FriendsFeedScreen extends ConsumerStatefulWidget {
   ConsumerState<FriendsFeedScreen> createState() => _FriendsFeedScreenState();
 }
 
-class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
+class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen>
+    with AutomaticKeepAliveClientMixin {
   Set<String> _friendAuthorIds = <String>{};
   bool _isResolvingFriends = false;
+  String _lastResolvedPostsSignature = '';
 
   @override
   void initState() {
@@ -26,8 +28,15 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
   Future<void> _loadFriendFeed({bool forceFetchPosts = true}) async {
     final postState = ref.read(postViewModelProvider);
     final hasPosts = postState.posts.isNotEmpty;
+    if (mounted && (forceFetchPosts || !hasPosts)) {
+      setState(() {
+        _isResolvingFriends = true;
+      });
+    }
     if (forceFetchPosts || !hasPosts) {
-      await ref.read(postViewModelProvider.notifier).fetchPosts();
+      await ref
+          .read(postViewModelProvider.notifier)
+          .fetchPosts(forceRefresh: forceFetchPosts);
     }
     await _resolveFriendAuthorIds();
   }
@@ -87,6 +96,14 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    ref.listen<PostState>(postViewModelProvider, (previous, next) {
+      final signature = next.posts.map((post) => post.id).join('|');
+      if (signature == _lastResolvedPostsSignature) return;
+      _lastResolvedPostsSignature = signature;
+      Future.microtask(_resolveFriendAuthorIds);
+    });
+
     final authState = ref.watch(authViewModelProvider);
     final postState = ref.watch(postViewModelProvider);
 
@@ -170,4 +187,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

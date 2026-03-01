@@ -252,11 +252,18 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
   Future<void> sendResetPasswordEmail(String email) async {
     await _apiClient.post(
       ApiEndpoints.sendResetPasswordEmail,
-      data: {
-        "email": email,
-        "platform": "mobile",
-        "resetUrl": "chautari://reset-password",
-      },
+      data: {"email": email, "platform": "mobile"},
+    );
+  }
+
+  @override
+  Future<void> verifyResetPasswordMobileCode({
+    required String email,
+    required String code,
+  }) async {
+    await _apiClient.post(
+      ApiEndpoints.verifyResetPasswordMobileCode,
+      data: {"email": email, "code": code},
     );
   }
 
@@ -265,6 +272,18 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     await _apiClient.post(
       ApiEndpoints.resetPassword(token),
       data: {"newPassword": newPassword},
+    );
+  }
+
+  @override
+  Future<void> resetPasswordWithMobileCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    await _apiClient.post(
+      ApiEndpoints.resetPasswordMobileCode,
+      data: {"email": email, "code": code, "newPassword": newPassword},
     );
   }
 

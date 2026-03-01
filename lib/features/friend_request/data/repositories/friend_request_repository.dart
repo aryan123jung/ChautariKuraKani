@@ -1,5 +1,6 @@
 import 'package:chautari_kurakani/core/error/failures.dart';
 import 'package:chautari_kurakani/core/services/connectivity/network_info.dart';
+import 'package:chautari_kurakani/core/services/hive/app_cache_service.dart';
 import 'package:chautari_kurakani/features/friend_request/data/datasources/friend_request_datasource.dart';
 import 'package:chautari_kurakani/features/friend_request/data/datasources/remote/friend_request_remote_datasource.dart';
 import 'package:chautari_kurakani/features/friend_request/domain/entities/friend_request_entity.dart';
@@ -14,64 +15,108 @@ final friendRequestRepositoryProvider = Provider<IFriendRequestRepository>((
   return FriendRequestRepository(
     remoteDatasource: ref.read(friendRequestRemoteDatasourceProvider),
     networkInfo: ref.read(networkInfoProvider),
+    cacheService: ref.read(appCacheServiceProvider),
   );
 });
 
 class FriendRequestRepository implements IFriendRequestRepository {
   final IFriendRequestRemoteDatasource _remoteDatasource;
   final NetworkInfo _networkInfo;
+  final AppCacheService _cacheService;
 
   FriendRequestRepository({
     required IFriendRequestRemoteDatasource remoteDatasource,
     required NetworkInfo networkInfo,
+    required AppCacheService cacheService,
   }) : _remoteDatasource = remoteDatasource,
-       _networkInfo = networkInfo;
+       _networkInfo = networkInfo,
+       _cacheService = cacheService;
 
   final Map<String, _CachedFriendStatus> _statusCache = {};
   final Map<String, _CachedFriendCount> _countCache = {};
-  static const Duration _statusCacheTtl = Duration(minutes: 5);
 
-  FriendStatusEntity? _readCachedStatus(String userId) {
-    final key = userId.trim().toLowerCase();
-    final cached = _statusCache[key];
-    if (cached == null) return null;
-    final isExpired =
-        DateTime.now().difference(cached.cachedAt) > _statusCacheTtl;
-    if (isExpired) {
-      _statusCache.remove(key);
-      return null;
-    }
-    return cached.value;
-  }
+  String _statusKey(String userId) =>
+      'friend_status_${userId.trim().toLowerCase()}';
+  String _countKey(String userId) =>
+      'friend_count_${userId.trim().toLowerCase()}';
 
   void _writeCachedStatus(String userId, FriendStatusEntity value) {
     final key = userId.trim().toLowerCase();
     if (key.isEmpty) return;
-    _statusCache[key] = _CachedFriendStatus(value, DateTime.now());
+    final now = DateTime.now();
+    _statusCache[key] = _CachedFriendStatus(value, now);
+    _cacheService.write(
+      key: _statusKey(userId),
+      data: {'status': value.status, 'requestId': value.requestId},
+    );
   }
 
   void _clearStatusCache() {
     _statusCache.clear();
     _countCache.clear();
-  }
-
-  int? _readCachedCount(String userId) {
-    final key = userId.trim().toLowerCase();
-    final cached = _countCache[key];
-    if (cached == null) return null;
-    final isExpired =
-        DateTime.now().difference(cached.cachedAt) > _statusCacheTtl;
-    if (isExpired) {
-      _countCache.remove(key);
-      return null;
-    }
-    return cached.value;
+    _cacheService.clearByPrefix('friend_status_');
+    _cacheService.clearByPrefix('friend_count_');
   }
 
   void _writeCachedCount(String userId, int value) {
     final key = userId.trim().toLowerCase();
     if (key.isEmpty) return;
-    _countCache[key] = _CachedFriendCount(value, DateTime.now());
+    final now = DateTime.now();
+    _countCache[key] = _CachedFriendCount(value, now);
+    _cacheService.write(key: _countKey(userId), data: {'count': value});
+  }
+
+  FriendStatusEntity? _readCachedStatus(String userId, {Duration? maxAge}) {
+    final key = userId.trim().toLowerCase();
+    if (key.isEmpty) return null;
+    final memory = _statusCache[key];
+    if (memory != null &&
+        (maxAge == null ||
+            DateTime.now().difference(memory.cachedAt) <= maxAge)) {
+      return memory.value;
+    }
+
+    final fromHive = _cacheService.read<FriendStatusEntity>(
+      key: _statusKey(userId),
+      maxAge: maxAge,
+      decoder: (raw) {
+        final map = (raw as Map).cast<String, dynamic>();
+        return FriendStatusEntity(
+          status: map['status']?.toString() ?? 'NONE',
+          requestId: map['requestId']?.toString(),
+        );
+      },
+    );
+    if (fromHive != null) {
+      _statusCache[key] = _CachedFriendStatus(fromHive, DateTime.now());
+    }
+    return fromHive;
+  }
+
+  int? _readCachedCount(String userId, {Duration? maxAge}) {
+    final key = userId.trim().toLowerCase();
+    if (key.isEmpty) return null;
+    final memory = _countCache[key];
+    if (memory != null &&
+        (maxAge == null ||
+            DateTime.now().difference(memory.cachedAt) <= maxAge)) {
+      return memory.value;
+    }
+
+    final fromHive = _cacheService.read<int>(
+      key: _countKey(userId),
+      maxAge: maxAge,
+      decoder: (raw) {
+        final map = (raw as Map).cast<String, dynamic>();
+        final countRaw = map['count'];
+        if (countRaw is int) return countRaw;
+        return int.tryParse(countRaw?.toString() ?? '0') ?? 0;
+      },
+    );
+    if (fromHive != null) {
+      _countCache[key] = _CachedFriendCount(fromHive, DateTime.now());
+    }
+    return fromHive;
   }
 
   @override
@@ -187,12 +232,9 @@ class FriendRequestRepository implements IFriendRequestRepository {
 
   @override
   Future<Either<Failure, FriendStatusEntity>> getStatus(String userId) async {
-    final cached = _readCachedStatus(userId);
-    if (cached != null) {
-      return Right(cached);
-    }
-
     if (!await _networkInfo.isConnected) {
+      final cached = _readCachedStatus(userId);
+      if (cached != null) return Right(cached);
       return const Left(ApiFailure(message: 'No internet connection'));
     }
     try {
@@ -201,6 +243,8 @@ class FriendRequestRepository implements IFriendRequestRepository {
       _writeCachedStatus(userId, entity);
       return Right(entity);
     } on DioException catch (e) {
+      final cached = _readCachedStatus(userId);
+      if (cached != null) return Right(cached);
       return Left(
         ApiFailure(
           message: e.response?.data['message'] ?? 'Failed to fetch status',
@@ -208,18 +252,17 @@ class FriendRequestRepository implements IFriendRequestRepository {
         ),
       );
     } catch (e) {
+      final cached = _readCachedStatus(userId);
+      if (cached != null) return Right(cached);
       return Left(ApiFailure(message: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, int>> getFriendCount(String userId) async {
-    final cached = _readCachedCount(userId);
-    if (cached != null) {
-      return Right(cached);
-    }
-
     if (!await _networkInfo.isConnected) {
+      final cached = _readCachedCount(userId);
+      if (cached != null) return Right(cached);
       return const Left(ApiFailure(message: 'No internet connection'));
     }
     try {
@@ -227,6 +270,8 @@ class FriendRequestRepository implements IFriendRequestRepository {
       _writeCachedCount(userId, count);
       return Right(count);
     } on DioException catch (e) {
+      final cached = _readCachedCount(userId);
+      if (cached != null) return Right(cached);
       return Left(
         ApiFailure(
           message:
@@ -235,6 +280,8 @@ class FriendRequestRepository implements IFriendRequestRepository {
         ),
       );
     } catch (e) {
+      final cached = _readCachedCount(userId);
+      if (cached != null) return Right(cached);
       return Left(ApiFailure(message: e.toString()));
     }
   }

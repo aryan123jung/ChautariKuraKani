@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:chautari_kurakani/core/routes/app_routes.dart';
+import 'package:chautari_kurakani/core/services/storage/token_service.dart';
+import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
 import 'package:chautari_kurakani/core/utils/snackbar_utils.dart';
+import 'package:chautari_kurakani/features/auth/domain/entities/auth_entity.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/state/auth_state.dart';
 import 'package:chautari_kurakani/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:chautari_kurakani/features/dashboard/presentation/pages/dashboard_screen.dart';
+import 'package:chautari_kurakani/features/sensor/data/services/face_id_auth_service.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/signup/signup_screen.dart';
 import 'package:chautari_kurakani/core/widgets/my_outline_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
@@ -23,10 +29,88 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  final bool _isLoading = false;
+  bool _isBiometricLoading = false;
+  bool _rememberFaceId = false;
+  final FaceIdAuthService _faceIdAuthService = FaceIdAuthService();
+  bool _didNavigateAfterLogin = false;
+  ProviderSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberFaceId();
+    _authSubscription = ref.listenManual<AuthState>(authViewModelProvider, (
+      previous,
+      next,
+    ) {
+      final loginSuccess =
+          next.status == AuthStatus.authenticated ||
+          next.status == AuthStatus.currentUserLoaded;
+
+      if (loginSuccess && !_didNavigateAfterLogin) {
+        _didNavigateAfterLogin = true;
+        final entity = next.authEntity;
+        if (entity != null && (entity.authId ?? '').trim().isNotEmpty) {
+          unawaited(_syncFaceIdSelection(entity));
+          ref
+              .read(userSessionServiceProvider)
+              .saveUserSession(
+                userId: entity.authId!,
+                email: entity.email,
+                fName: entity.fName,
+                lName: entity.lName,
+                username: entity.username,
+                profilePicture: entity.profilePicture,
+                coverPicture: entity.coverPicture,
+                bio: entity.bio,
+              );
+        }
+        if (!mounted) return;
+        SnackbarUtils.showSuccess(context, 'Login successful');
+        AppRoutes.pushReplacement(context, const DashboardScreen());
+        return;
+      }
+
+      if (next.status == AuthStatus.error && next.errorMessage != null) {
+        SnackbarUtils.showError(context, next.errorMessage!);
+      }
+    });
+  }
+
+  Future<void> _loadRememberFaceId() async {
+    final enabled = await ref.read(tokenServiceProvider).isBiometricEnabled();
+    if (!mounted) return;
+    setState(() {
+      _rememberFaceId = enabled;
+    });
+  }
+
+  Future<void> _onRememberFaceIdChanged(bool value) async {
+    setState(() => _rememberFaceId = value);
+    final tokenService = ref.read(tokenServiceProvider);
+    await tokenService.setBiometricEnabled(value);
+    if (!value) {
+      await tokenService.removeBiometricToken();
+    }
+  }
+
+  Future<void> _syncFaceIdSelection(AuthEntity entity) async {
+    final tokenService = ref.read(tokenServiceProvider);
+    if (!_rememberFaceId) {
+      return;
+    }
+
+    final token = await tokenService.getToken();
+    if (token == null || token.trim().isEmpty) return;
+
+    await tokenService.saveBiometricToken(token);
+    await tokenService.saveBiometricUserId(entity.authId ?? '');
+  }
 
   @override
   void dispose() {
+    _authSubscription?.close();
+    _authSubscription = null;
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -40,6 +124,65 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    if (_isBiometricLoading) return;
+    setState(() => _isBiometricLoading = true);
+
+    try {
+      final biometricEnabled = await ref
+          .read(tokenServiceProvider)
+          .isBiometricEnabled();
+      if (!biometricEnabled) {
+        if (!mounted) return;
+        SnackbarUtils.showInfo(
+          context,
+          'Enable "Remember this account for Face ID" first.',
+        );
+        return;
+      }
+      final authResult = await _faceIdAuthService.authenticateForLogin();
+      if (!authResult.success) {
+        if (!mounted) return;
+        if (authResult.message != null &&
+            authResult.message!.trim().isNotEmpty) {
+          SnackbarUtils.showError(context, authResult.message!);
+        }
+        return;
+      }
+
+      final tokenService = ref.read(tokenServiceProvider);
+      String? token = await tokenService.getToken();
+      token ??= await tokenService.getBiometricToken();
+      if (token != null && token.trim().isNotEmpty) {
+        await tokenService.saveToken(token);
+      }
+
+      final hasToken = token?.trim().isNotEmpty == true;
+      final hasUserId =
+          (ref.read(userSessionServiceProvider).getCurrentUserId() ?? '')
+              .trim()
+              .isNotEmpty;
+
+      if (!hasToken && !hasUserId) {
+        if (!mounted) return;
+        SnackbarUtils.showInfo(
+          context,
+          'No saved session found. Please login once with email/password.',
+        );
+        return;
+      }
+
+      await ref.read(authViewModelProvider.notifier).getCurrentUser(userId: '');
+    } catch (_) {
+      if (!mounted) return;
+      SnackbarUtils.showError(context, 'Biometric login failed');
+    } finally {
+      if (mounted) {
+        setState(() => _isBiometricLoading = false);
+      }
     }
   }
 
@@ -61,32 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
-
-    // ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-    //   // Only navigate when login is successful (not on first build)
-    //   if (next.status == AuthStatus.authenticated &&
-    //       previous?.status != AuthStatus.authenticated) {
-    //     AppRoutes.pushReplacement(context, DashboardScreen());
-    //   } else if (next.status == AuthStatus.error && next.errorMessage != null) {
-    //     SnackbarUtils.showError(context, next.errorMessage!);
-    //   }
-    // });
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.authenticated &&
-          previous?.status != AuthStatus.authenticated) {
-        SnackbarUtils.showSuccess(context, 'Login successful');
-
-        // Future.microtask(() {
-        //   AppRoutes.pushReplacement(context, DashboardScreen());
-        // });
-        if (!mounted) return;
-        AppRoutes.pushReplacement(context, DashboardScreen());
-      }
-
-      if (next.status == AuthStatus.error && next.errorMessage != null) {
-        SnackbarUtils.showError(context, next.errorMessage!);
-      }
-    });
+    final isAuthLoading = authState.status == AuthStatus.loading;
 
     double screenWidth = MediaQuery.of(context).size.width;
     bool isTablet = screenWidth > 600;
@@ -252,43 +370,106 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           SizedBox(height: 30),
 
                           SizedBox(
-                            width: double.infinity,
                             height: 50,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(
-                                  255,
-                                  229,
-                                  163,
-                                  32,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                              ),
-                              child: authState.status == AuthStatus.loading
-                                  ? const SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: ElevatedButton(
+                                    onPressed: isAuthLoading
+                                        ? null
+                                        : _handleLogin,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(
+                                        255,
+                                        229,
+                                        163,
+                                        32,
                                       ),
-                                    )
-                                  : const Text(
-                                      "Log in",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    child:
+                                        authState.status == AuthStatus.loading
+                                        ? const SizedBox(
+                                            height: 22,
+                                            width: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.white,
+                                                  ),
+                                            ),
+                                          )
+                                        : const Text(
+                                            "Log in",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed:
+                                        (_isBiometricLoading || isAuthLoading)
+                                        ? null
+                                        : _handleBiometricLogin,
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                        color: Color(0XFF76C05D),
+                                        width: 1.3,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
+                                    child: _isBiometricLoading
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.face_retouching_natural,
+                                            color: Color(0XFF76C05D),
+                                          ),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberFaceId,
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  unawaited(_onRememberFaceIdChanged(value));
+                                },
+                                activeColor: const Color(0XFF76C05D),
+                              ),
+                              const SizedBox(width: 2),
+                              const Expanded(
+                                child: Text(
+                                  'Remember this account for Face ID',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
 
                           SizedBox(height: 20),

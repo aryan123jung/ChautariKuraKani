@@ -8,6 +8,7 @@ abstract interface class IPostRepository {
   Future<Either<Failure, List<PostEntity>>> getPosts({
     int page = 1,
     int size = 20,
+    bool bypassCache = false,
   });
 
   Future<Either<Failure, List<PostEntity>>> getMyPosts({

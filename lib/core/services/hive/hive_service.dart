@@ -231,6 +231,7 @@ class HiveService {
 
   Future<void> _openBoxes() async {
     await Hive.openBox<AuthHiveModel>(HiveTableConstant.authTable);
+    await Hive.openBox<dynamic>(HiveTableConstant.appCacheTable);
   }
 
   Box<AuthHiveModel> get _authBox =>
@@ -358,5 +359,4 @@ class HiveService {
   Future<void> deleteUser(String authId) async {
     await _authBox.delete(authId);
   }
-
 }

@@ -202,6 +202,29 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
+  Future<void> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    final result = await _forgotPasswordUsecase.verifyCode(
+      email: email,
+      code: code,
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (_) {
+        state = state.copyWith(status: AuthStatus.success);
+      },
+    );
+  }
+
   Future<void> resetPassword({
     required String token,
     required String newPassword,
@@ -210,6 +233,32 @@ class AuthViewModel extends Notifier<AuthState> {
 
     final result = await _resetPasswordUsecase(
       token: token,
+      newPassword: newPassword,
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (_) {
+        state = state.copyWith(status: AuthStatus.passwordResetSuccess);
+      },
+    );
+  }
+
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _resetPasswordUsecase.mobileCode(
+      email: email,
+      code: code,
       newPassword: newPassword,
     );
 

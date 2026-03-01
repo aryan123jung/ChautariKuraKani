@@ -10,6 +10,7 @@ abstract class IMessageRepository {
   Future<Either<Failure, List<ConversationEntity>>> listConversations({
     int page = 1,
     int size = 20,
+    bool bypassCache = false,
   });
 
   Future<Either<Failure, List<MessageEntity>>> listMessages({

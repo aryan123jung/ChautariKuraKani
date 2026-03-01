@@ -28,7 +28,7 @@ class ApiEndpoints {
   );
   static const String apiHostIos = String.fromEnvironment('API_HOST_IOS');
 
-  static const String computerIpAddress = "192.168.1.78";
+  static const String computerIpAddress = "192.168.1.114";
 
   // static String get baseUrl {
   //   if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
@@ -157,11 +157,16 @@ class ApiEndpoints {
   static const String authUsers = '/auth/users';
   static const String whoAmI = '/auth/whoami';
   static String getCurrentUserById(String userId) => '/auth/user/$userId';
+  static String reportUser(String userId) => '/auth/user/$userId/report';
 
   static const String sendResetPasswordEmail =
       "/auth/send-reset-password-email";
 
   static String resetPassword(String token) => "/auth/reset-password/$token";
+  static const String verifyResetPasswordMobileCode =
+      "/auth/verify-reset-password-mobile-code";
+  static const String resetPasswordMobileCode =
+      "/auth/reset-password-mobile-code";
 
   // Profile picture upload
   static const String updateProfileImage = '/auth/update-profile';
@@ -175,6 +180,7 @@ class ApiEndpoints {
   static String postComments(String id) => '/post/$id/comments';
   static String deletePostComment(String postId, String commentId) =>
       '/post/$postId/comments/$commentId';
+  static String reportPost(String postId) => '/post/$postId/report';
 
   // Friend requests
   static const String friendsBase = '/friends';
@@ -224,6 +230,24 @@ class ApiEndpoints {
   static String chautariCountByUser(String userId) => '$chautari/count/$userId';
   static String chautariPosts(String communityId) =>
       '$chautari/$communityId/posts';
+  static String reportChautari(String communityId) =>
+      '$chautari/$communityId/report';
+
+  // Reports (generic + admin)
+  static const String reportsBase = '/reports';
+  static String genericReportPost(String postId) => '$reportsBase/post/$postId';
+  static String genericReportUser(String userId) => '$reportsBase/user/$userId';
+  static String genericReportChautari(String communityId) =>
+      '$reportsBase/chautari/$communityId';
+  static const String myReports = '$reportsBase/my';
+
+  static const String adminReportsStats = '/admin/reports/stats';
+  static const String adminReports = '/admin/reports';
+  static String adminReportById(String reportId) => '/admin/reports/$reportId';
+  static String adminAssignReport(String reportId) =>
+      '/admin/reports/$reportId/assign';
+  static String adminResolveReport(String reportId) =>
+      '/admin/reports/$reportId/resolve';
 
   static String postMediaUrl(String fileName, String mediaType) {
     if (fileName.startsWith('http')) return fileName;

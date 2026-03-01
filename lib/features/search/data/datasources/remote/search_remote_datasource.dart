@@ -22,7 +22,11 @@ class SearchRemoteDatasource implements ISearchRemoteDatasource {
   }) async {
     final response = await _apiClient.get(
       ApiEndpoints.authUsers,
-      queryParameters: {'search': query, 'page': page, 'size': size},
+      queryParameters: {
+        'page': page,
+        'size': size,
+        if (query.trim().isNotEmpty) 'search': query.trim(),
+      },
     );
 
     final rawUsers = response.data['data'] as List<dynamic>? ?? [];

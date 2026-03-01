@@ -53,6 +53,7 @@ class ThemeModeNotifier extends Notifier<ThemeModeState> {
   bool _autoDark = false;
   double? _emaLux;
   double? _baselineLux;
+  int _sensorSessionId = 0;
 
   @override
   ThemeModeState build() {
@@ -135,6 +136,8 @@ class ThemeModeNotifier extends Notifier<ThemeModeState> {
 
   Future<void> _startAmbientAutoMode() async {
     _disposeSensor();
+    _sensorSessionId++;
+    final int sessionId = _sensorSessionId;
     _autoDark = state.effectiveMode == ThemeMode.dark;
     _emaLux = null;
     _baselineLux = null;
@@ -151,21 +154,41 @@ class ThemeModeNotifier extends Notifier<ThemeModeState> {
     }
 
     state = state.copyWith(sensorActive: true, sensorAvailable: true);
+    var gotFirstLuxEvent = false;
+
+    // Some Android devices (including some Samsung builds) may expose
+    // the light sensor but not emit readings to third-party apps.
+    // If no events arrive quickly, fallback to system appearance.
+    Future.delayed(const Duration(seconds: 4), () {
+      if (sessionId != _sensorSessionId) return;
+      if (state.preference != ThemePreference.auto) return;
+      if (gotFirstLuxEvent) return;
+      state = state.copyWith(
+        sensorActive: false,
+        sensorAvailable: false,
+        effectiveMode: _themeForPreference(ThemePreference.auto),
+        clearLux: true,
+      );
+    });
 
     _luxSub = _ambientLightService.luxStream().listen(
       (lux) {
+        if (sessionId != _sensorSessionId) return;
+        gotFirstLuxEvent = true;
         final shouldDarken = _computeAutoDarkWithHysteresis(lux);
         state = state.copyWith(
+          sensorActive: true,
           sensorAvailable: true,
           lux: lux,
           effectiveMode: shouldDarken ? ThemeMode.dark : ThemeMode.light,
         );
       },
       onError: (_) {
+        if (sessionId != _sensorSessionId) return;
         state = state.copyWith(
           sensorActive: false,
           sensorAvailable: false,
-          effectiveMode: _themeForPreference(ThemePreference.light),
+          effectiveMode: _themeForPreference(ThemePreference.auto),
           clearLux: true,
         );
       },
@@ -203,6 +226,7 @@ class ThemeModeNotifier extends Notifier<ThemeModeState> {
   }
 
   void _disposeSensor() {
+    _sensorSessionId++;
     _luxSub?.cancel();
     _luxSub = null;
   }

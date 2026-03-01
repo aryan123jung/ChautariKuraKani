@@ -46,6 +46,7 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
   bool _manualNearEarMode = false;
   bool _receivedProximityEvent = false;
   bool _proximitySupported = true;
+  bool _didRequestClose = false;
   final ProximityCallService _proximityCallService = ProximityCallService();
 
   @override
@@ -276,10 +277,15 @@ class _CallSessionScreenState extends ConsumerState<CallSessionScreen> {
     final call = state.activeCall;
 
     if (call == null || call.callId != widget.callId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.of(context).maybePop();
-      });
+      if (!_didRequestClose) {
+        _didRequestClose = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(context).maybePop();
+        });
+      }
     } else {
+      _didRequestClose = false;
       _createOfferIfNeeded(call);
     }
 

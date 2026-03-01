@@ -4,6 +4,8 @@ import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/core/utils/responsive.dart';
 import 'package:chautari_kurakani/features/post/domain/entities/post_entity.dart';
 import 'package:chautari_kurakani/features/post/presentation/view_model/post_view_model.dart';
+import 'package:chautari_kurakani/features/report/presentation/view_model/report_view_model.dart';
+import 'package:chautari_kurakani/features/report/presentation/widgets/report_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -203,6 +205,32 @@ class _PostCardState extends ConsumerState<PostCard> {
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }
+  }
+
+  Future<void> _reportPost() async {
+    final payload = await showReportBottomSheet(
+      context: context,
+      title: 'Report post',
+      hintText: 'Explain why this post should be reviewed',
+    );
+    if (payload == null) return;
+
+    final success = await ref
+        .read(reportViewModelProvider.notifier)
+        .reportPost(widget.post.id, payload);
+    if (!mounted) return;
+
+    if (!success) {
+      final error = ref.read(reportViewModelProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error ?? 'Failed to submit report')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Report submitted successfully')),
+    );
   }
 
   Future<void> _showEditPostModal() async {
@@ -409,90 +437,92 @@ class _PostCardState extends ConsumerState<PostCard> {
         : (fallbackProfileUrl ?? authorFallbackProfileUrl ?? '');
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Center(
-      child: SizedBox(
-        width: cardWidth,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [const Color(0xFF1C232E), const Color(0xFF151A23)]
-                  : [const Color(0xFFFDFEFF), const Color(0xFFF0F8F0)],
-            ),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : const Color(0xFFDDE6DA),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+    return RepaintBoundary(
+      child: Center(
+        child: SizedBox(
+          width: cardWidth,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [const Color(0xFF1C232E), const Color(0xFF151A23)]
+                    : [const Color(0xFFFDFEFF), const Color(0xFFF0F8F0)],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(cardPadding + 2),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0XFF76C05D).withValues(alpha: 0.6),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFDDE6DA),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(cardPadding + 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(
+                              0XFF76C05D,
+                            ).withValues(alpha: 0.6),
+                          ),
                         ),
-                      ),
-                      child: SizedBox(
-                        height: avatarRadius * 2,
-                        width: avatarRadius * 2,
-                        child: ClipOval(
-                          child: displayProfileUrl.isNotEmpty
-                              ? Image.network(
-                                  displayProfileUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
+                        child: SizedBox(
+                          height: avatarRadius * 2,
+                          width: avatarRadius * 2,
+                          child: ClipOval(
+                            child: displayProfileUrl.isNotEmpty
+                                ? Image.network(
+                                    displayProfileUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey.shade300,
+                                      child: const Icon(Icons.person),
+                                    ),
+                                  )
+                                : Container(
                                     color: Colors.grey.shade300,
                                     child: const Icon(Icons.person),
                                   ),
-                                )
-                              : Container(
-                                  color: Colors.grey.shade300,
-                                  child: const Icon(Icons.person),
-                                ),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: isTablet ? 16 : 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.post.name,
-                          style: TextStyle(
-                            fontSize: nameFont,
-                            fontWeight: FontWeight.bold,
+                      SizedBox(width: isTablet ? 16 : 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.post.name,
+                            style: TextStyle(
+                              fontSize: nameFont,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        Text(
-                          widget.post.hoursAgo,
-                          style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.grey[600],
-                            fontSize: timeFont,
+                          Text(
+                            widget.post.hoursAgo,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.grey[600],
+                              fontSize: timeFont,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    if (canDeleteThisPost)
+                        ],
+                      ),
+                      const Spacer(),
                       PopupMenuButton<String>(
                         enabled: !_isBusy,
                         onSelected: (value) {
@@ -500,6 +530,8 @@ class _PostCardState extends ConsumerState<PostCard> {
                             _showEditPostModal();
                           } else if (value == 'delete') {
                             _deletePost();
+                          } else if (value == 'report') {
+                            _reportPost();
                           }
                         },
                         itemBuilder: (context) => [
@@ -508,103 +540,110 @@ class _PostCardState extends ConsumerState<PostCard> {
                               value: 'edit',
                               child: Text('Edit'),
                             ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text('Delete'),
-                          ),
+                          if (canDeleteThisPost)
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                          if (!isMyPost)
+                            const PopupMenuItem(
+                              value: 'report',
+                              child: Text('Report post'),
+                            ),
                         ],
                         child: const Padding(
                           padding: EdgeInsets.all(8),
                           child: Icon(Icons.more_horiz),
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (widget.post.caption.trim().isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
-                    child: Text(
-                      widget.post.caption,
-                      style: TextStyle(
-                        fontSize: captionFont,
-                        fontWeight: FontWeight.w500,
-                        height: 1.28,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 13),
-                ],
-                if (widget.post.imageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
-                    child: Container(
-                      width: double.infinity,
-                      color: Colors.black,
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.72,
-                      ),
-                      child: Image.network(
-                        widget.post.imageUrl!,
-                        width: double.infinity,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => SizedBox(
-                          height: context.scale(220),
-                          child: Center(child: Text('Failed to load image')),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (widget.post.videoUrl != null)
-                  _PostVideoPlayer(url: widget.post.videoUrl!),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : const Color(0xFFF2F6F1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      TextButton.icon(
-                        onPressed: _likePost,
-                        icon: Icon(
-                          _hasLiked ? Icons.favorite : Icons.favorite_border,
-                          color: _hasLiked ? Colors.red : null,
-                        ),
-                        style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        label: Text(
-                          '$_likesCount',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      TextButton.icon(
-                        onPressed: _showCommentsModal,
-                        icon: const Icon(Icons.comment_outlined),
-                        style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        label: Text(
-                          '$_commentsCount',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  if (widget.post.caption.trim().isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+                      child: Text(
+                        widget.post.caption,
+                        style: TextStyle(
+                          fontSize: captionFont,
+                          fontWeight: FontWeight.w500,
+                          height: 1.28,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                  ],
+                  if (widget.post.imageUrl != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
+                      child: Container(
+                        width: double.infinity,
+                        color: Colors.black,
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.72,
+                        ),
+                        child: Image.network(
+                          widget.post.imageUrl!,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => SizedBox(
+                            height: context.scale(220),
+                            child: Center(child: Text('Failed to load image')),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (widget.post.videoUrl != null)
+                    _PostVideoPlayer(url: widget.post.videoUrl!),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : const Color(0xFFF2F6F1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        TextButton.icon(
+                          onPressed: _likePost,
+                          icon: Icon(
+                            _hasLiked ? Icons.favorite : Icons.favorite_border,
+                            color: _hasLiked ? Colors.red : null,
+                          ),
+                          style: TextButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          label: Text(
+                            '$_likesCount',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _showCommentsModal,
+                          icon: const Icon(Icons.comment_outlined),
+                          style: TextButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          label: Text(
+                            '$_commentsCount',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -746,6 +785,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   Widget build(BuildContext context) {
     final currentUserId = (widget.currentUserId ?? '').trim().toLowerCase();
     final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SafeArea(
       child: SizedBox(
@@ -757,14 +797,21 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'Comments',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                   const Spacer(),
                   IconButton(
                     onPressed: _closeSheet,
-                    icon: const Icon(Icons.close),
+                    icon: Icon(
+                      Icons.close,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
                   ),
                 ],
               ),
@@ -772,10 +819,20 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _comments.isEmpty
-                    ? const Center(child: Text('No comments yet.'))
+                    ? Center(
+                        child: Text(
+                          'No comments yet.',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      )
                     : ListView.separated(
                         itemCount: _comments.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          color: isDark ? Colors.white12 : Colors.black12,
+                        ),
                         itemBuilder: (context, index) {
                           final comment = _comments[index];
                           final postAuthorId = widget.postAuthorId
@@ -838,7 +895,9 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                                       10,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF4F5F7),
+                                      color: isDark
+                                          ? const Color(0xFF1F2937)
+                                          : const Color(0xFFF4F5F7),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: Column(
@@ -852,16 +911,21 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                                                 displayName.trim().isEmpty
                                                     ? 'User'
                                                     : displayName,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 13,
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : Colors.black87,
                                                 ),
                                               ),
                                             ),
                                             Text(
                                               comment.createdAtText,
                                               style: TextStyle(
-                                                color: Colors.grey.shade600,
+                                                color: isDark
+                                                    ? Colors.white60
+                                                    : Colors.grey.shade600,
                                                 fontSize: 12,
                                               ),
                                             ),
@@ -870,7 +934,12 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                                         const SizedBox(height: 6),
                                         Text(
                                           comment.text,
-                                          style: const TextStyle(fontSize: 14),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -905,9 +974,31 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
                         controller: _commentController,
                         minLines: 1,
                         maxLines: 3,
-                        decoration: const InputDecoration(
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
                           hintText: 'Write a comment...',
-                          border: OutlineInputBorder(),
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black45,
+                          ),
+                          border: const OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: isDark ? Colors.white24 : Colors.black26,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? const Color(0XFF76C05D)
+                                  : Colors.blue,
+                            ),
+                          ),
+                          fillColor: isDark
+                              ? const Color(0xFF111827)
+                              : Colors.white,
+                          filled: true,
                           isDense: true,
                         ),
                       ),

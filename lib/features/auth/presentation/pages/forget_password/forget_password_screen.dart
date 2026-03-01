@@ -264,6 +264,7 @@
 //   }
 // }
 import 'package:chautari_kurakani/common/my_snackbar.dart';
+import 'package:chautari_kurakani/features/auth/presentation/pages/forget_password/forget_password_pin_screen.dart';
 import 'package:chautari_kurakani/features/auth/presentation/pages/login_screen.dart';
 import 'package:chautari_kurakani/core/widgets/my_elevated_button.dart';
 import 'package:chautari_kurakani/core/widgets/my_text_button.dart';
@@ -402,7 +403,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                               const SizedBox(height: 30),
 
                               Text(
-                                "A link will be sent to your email to reset password",
+                                "A 6-digit code will be sent to your email",
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: isTablet
@@ -441,32 +442,30 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
 
                                       if (state.status ==
                                           AuthStatus.passwordResetEmailSent) {
-                                        ScaffoldMessenger.of(
+                                        showMySnackBar(
+                                          context: context,
+                                          color: Colors.blueGrey,
+                                          message:
+                                              "Reset code sent to your email.",
+                                        );
+                                        Navigator.push(
                                           context,
-                                        ).showSnackBar(
-                                          // const SnackBar(
-                                          //   content: Text(
-                                          //     "Password reset link sent to your email.",
-                                          //   ),
-                                          // ),
-                                          showMySnackBar(
-                                            context: context,
-                                            color: Colors.blueGrey,
-                                            message:
-                                                "Password reset link sent to your email.",
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                ForgetPasswordPinScreen(
+                                                  email: emailController.text
+                                                      .trim(),
+                                                ),
                                           ),
                                         );
                                       } else if (state.status ==
                                           AuthStatus.error) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
+                                        showMySnackBar(
+                                          context: context,
+                                          message:
                                               state.errorMessage ??
-                                                  "Error occurred",
-                                            ),
-                                          ),
+                                              "Error occurred",
+                                          color: Colors.red,
                                         );
                                       }
                                     }

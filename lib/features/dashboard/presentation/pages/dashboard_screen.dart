@@ -420,6 +420,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
   Timer? _topPopupTimer;
   Timer? _postSyncTimer;
   bool _realtimeBootstrapped = false;
+  bool _notificationPopupPrimed = false;
+  bool _messagePopupPrimed = false;
   List<Widget>? _screensCache;
   String _screensCacheUserId = '';
 
@@ -521,6 +523,8 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
         _messageNotifier.setCurrentUserId(_boundRealtimeUserId);
         _callNotifier.setCurrentUserId(_boundRealtimeUserId);
         _realtimeBootstrapped = true;
+        _notificationPopupPrimed = false;
+        _messagePopupPrimed = false;
         _messageNotifier.connectRealtime();
         _messageNotifier.loadConversations();
         _callNotifier.connectRealtime();
@@ -545,6 +549,16 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       previous,
       next,
     ) {
+      if (!_notificationPopupPrimed) {
+        final isInitialHydration =
+            (previous == null ||
+                previous.status == NotificationStatusUi.initial ||
+                previous.status == NotificationStatusUi.loading) &&
+            next.status == NotificationStatusUi.loaded;
+        _notificationPopupPrimed = true;
+        if (isInitialHydration) return;
+      }
+
       final previousCount = previous?.notifications.length ?? 0;
       final nextCount = next.notifications.length;
       if (nextCount <= previousCount || next.notifications.isEmpty) return;
@@ -557,6 +571,16 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
       _showTopPopup(context, title.isEmpty ? 'New notification' : title);
     });
     ref.listen<MessageState>(messageViewModelProvider, (previous, next) {
+      if (!_messagePopupPrimed) {
+        final isInitialHydration =
+            (previous == null ||
+                previous.status == MessageStatusUi.initial ||
+                previous.status == MessageStatusUi.loading) &&
+            next.status == MessageStatusUi.loaded;
+        _messagePopupPrimed = true;
+        if (isInitialHydration) return;
+      }
+
       final previousUnread = previous?.totalUnread ?? 0;
       if (next.totalUnread <= previousUnread) return;
       if (!mounted) return;

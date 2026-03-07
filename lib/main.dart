@@ -1,39 +1,3 @@
-// import 'package:chautari_kurakani/app/app.dart';
-// import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
-// import 'package:chautari_kurakani/core/services/storage/user_session_service.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-
-// void main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-
-//   await dotenv.load(fileName: ".env");
-
-//   SystemChrome.setSystemUIOverlayStyle(
-//     const SystemUiOverlayStyle(
-//       statusBarColor: Colors.transparent,
-//       statusBarIconBrightness: Brightness.dark,
-//       systemNavigationBarColor: Colors.white,
-//       systemNavigationBarIconBrightness: Brightness.dark,
-//     ),
-//   );
-
-//   await HiveService().init();
-//   final sharedPreferences = await SharedPreferences.getInstance();
-
-//   runApp(
-//     ProviderScope(
-//       overrides: [
-//         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-//       ],
-//       child: const App(),
-//     ),
-//   );
-// }
-
 import 'package:chautari_kurakani/app/theme/theme_data.dart';
 import 'package:chautari_kurakani/core/api/api_endpoints.dart';
 import 'package:chautari_kurakani/core/services/hive/hive_service.dart';
@@ -66,17 +30,13 @@ void main() async {
     ),
   );
 
-  // Initialize Hive
   await HiveService().init();
 
-  // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
 
-  // Initialize Deep Link Service
   final deepLinkService = DeepLinkService();
   ApiEndpoints.debugPrintResolvedEndpoints();
 
-  // Run app with ProviderScope
   runApp(
     ProviderScope(
       overrides: [
@@ -102,7 +62,6 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Initialize deep link handling
     widget.deepLinkService.init((token) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         navigatorKey.currentState?.push(

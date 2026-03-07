@@ -56,7 +56,6 @@ void main() {
 
       expect(result, const Right(authEntity));
 
-
       verify(() => mockAuthRepository.register(any())).called(1);
 
       // Optional stricter check:

@@ -64,7 +64,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       data: user.toJson(),
     );
 
-    if (response.data['succcess'] == true) {
+    if (response.data['success'] == true) {
       final data = response.data['data'] as Map<String, dynamic>;
       final registeredUser = AuthApiModel.fromJson(data);
       return registeredUser;

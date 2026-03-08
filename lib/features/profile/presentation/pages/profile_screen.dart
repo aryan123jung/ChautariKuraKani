@@ -547,13 +547,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (!widget.isReadOnly) return;
     final targetId = widget.userEntity.authId;
     if (targetId == null || targetId.trim().isEmpty) return;
-    final normalizedTarget = _normalizeId(targetId);
-    final currentState = ref.read(friendRequestViewModelProvider);
-    final alreadyLoadedForTarget =
-        currentState.statusUserId == normalizedTarget &&
-        currentState.friendStatus != null &&
-        currentState.status == FriendRequestStatusUi.loaded;
-    if (alreadyLoadedForTarget) return;
     await ref
         .read(friendRequestViewModelProvider.notifier)
         .loadStatus(targetId);
@@ -719,14 +712,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           .fetchPosts()
           .timeout(const Duration(seconds: 2), onTimeout: () {});
       final allPosts = ref.read(postViewModelProvider).posts;
-      final posts = allPosts
-          .where(
-            (post) =>
-                candidateUserIds.contains(_normalizeId(post.authorId)) ||
-                (normalizedCurrentName.isNotEmpty &&
-                    _normalizeName(post.name) == normalizedCurrentName),
-          )
-          .toList();
+      final posts = allPosts.where((post) {
+        // Do not mix Chautari posts into personal profile posts.
+        final communityId = (post.communityId ?? '').trim();
+        if (communityId.isNotEmpty) return false;
+
+        return candidateUserIds.contains(_normalizeId(post.authorId)) ||
+            (normalizedCurrentName.isNotEmpty &&
+                _normalizeName(post.name) == normalizedCurrentName);
+      }).toList();
       if (!mounted) return;
       setState(() {
         _userPosts = posts;
@@ -1747,14 +1741,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         : _currentUserIdCandidates();
     final normalizedCurrentName = _normalizeName(_fullName);
 
-    return allPosts
-        .where(
-          (post) =>
-              candidateUserIds.contains(_normalizeId(post.authorId)) ||
-              (normalizedCurrentName.isNotEmpty &&
-                  _normalizeName(post.name) == normalizedCurrentName),
-        )
-        .toList();
+    return allPosts.where((post) {
+      // Keep personal profile posts separate from Chautari posts.
+      final communityId = (post.communityId ?? '').trim();
+      if (communityId.isNotEmpty) return false;
+
+      return candidateUserIds.contains(_normalizeId(post.authorId)) ||
+          (normalizedCurrentName.isNotEmpty &&
+              _normalizeName(post.name) == normalizedCurrentName);
+    }).toList();
   }
 
   Widget _buildFriendActionButtons({

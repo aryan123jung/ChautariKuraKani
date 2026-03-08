@@ -21,6 +21,7 @@ class MessageViewModel extends Notifier<MessageState> {
 
   StreamSubscription<MessageEntity>? _messageSub;
   String _currentUserId = '';
+  bool _isRefreshingConversations = false;
 
   @override
   MessageState build() {
@@ -283,7 +284,11 @@ class MessageViewModel extends Notifier<MessageState> {
     final index = state.conversations.indexWhere(
       (item) => item.id == message.conversationId,
     );
-    if (index < 0) return;
+    if (index < 0) {
+      _insertOptimisticConversationFromMessage(message);
+      _refreshConversationsFromServer();
+      return;
+    }
 
     final updatedConversation = ConversationEntity(
       id: state.conversations[index].id,
@@ -297,6 +302,39 @@ class MessageViewModel extends Notifier<MessageState> {
     next.insert(0, updatedConversation);
 
     state = state.copyWith(status: MessageStatusUi.loaded, conversations: next);
+  }
+
+  void _insertOptimisticConversationFromMessage(MessageEntity message) {
+    final conversationId = message.conversationId.trim();
+    if (conversationId.isEmpty) return;
+    if (state.conversations.any((item) => item.id == conversationId)) return;
+
+    final sender = message.sender;
+    final receiver = message.receiver;
+    if (sender == null || receiver == null) return;
+    if (sender.id.trim().isEmpty || receiver.id.trim().isEmpty) return;
+
+    final optimistic = ConversationEntity(
+      id: conversationId,
+      participants: [sender, receiver],
+      lastMessage: message.text,
+      lastMessageAt: message.createdAt,
+    );
+
+    state = state.copyWith(
+      status: MessageStatusUi.loaded,
+      conversations: [optimistic, ...state.conversations],
+    );
+  }
+
+  Future<void> _refreshConversationsFromServer() async {
+    if (_isRefreshingConversations) return;
+    _isRefreshingConversations = true;
+    try {
+      await loadConversations(forceRefresh: true);
+    } finally {
+      _isRefreshingConversations = false;
+    }
   }
 
   void _trackUnreadForIncoming(MessageEntity message) {

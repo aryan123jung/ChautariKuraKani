@@ -32,7 +32,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   }
 
   Future<void> _refresh() async {
-    await _messageNotifier.loadConversations();
+    await _messageNotifier.loadConversations(forceRefresh: true);
   }
 
   Future<void> _startConversationWithFriend() async {

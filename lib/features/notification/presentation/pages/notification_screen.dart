@@ -24,15 +24,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     _friendRequestNotifier = ref.read(friendRequestViewModelProvider.notifier);
     Future.microtask(() async {
       await _notificationNotifier.fetchNotifications();
-      await _notificationNotifier.connectRealtime();
       await _friendRequestNotifier.loadIncoming();
     });
-  }
-
-  @override
-  void dispose() {
-    _notificationNotifier.disconnectRealtime();
-    super.dispose();
   }
 
   Future<void> _onRefresh() async {

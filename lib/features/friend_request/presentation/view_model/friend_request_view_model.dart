@@ -80,10 +80,15 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
         );
         return false;
       },
-      (_) {
+      (request) {
+        final exists = state.outgoing.any((item) => item.id == request.id);
+        final nextOutgoing = exists
+            ? state.outgoing
+            : [request, ...state.outgoing];
         state = state.copyWith(
           status: FriendRequestStatusUi.success,
           friendStatus: const FriendStatusEntity(status: 'PENDING_OUTGOING'),
+          outgoing: nextOutgoing,
           errorMessage: null,
         );
         return true;
@@ -110,9 +115,14 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
         return false;
       },
       (_) {
+        final targetId = userId.trim().toLowerCase();
+        final nextOutgoing = state.outgoing
+            .where((item) => item.toUser.id.trim().toLowerCase() != targetId)
+            .toList();
         state = state.copyWith(
           status: FriendRequestStatusUi.success,
           friendStatus: const FriendStatusEntity(status: 'NONE'),
+          outgoing: nextOutgoing,
           errorMessage: null,
         );
         return true;
@@ -138,10 +148,25 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
         );
         return false;
       },
-      (_) {
+      (request) {
+        final normalizedRequestId = requestId.trim().toLowerCase();
+        final nextIncoming = state.incoming
+            .where(
+              (item) => item.id.trim().toLowerCase() != normalizedRequestId,
+            )
+            .toList();
+        final existsOutgoing = state.outgoing.any(
+          (item) =>
+              item.id.trim().toLowerCase() == request.id.trim().toLowerCase(),
+        );
+        final nextOutgoing = existsOutgoing
+            ? state.outgoing
+            : [request, ...state.outgoing];
         state = state.copyWith(
           status: FriendRequestStatusUi.success,
           friendStatus: const FriendStatusEntity(status: 'FRIEND'),
+          incoming: nextIncoming,
+          outgoing: nextOutgoing,
           errorMessage: null,
         );
         return true;
@@ -168,9 +193,16 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
         return false;
       },
       (_) {
+        final normalizedRequestId = requestId.trim().toLowerCase();
+        final nextIncoming = state.incoming
+            .where(
+              (item) => item.id.trim().toLowerCase() != normalizedRequestId,
+            )
+            .toList();
         state = state.copyWith(
           status: FriendRequestStatusUi.success,
           friendStatus: const FriendStatusEntity(status: 'NONE'),
+          incoming: nextIncoming,
           errorMessage: null,
         );
         return true;
@@ -194,9 +226,14 @@ class FriendRequestViewModel extends Notifier<FriendRequestState> {
         return false;
       },
       (_) {
+        final targetId = userId.trim().toLowerCase();
+        final nextOutgoing = state.outgoing
+            .where((item) => item.toUser.id.trim().toLowerCase() != targetId)
+            .toList();
         state = state.copyWith(
           status: FriendRequestStatusUi.success,
           friendStatus: const FriendStatusEntity(status: 'NONE'),
+          outgoing: nextOutgoing,
           errorMessage: null,
         );
         return true;

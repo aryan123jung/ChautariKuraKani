@@ -27,17 +27,30 @@ class AuthApiModel {
 
   // toJSON
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'firstName': fname,
       'lastName': lname,
       'username': username,
       'email': email,
       'password': password,
       'confirmPassword': confirmPassword ?? password,
-      'profileUrl': profilePicture,
-      'coverUrl': coverPicture,
-      'bio': bio,
     };
+
+    final safeProfile = profilePicture?.trim();
+    final safeCover = coverPicture?.trim();
+    final safeBio = bio?.trim();
+
+    if (safeProfile != null && safeProfile.isNotEmpty) {
+      map['profileUrl'] = safeProfile;
+    }
+    if (safeCover != null && safeCover.isNotEmpty) {
+      map['coverUrl'] = safeCover;
+    }
+    if (safeBio != null && safeBio.isNotEmpty) {
+      map['bio'] = safeBio;
+    }
+
+    return map;
   }
 
   //fromJSON

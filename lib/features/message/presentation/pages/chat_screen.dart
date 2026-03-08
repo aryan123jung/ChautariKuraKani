@@ -49,9 +49,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void dispose() {
     _messageNotifier.leaveConversationRoom(widget.conversation.id);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _messageNotifier.clearActiveConversation();
-    });
+    _messageNotifier.clearActiveConversation();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();

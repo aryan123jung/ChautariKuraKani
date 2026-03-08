@@ -501,12 +501,46 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
     return _screensCache!;
   }
 
+  void _bootstrapRealtimeIfNeeded(AuthEntity? authEntity) {
+    final userId = authEntity?.authId?.trim() ?? '';
+    if (_realtimeBootstrapped || userId.isEmpty) return;
+
+    _boundRealtimeUserId = userId;
+    _messageNotifier.setCurrentUserId(_boundRealtimeUserId);
+    _callNotifier.setCurrentUserId(_boundRealtimeUserId);
+    _realtimeBootstrapped = true;
+    _notificationPopupPrimed = false;
+    _messagePopupPrimed = false;
+
+    _messageNotifier.connectRealtime();
+    _messageNotifier.loadConversations();
+    _callNotifier.connectRealtime();
+    _callNotifier.loadCallHistory();
+    _postNotifier.fetchPosts(forceRefresh: false);
+    _postNotifier.refreshPostsIfChanged();
+    _startPostSyncLoop();
+    _notificationNotifier.fetchNotifications();
+    _notificationNotifier.connectRealtime();
+  }
+
+  double _chatbotFabBottomOffset(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final platform = Theme.of(context).platform;
+
+    if (platform == TargetPlatform.android) {
+      return context.scale(76) + bottomInset;
+    }
+    return context.scale(60);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final totalUnread = ref.watch(
       messageViewModelProvider.select((state) => state.totalUnread),
     );
+
+    _bootstrapRealtimeIfNeeded(authState.authEntity);
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.error && next.errorMessage != null) {
@@ -515,26 +549,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
           next.errorMessage ?? 'An error occurred',
         );
       }
-      if (!_realtimeBootstrapped &&
-          next.authEntity != null &&
-          next.authEntity!.authId != null &&
-          next.authEntity!.authId!.trim().isNotEmpty) {
-        _boundRealtimeUserId = next.authEntity!.authId!.trim();
-        _messageNotifier.setCurrentUserId(_boundRealtimeUserId);
-        _callNotifier.setCurrentUserId(_boundRealtimeUserId);
-        _realtimeBootstrapped = true;
-        _notificationPopupPrimed = false;
-        _messagePopupPrimed = false;
-        _messageNotifier.connectRealtime();
-        _messageNotifier.loadConversations();
-        _callNotifier.connectRealtime();
-        _callNotifier.loadCallHistory();
-        _postNotifier.fetchPosts(forceRefresh: false);
-        _postNotifier.refreshPostsIfChanged();
-        _startPostSyncLoop();
-        _notificationNotifier.fetchNotifications();
-        _notificationNotifier.connectRealtime();
-      }
+      _bootstrapRealtimeIfNeeded(next.authEntity);
 
       if (next.authEntity != null &&
           next.authEntity!.authId != null &&
@@ -715,7 +730,7 @@ class _BottomNavScreenState extends ConsumerState<DashboardScreen> {
 
       /// Floating AI Button
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: context.scale(60)),
+        padding: EdgeInsets.only(bottom: _chatbotFabBottomOffset(context)),
         child: FloatingActionButton(
           heroTag: 'dashboard_chatbot_fab',
           backgroundColor: const Color(0XFF76C05D),
